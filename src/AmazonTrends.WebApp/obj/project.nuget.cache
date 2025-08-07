@@ -1,0 +1,53 @@
+{
+  "version": 2,
+  "dgSpecHash": "qeBf6PkHZSM+2290u47qLpGYxTOWh0TnNGxCmoZYImCTdyW2dZlmOBp7FvZKYlDziLuIRW9C/seMP20o9CQdqQ==",
+  "success": true,
+  "projectFilePath": "/home/dministrator/code/test/amazon-trends-dashboard/src/AmazonTrends.WebApp/AmazonTrends.WebApp.csproj",
+  "expectedPackageFiles": [
+    "/home/dministrator/.nuget/packages/dapper/2.0.123/dapper.2.0.123.nupkg.sha512",
+    "/home/dministrator/.nuget/packages/hangfire.aspnetcore/1.8.20/hangfire.aspnetcore.1.8.20.nupkg.sha512",
+    "/home/dministrator/.nuget/packages/hangfire.core/1.8.20/hangfire.core.1.8.20.nupkg.sha512",
+    "/home/dministrator/.nuget/packages/hangfire.netcore/1.8.20/hangfire.netcore.1.8.20.nupkg.sha512",
+    "/home/dministrator/.nuget/packages/hangfire.postgresql/1.9.2/hangfire.postgresql.1.9.2.nupkg.sha512",
+    "/home/dministrator/.nuget/packages/htmlagilitypack/1.12.2/htmlagilitypack.1.12.2.nupkg.sha512",
+    "/home/dministrator/.nuget/packages/microsoft.aspnetcore.openapi/8.0.18/microsoft.aspnetcore.openapi.8.0.18.nupkg.sha512",
+    "/home/dministrator/.nuget/packages/microsoft.csharp/4.7.0/microsoft.csharp.4.7.0.nupkg.sha512",
+    "/home/dministrator/.nuget/packages/microsoft.entityframeworkcore/9.0.8/microsoft.entityframeworkcore.9.0.8.nupkg.sha512",
+    "/home/dministrator/.nuget/packages/microsoft.entityframeworkcore.abstractions/9.0.8/microsoft.entityframeworkcore.abstractions.9.0.8.nupkg.sha512",
+    "/home/dministrator/.nuget/packages/microsoft.entityframeworkcore.analyzers/9.0.8/microsoft.entityframeworkcore.analyzers.9.0.8.nupkg.sha512",
+    "/home/dministrator/.nuget/packages/microsoft.entityframeworkcore.relational/9.0.1/microsoft.entityframeworkcore.relational.9.0.1.nupkg.sha512",
+    "/home/dministrator/.nuget/packages/microsoft.extensions.apidescription.server/8.0.0/microsoft.extensions.apidescription.server.8.0.0.nupkg.sha512",
+    "/home/dministrator/.nuget/packages/microsoft.extensions.caching.abstractions/9.0.8/microsoft.extensions.caching.abstractions.9.0.8.nupkg.sha512",
+    "/home/dministrator/.nuget/packages/microsoft.extensions.caching.memory/9.0.8/microsoft.extensions.caching.memory.9.0.8.nupkg.sha512",
+    "/home/dministrator/.nuget/packages/microsoft.extensions.configuration.abstractions/9.0.1/microsoft.extensions.configuration.abstractions.9.0.1.nupkg.sha512",
+    "/home/dministrator/.nuget/packages/microsoft.extensions.dependencyinjection/9.0.8/microsoft.extensions.dependencyinjection.9.0.8.nupkg.sha512",
+    "/home/dministrator/.nuget/packages/microsoft.extensions.dependencyinjection.abstractions/9.0.8/microsoft.extensions.dependencyinjection.abstractions.9.0.8.nupkg.sha512",
+    "/home/dministrator/.nuget/packages/microsoft.extensions.fileproviders.abstractions/3.0.0/microsoft.extensions.fileproviders.abstractions.3.0.0.nupkg.sha512",
+    "/home/dministrator/.nuget/packages/microsoft.extensions.hosting.abstractions/3.0.0/microsoft.extensions.hosting.abstractions.3.0.0.nupkg.sha512",
+    "/home/dministrator/.nuget/packages/microsoft.extensions.logging/9.0.8/microsoft.extensions.logging.9.0.8.nupkg.sha512",
+    "/home/dministrator/.nuget/packages/microsoft.extensions.logging.abstractions/9.0.8/microsoft.extensions.logging.abstractions.9.0.8.nupkg.sha512",
+    "/home/dministrator/.nuget/packages/microsoft.extensions.options/9.0.8/microsoft.extensions.options.9.0.8.nupkg.sha512",
+    "/home/dministrator/.nuget/packages/microsoft.extensions.primitives/9.0.8/microsoft.extensions.primitives.9.0.8.nupkg.sha512",
+    "/home/dministrator/.nuget/packages/microsoft.openapi/1.6.23/microsoft.openapi.1.6.23.nupkg.sha512",
+    "/home/dministrator/.nuget/packages/newtonsoft.json/11.0.1/newtonsoft.json.11.0.1.nupkg.sha512",
+    "/home/dministrator/.nuget/packages/npgsql/9.0.3/npgsql.9.0.3.nupkg.sha512",
+    "/home/dministrator/.nuget/packages/npgsql.entityframeworkcore.postgresql/9.0.4/npgsql.entityframeworkcore.postgresql.9.0.4.nupkg.sha512",
+    "/home/dministrator/.nuget/packages/swashbuckle.aspnetcore/9.0.3/swashbuckle.aspnetcore.9.0.3.nupkg.sha512",
+    "/home/dministrator/.nuget/packages/swashbuckle.aspnetcore.swagger/9.0.3/swashbuckle.aspnetcore.swagger.9.0.3.nupkg.sha512",
+    "/home/dministrator/.nuget/packages/swashbuckle.aspnetcore.swaggergen/9.0.3/swashbuckle.aspnetcore.swaggergen.9.0.3.nupkg.sha512",
+    "/home/dministrator/.nuget/packages/swashbuckle.aspnetcore.swaggerui/9.0.3/swashbuckle.aspnetcore.swaggerui.9.0.3.nupkg.sha512",
+    "/home/dministrator/.nuget/packages/system.diagnostics.diagnosticsource/9.0.8/system.diagnostics.diagnosticsource.9.0.8.nupkg.sha512"
+  ],
+  "logs": [
+    {
+      "code": "NU1603",
+      "level": "Warning",
+      "warningLevel": 1,
+      "message": "AmazonTrends.WebApp depends on Hangfire.PostgreSql (>= 1.8.20) but Hangfire.PostgreSql 1.8.20 was not found. An approximate best match of Hangfire.PostgreSql 1.9.2 was resolved.",
+      "libraryId": "Hangfire.PostgreSql",
+      "targetGraphs": [
+        "net8.0"
+      ]
+    }
+  ]
+}

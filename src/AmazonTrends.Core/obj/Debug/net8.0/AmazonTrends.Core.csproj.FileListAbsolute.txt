@@ -1,0 +1,15 @@
+/home/dministrator/code/test/amazon-trends-dashboard/src/AmazonTrends.Core/bin/Debug/net8.0/AmazonTrends.Core.deps.json
+/home/dministrator/code/test/amazon-trends-dashboard/src/AmazonTrends.Core/bin/Debug/net8.0/AmazonTrends.Core.dll
+/home/dministrator/code/test/amazon-trends-dashboard/src/AmazonTrends.Core/bin/Debug/net8.0/AmazonTrends.Core.pdb
+/home/dministrator/code/test/amazon-trends-dashboard/src/AmazonTrends.Core/bin/Debug/net8.0/AmazonTrends.Data.dll
+/home/dministrator/code/test/amazon-trends-dashboard/src/AmazonTrends.Core/bin/Debug/net8.0/AmazonTrends.Data.pdb
+/home/dministrator/code/test/amazon-trends-dashboard/src/AmazonTrends.Core/obj/Debug/net8.0/AmazonTrends.Core.csproj.AssemblyReference.cache
+/home/dministrator/code/test/amazon-trends-dashboard/src/AmazonTrends.Core/obj/Debug/net8.0/AmazonTrends.Core.GeneratedMSBuildEditorConfig.editorconfig
+/home/dministrator/code/test/amazon-trends-dashboard/src/AmazonTrends.Core/obj/Debug/net8.0/AmazonTrends.Core.AssemblyInfoInputs.cache
+/home/dministrator/code/test/amazon-trends-dashboard/src/AmazonTrends.Core/obj/Debug/net8.0/AmazonTrends.Core.AssemblyInfo.cs
+/home/dministrator/code/test/amazon-trends-dashboard/src/AmazonTrends.Core/obj/Debug/net8.0/AmazonTrends.Core.csproj.CoreCompileInputs.cache
+/home/dministrator/code/test/amazon-trends-dashboard/src/AmazonTrends.Core/obj/Debug/net8.0/AmazonTrends.Core.csproj.CopyComplete
+/home/dministrator/code/test/amazon-trends-dashboard/src/AmazonTrends.Core/obj/Debug/net8.0/AmazonTrends.Core.dll
+/home/dministrator/code/test/amazon-trends-dashboard/src/AmazonTrends.Core/obj/Debug/net8.0/refint/AmazonTrends.Core.dll
+/home/dministrator/code/test/amazon-trends-dashboard/src/AmazonTrends.Core/obj/Debug/net8.0/AmazonTrends.Core.pdb
+/home/dministrator/code/test/amazon-trends-dashboard/src/AmazonTrends.Core/obj/Debug/net8.0/ref/AmazonTrends.Core.dll

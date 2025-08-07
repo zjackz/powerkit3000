@@ -1,0 +1,26 @@
+{
+  "version": 2,
+  "dgSpecHash": "itwNq2mpfJTsH3NeQ1ojQl/AuzwQA4R2L3euS7O/pGvUBWZadpobrgbMjvppaN2Fnnhhks8s0ao7CFcoArEN2g==",
+  "success": true,
+  "projectFilePath": "/home/dministrator/code/test/amazon-trends-dashboard/src/AmazonTrends.Core/AmazonTrends.Core.csproj",
+  "expectedPackageFiles": [
+    "/home/dministrator/.nuget/packages/htmlagilitypack/1.12.2/htmlagilitypack.1.12.2.nupkg.sha512",
+    "/home/dministrator/.nuget/packages/microsoft.entityframeworkcore/9.0.1/microsoft.entityframeworkcore.9.0.1.nupkg.sha512",
+    "/home/dministrator/.nuget/packages/microsoft.entityframeworkcore.abstractions/9.0.1/microsoft.entityframeworkcore.abstractions.9.0.1.nupkg.sha512",
+    "/home/dministrator/.nuget/packages/microsoft.entityframeworkcore.analyzers/9.0.1/microsoft.entityframeworkcore.analyzers.9.0.1.nupkg.sha512",
+    "/home/dministrator/.nuget/packages/microsoft.entityframeworkcore.relational/9.0.1/microsoft.entityframeworkcore.relational.9.0.1.nupkg.sha512",
+    "/home/dministrator/.nuget/packages/microsoft.extensions.caching.abstractions/9.0.1/microsoft.extensions.caching.abstractions.9.0.1.nupkg.sha512",
+    "/home/dministrator/.nuget/packages/microsoft.extensions.caching.memory/9.0.1/microsoft.extensions.caching.memory.9.0.1.nupkg.sha512",
+    "/home/dministrator/.nuget/packages/microsoft.extensions.configuration.abstractions/9.0.1/microsoft.extensions.configuration.abstractions.9.0.1.nupkg.sha512",
+    "/home/dministrator/.nuget/packages/microsoft.extensions.dependencyinjection/9.0.1/microsoft.extensions.dependencyinjection.9.0.1.nupkg.sha512",
+    "/home/dministrator/.nuget/packages/microsoft.extensions.dependencyinjection.abstractions/9.0.1/microsoft.extensions.dependencyinjection.abstractions.9.0.1.nupkg.sha512",
+    "/home/dministrator/.nuget/packages/microsoft.extensions.logging/9.0.1/microsoft.extensions.logging.9.0.1.nupkg.sha512",
+    "/home/dministrator/.nuget/packages/microsoft.extensions.logging.abstractions/9.0.1/microsoft.extensions.logging.abstractions.9.0.1.nupkg.sha512",
+    "/home/dministrator/.nuget/packages/microsoft.extensions.options/9.0.1/microsoft.extensions.options.9.0.1.nupkg.sha512",
+    "/home/dministrator/.nuget/packages/microsoft.extensions.primitives/9.0.1/microsoft.extensions.primitives.9.0.1.nupkg.sha512",
+    "/home/dministrator/.nuget/packages/npgsql/9.0.3/npgsql.9.0.3.nupkg.sha512",
+    "/home/dministrator/.nuget/packages/npgsql.entityframeworkcore.postgresql/9.0.4/npgsql.entityframeworkcore.postgresql.9.0.4.nupkg.sha512",
+    "/home/dministrator/.nuget/packages/system.diagnostics.diagnosticsource/9.0.1/system.diagnostics.diagnosticsource.9.0.1.nupkg.sha512"
+  ],
+  "logs": []
+}

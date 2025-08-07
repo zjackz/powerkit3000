@@ -1,0 +1,7 @@
+/home/dministrator/code/test/amazon-trends-dashboard/src/AmazonTrends.WebApp/obj/Debug/net8.0/AmazonTrends.WebApp.csproj.AssemblyReference.cache
+/home/dministrator/code/test/amazon-trends-dashboard/src/AmazonTrends.WebApp/obj/Debug/net8.0/AmazonTrends.WebApp.GeneratedMSBuildEditorConfig.editorconfig
+/home/dministrator/code/test/amazon-trends-dashboard/src/AmazonTrends.WebApp/obj/Debug/net8.0/AmazonTrends.WebApp.AssemblyInfoInputs.cache
+/home/dministrator/code/test/amazon-trends-dashboard/src/AmazonTrends.WebApp/obj/Debug/net8.0/AmazonTrends.WebApp.AssemblyInfo.cs
+/home/dministrator/code/test/amazon-trends-dashboard/src/AmazonTrends.WebApp/obj/Debug/net8.0/AmazonTrends.WebApp.csproj.CoreCompileInputs.cache
+/home/dministrator/code/test/amazon-trends-dashboard/src/AmazonTrends.WebApp/obj/Debug/net8.0/AmazonTrends.WebApp.MvcApplicationPartsAssemblyInfo.cs
+/home/dministrator/code/test/amazon-trends-dashboard/src/AmazonTrends.WebApp/obj/Debug/net8.0/AmazonTrends.WebApp.MvcApplicationPartsAssemblyInfo.cache
