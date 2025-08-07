@@ -15,8 +15,8 @@ public class ProductDataPoint
     /// 外键：关联到 Product 表
     /// </summary>
     [Required]
-    public string ProductId { get; set; }
-    public Product Product { get; set; }
+    public string ProductId { get; set; } = null!;
+    public Product Product { get; set; } = null!;
 
     /// <summary>
     /// 数据采集的时间戳
@@ -49,5 +49,5 @@ public class ProductDataPoint
     /// 外键：关联到 DataCollectionRun 表，标识该数据由哪次采集任务生成
     /// </summary>
     public long DataCollectionRunId { get; set; }
-    public DataCollectionRun DataCollectionRun { get; set; }
+    public DataCollectionRun DataCollectionRun { get; set; } = null!;
 }

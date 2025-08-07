@@ -16,7 +16,13 @@ public class Category
     /// </summary>
     [Required]
     [MaxLength(100)]
-    public string Name { get; set; }
+    public string Name { get; set; } = null!;
+
+    /// <summary>
+    /// 亚马逊分类ID或路径，用于构建抓取URL
+    /// </summary>
+    [MaxLength(200)]
+    public string? AmazonCategoryId { get; set; }
 
     /// <summary>
     /// 外键：自引用，关联到父分类

@@ -12,6 +12,10 @@ github.pub
 node_modules/
 dist/
 build/
+
+# .NET build artifacts
+bin/
+obj/
  
 # IDE
 .vscode/

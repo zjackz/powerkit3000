@@ -52,6 +52,12 @@ public class AppDbContext : DbContext
             .WithMany(dcr => dcr.DataPoints)      // 一次采集任务生成多个数据点
             .HasForeignKey(pdp => pdp.DataCollectionRunId); // 外键是 DataCollectionRunId
 
+        // 配置 DataCollectionRun 和 Category 之间的关系
+        modelBuilder.Entity<DataCollectionRun>()
+            .HasOne(dcr => dcr.Category)          // 一次采集任务针对一个分类
+            .WithMany()                           // Category 没有直接的 DataCollectionRuns 集合，因为是单向关系
+            .HasForeignKey(dcr => dcr.CategoryId); // 外键是 CategoryId
+
         // ----- 添加索引 -----
 
         // 为 ProductDataPoint 表的 ProductId 和 Timestamp 创建复合索引，以加速趋势查询

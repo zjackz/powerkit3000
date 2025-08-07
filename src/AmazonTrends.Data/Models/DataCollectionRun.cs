@@ -11,10 +11,10 @@ public class DataCollectionRun
     public long Id { get; set; }
 
     /// <summary>
-    /// 任务开始时间
+    /// 任务执行时间戳
     /// </summary>
     [Required]
-    public DateTime StartTime { get; set; }
+    public DateTime Timestamp { get; set; }
 
     /// <summary>
     /// 任务结束时间
@@ -26,7 +26,13 @@ public class DataCollectionRun
     /// </summary>
     [Required]
     [MaxLength(50)]
-    public string Status { get; set; }
+    public string Status { get; set; } = null!;
+
+    /// <summary>
+    /// 外键：关联到 Category 表，表示本次采集任务针对哪个分类
+    /// </summary>
+    public int CategoryId { get; set; }
+    public Category Category { get; set; } = null!;
 
     /// <summary>
     /// 本次任务成功抓取的商品数量
