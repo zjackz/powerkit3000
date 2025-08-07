@@ -181,3 +181,569 @@ fail: Hangfire.Processing.BackgroundExecution[0]
           File: xact.c
           Line: 3590
           Routine: PreventInTransactionBlock
+warn: Hangfire.Server.ServerHeartbeatProcess[0]
+      Server pc-20250316mvtl:316668:89e1a2d1 encountered an exception while sending heartbeat
+      Npgsql.PostgresException (0x80004005): 25001: DISCARD ALL cannot run inside a transaction block
+         at Npgsql.Internal.NpgsqlConnector.ReadMessageLong(Boolean async, DataRowLoadingMode dataRowLoadingMode, Boolean readingNotifications, Boolean isReadingPrependedMessage)
+         at System.Runtime.CompilerServices.PoolingAsyncValueTaskMethodBuilder`1.StateMachineBox`1.System.Threading.Tasks.Sources.IValueTaskSource<TResult>.GetResult(Int16 token)
+         at Npgsql.Internal.NpgsqlConnector.ReadMessageLong(Boolean async, DataRowLoadingMode dataRowLoadingMode, Boolean readingNotifications, Boolean isReadingPrependedMessage)
+         at System.Runtime.CompilerServices.PoolingAsyncValueTaskMethodBuilder`1.StateMachineBox`1.System.Threading.Tasks.Sources.IValueTaskSource<TResult>.GetResult(Int16 token)
+         at Npgsql.NpgsqlDataReader.NextResult(Boolean async, Boolean isConsuming, CancellationToken cancellationToken)
+         at Npgsql.NpgsqlDataReader.NextResult(Boolean async, Boolean isConsuming, CancellationToken cancellationToken)
+         at Npgsql.NpgsqlCommand.ExecuteReader(Boolean async, CommandBehavior behavior, CancellationToken cancellationToken)
+         at Npgsql.NpgsqlCommand.ExecuteReader(Boolean async, CommandBehavior behavior, CancellationToken cancellationToken)
+         at Npgsql.NpgsqlCommand.ExecuteNonQuery(Boolean async, CancellationToken cancellationToken)
+         at Npgsql.NpgsqlCommand.ExecuteNonQuery()
+         at Dapper.SqlMapper.ExecuteCommand(IDbConnection cnn, CommandDefinition& command, Action`2 paramReader) in /_/Dapper/SqlMapper.cs:line 2848
+         at Dapper.SqlMapper.ExecuteImpl(IDbConnection cnn, CommandDefinition& command) in /_/Dapper/SqlMapper.cs:line 581
+         at Dapper.SqlMapper.Execute(IDbConnection cnn, String sql, Object param, IDbTransaction transaction, Nullable`1 commandTimeout, Nullable`1 commandType) in /_/Dapper/SqlMapper.cs:line 452
+         at Hangfire.PostgreSql.PostgreSqlConnection.<>c__DisplayClass21_0.<Heartbeat>b__0(DbConnection connection)
+         at Hangfire.PostgreSql.PostgreSqlStorage.UseConnection[T](DbConnection dedicatedConnection, Func`2 func)
+         at Hangfire.PostgreSql.PostgreSqlConnection.Heartbeat(String serverId)
+         at Hangfire.Server.ServerHeartbeatProcess.Execute(BackgroundProcessContext context) in C:\projects\hangfire-525\src\Hangfire.Core\Server\ServerHeartbeatProcess.cs:line 50
+        Exception data:
+          Severity: ERROR
+          SqlState: 25001
+          MessageText: DISCARD ALL cannot run inside a transaction block
+          File: xact.c
+          Line: 3590
+          Routine: PreventInTransactionBlock
+warn: Hangfire.PostgreSql.PostgreSqlDistributedLock[0]
+      locks:expirationmanager: Failed to remove lock
+      Npgsql.NpgsqlException (0x80004005): Exception while reading from stream
+       ---> System.TimeoutException: Timeout during reading attempt
+         at Npgsql.Internal.NpgsqlReadBuffer.<Ensure>g__EnsureLong|55_0(NpgsqlReadBuffer buffer, Int32 count, Boolean async, Boolean readingNotifications)
+         at System.Runtime.CompilerServices.PoolingAsyncValueTaskMethodBuilder`1.StateMachineBox`1.System.Threading.Tasks.Sources.IValueTaskSource.GetResult(Int16 token)
+         at Npgsql.Internal.NpgsqlConnector.ReadMessageLong(Boolean async, DataRowLoadingMode dataRowLoadingMode, Boolean readingNotifications, Boolean isReadingPrependedMessage)
+         at System.Runtime.CompilerServices.PoolingAsyncValueTaskMethodBuilder`1.StateMachineBox`1.System.Threading.Tasks.Sources.IValueTaskSource<TResult>.GetResult(Int16 token)
+         at Npgsql.Internal.NpgsqlConnector.ReadMessageLong(Boolean async, DataRowLoadingMode dataRowLoadingMode, Boolean readingNotifications, Boolean isReadingPrependedMessage)
+         at System.Runtime.CompilerServices.PoolingAsyncValueTaskMethodBuilder`1.StateMachineBox`1.System.Threading.Tasks.Sources.IValueTaskSource<TResult>.GetResult(Int16 token)
+         at Npgsql.NpgsqlDataReader.NextResult(Boolean async, Boolean isConsuming, CancellationToken cancellationToken)
+         at Npgsql.NpgsqlDataReader.NextResult(Boolean async, Boolean isConsuming, CancellationToken cancellationToken)
+         at Npgsql.NpgsqlCommand.ExecuteReader(Boolean async, CommandBehavior behavior, CancellationToken cancellationToken)
+         at Npgsql.NpgsqlCommand.ExecuteReader(Boolean async, CommandBehavior behavior, CancellationToken cancellationToken)
+         at Npgsql.NpgsqlCommand.ExecuteNonQuery(Boolean async, CancellationToken cancellationToken)
+         at Npgsql.NpgsqlCommand.ExecuteNonQuery()
+         at Dapper.SqlMapper.ExecuteCommand(IDbConnection cnn, CommandDefinition& command, Action`2 paramReader) in /_/Dapper/SqlMapper.cs:line 2848
+         at Dapper.SqlMapper.ExecuteImpl(IDbConnection cnn, CommandDefinition& command) in /_/Dapper/SqlMapper.cs:line 581
+         at Dapper.SqlMapper.Execute(IDbConnection cnn, String sql, Object param, IDbTransaction transaction, Nullable`1 commandTimeout, Nullable`1 commandType) in /_/Dapper/SqlMapper.cs:line 452
+         at Hangfire.PostgreSql.PostgreSqlDistributedLock.LockHandler.TryRemoveLock(String resource, IDbConnection connection, PostgreSqlStorageOptions options, Boolean onlyExpired)
+warn: Hangfire.PostgreSql.PostgreSqlDistributedLock[0]
+      locks:expirationmanager: Failed to acquire lock
+      System.InvalidOperationException: Connection is not open
+         at Npgsql.ThrowHelper.ThrowInvalidOperationException(String message)
+         at Npgsql.NpgsqlConnection.CheckReady()
+         at Npgsql.NpgsqlConnection.BeginTransaction(Boolean async, IsolationLevel level, CancellationToken cancellationToken)
+         at Npgsql.NpgsqlConnection.BeginTransaction(IsolationLevel level)
+         at Npgsql.NpgsqlConnection.BeginDbTransaction(IsolationLevel isolationLevel)
+         at Hangfire.PostgreSql.PostgreSqlDistributedLock.TransactionLockHandler.BeginTransactionIfNotPresent(IDbConnection connection)
+         at Hangfire.PostgreSql.PostgreSqlDistributedLock.TransactionLockHandler.TryLock(IDbConnection connection, String schemaName, String resource)
+         at Hangfire.PostgreSql.PostgreSqlDistributedLock.LockHandler.Lock(String resource, TimeSpan timeout, IDbConnection connection, PostgreSqlStorageOptions options)
+warn: Hangfire.PostgreSql.PostgreSqlDistributedLock[0]
+      hangfire:recurring-jobs:lock: Failed to remove lock
+      Npgsql.NpgsqlException (0x80004005): Exception while reading from stream
+       ---> System.TimeoutException: Timeout during reading attempt
+         at Npgsql.Internal.NpgsqlReadBuffer.<Ensure>g__EnsureLong|55_0(NpgsqlReadBuffer buffer, Int32 count, Boolean async, Boolean readingNotifications)
+         at System.Runtime.CompilerServices.PoolingAsyncValueTaskMethodBuilder`1.StateMachineBox`1.System.Threading.Tasks.Sources.IValueTaskSource.GetResult(Int16 token)
+         at Npgsql.Internal.NpgsqlConnector.ReadMessageLong(Boolean async, DataRowLoadingMode dataRowLoadingMode, Boolean readingNotifications, Boolean isReadingPrependedMessage)
+         at System.Runtime.CompilerServices.PoolingAsyncValueTaskMethodBuilder`1.StateMachineBox`1.System.Threading.Tasks.Sources.IValueTaskSource<TResult>.GetResult(Int16 token)
+         at Npgsql.Internal.NpgsqlConnector.ReadMessageLong(Boolean async, DataRowLoadingMode dataRowLoadingMode, Boolean readingNotifications, Boolean isReadingPrependedMessage)
+         at System.Runtime.CompilerServices.PoolingAsyncValueTaskMethodBuilder`1.StateMachineBox`1.System.Threading.Tasks.Sources.IValueTaskSource<TResult>.GetResult(Int16 token)
+         at Npgsql.NpgsqlDataReader.NextResult(Boolean async, Boolean isConsuming, CancellationToken cancellationToken)
+         at Npgsql.NpgsqlDataReader.NextResult(Boolean async, Boolean isConsuming, CancellationToken cancellationToken)
+         at Npgsql.NpgsqlCommand.ExecuteReader(Boolean async, CommandBehavior behavior, CancellationToken cancellationToken)
+         at Npgsql.NpgsqlCommand.ExecuteReader(Boolean async, CommandBehavior behavior, CancellationToken cancellationToken)
+         at Npgsql.NpgsqlCommand.ExecuteNonQuery(Boolean async, CancellationToken cancellationToken)
+         at Npgsql.NpgsqlCommand.ExecuteNonQuery()
+         at Dapper.SqlMapper.ExecuteCommand(IDbConnection cnn, CommandDefinition& command, Action`2 paramReader) in /_/Dapper/SqlMapper.cs:line 2848
+         at Dapper.SqlMapper.ExecuteImpl(IDbConnection cnn, CommandDefinition& command) in /_/Dapper/SqlMapper.cs:line 581
+         at Dapper.SqlMapper.Execute(IDbConnection cnn, String sql, Object param, IDbTransaction transaction, Nullable`1 commandTimeout, Nullable`1 commandType) in /_/Dapper/SqlMapper.cs:line 452
+         at Hangfire.PostgreSql.PostgreSqlDistributedLock.LockHandler.TryRemoveLock(String resource, IDbConnection connection, PostgreSqlStorageOptions options, Boolean onlyExpired)
+warn: Hangfire.PostgreSql.PostgreSqlDistributedLock[0]
+      hangfire:recurring-jobs:lock: Failed to acquire lock
+      System.InvalidOperationException: Connection is not open
+         at Npgsql.ThrowHelper.ThrowInvalidOperationException(String message)
+         at Npgsql.NpgsqlConnection.CheckReady()
+         at Npgsql.NpgsqlConnection.BeginTransaction(Boolean async, IsolationLevel level, CancellationToken cancellationToken)
+         at Npgsql.NpgsqlConnection.BeginTransaction(IsolationLevel level)
+         at Npgsql.NpgsqlConnection.BeginDbTransaction(IsolationLevel isolationLevel)
+         at Hangfire.PostgreSql.PostgreSqlDistributedLock.TransactionLockHandler.BeginTransactionIfNotPresent(IDbConnection connection)
+         at Hangfire.PostgreSql.PostgreSqlDistributedLock.TransactionLockHandler.TryLock(IDbConnection connection, String schemaName, String resource)
+         at Hangfire.PostgreSql.PostgreSqlDistributedLock.LockHandler.Lock(String resource, TimeSpan timeout, IDbConnection connection, PostgreSqlStorageOptions options)
+warn: Hangfire.PostgreSql.PostgreSqlDistributedLock[0]
+      hangfire:locks:schedulepoller: Failed to remove lock
+      Npgsql.NpgsqlException (0x80004005): Exception while reading from stream
+       ---> System.TimeoutException: Timeout during reading attempt
+         at Npgsql.Internal.NpgsqlReadBuffer.<Ensure>g__EnsureLong|55_0(NpgsqlReadBuffer buffer, Int32 count, Boolean async, Boolean readingNotifications)
+         at System.Runtime.CompilerServices.PoolingAsyncValueTaskMethodBuilder`1.StateMachineBox`1.System.Threading.Tasks.Sources.IValueTaskSource.GetResult(Int16 token)
+         at Npgsql.Internal.NpgsqlConnector.ReadMessageLong(Boolean async, DataRowLoadingMode dataRowLoadingMode, Boolean readingNotifications, Boolean isReadingPrependedMessage)
+         at System.Runtime.CompilerServices.PoolingAsyncValueTaskMethodBuilder`1.StateMachineBox`1.System.Threading.Tasks.Sources.IValueTaskSource<TResult>.GetResult(Int16 token)
+         at Npgsql.Internal.NpgsqlConnector.ReadMessageLong(Boolean async, DataRowLoadingMode dataRowLoadingMode, Boolean readingNotifications, Boolean isReadingPrependedMessage)
+         at System.Runtime.CompilerServices.PoolingAsyncValueTaskMethodBuilder`1.StateMachineBox`1.System.Threading.Tasks.Sources.IValueTaskSource<TResult>.GetResult(Int16 token)
+         at Npgsql.NpgsqlDataReader.NextResult(Boolean async, Boolean isConsuming, CancellationToken cancellationToken)
+         at Npgsql.NpgsqlDataReader.NextResult(Boolean async, Boolean isConsuming, CancellationToken cancellationToken)
+         at Npgsql.NpgsqlCommand.ExecuteReader(Boolean async, CommandBehavior behavior, CancellationToken cancellationToken)
+         at Npgsql.NpgsqlCommand.ExecuteReader(Boolean async, CommandBehavior behavior, CancellationToken cancellationToken)
+         at Npgsql.NpgsqlCommand.ExecuteNonQuery(Boolean async, CancellationToken cancellationToken)
+         at Npgsql.NpgsqlCommand.ExecuteNonQuery()
+         at Dapper.SqlMapper.ExecuteCommand(IDbConnection cnn, CommandDefinition& command, Action`2 paramReader) in /_/Dapper/SqlMapper.cs:line 2848
+         at Dapper.SqlMapper.ExecuteImpl(IDbConnection cnn, CommandDefinition& command) in /_/Dapper/SqlMapper.cs:line 581
+         at Dapper.SqlMapper.Execute(IDbConnection cnn, String sql, Object param, IDbTransaction transaction, Nullable`1 commandTimeout, Nullable`1 commandType) in /_/Dapper/SqlMapper.cs:line 452
+         at Hangfire.PostgreSql.PostgreSqlDistributedLock.LockHandler.TryRemoveLock(String resource, IDbConnection connection, PostgreSqlStorageOptions options, Boolean onlyExpired)
+warn: Hangfire.PostgreSql.PostgreSqlDistributedLock[0]
+      hangfire:locks:schedulepoller: Failed to acquire lock
+      System.InvalidOperationException: Connection is not open
+         at Npgsql.ThrowHelper.ThrowInvalidOperationException(String message)
+         at Npgsql.NpgsqlConnection.CheckReady()
+         at Npgsql.NpgsqlConnection.BeginTransaction(Boolean async, IsolationLevel level, CancellationToken cancellationToken)
+         at Npgsql.NpgsqlConnection.BeginTransaction(IsolationLevel level)
+         at Npgsql.NpgsqlConnection.BeginDbTransaction(IsolationLevel isolationLevel)
+         at Hangfire.PostgreSql.PostgreSqlDistributedLock.TransactionLockHandler.BeginTransactionIfNotPresent(IDbConnection connection)
+         at Hangfire.PostgreSql.PostgreSqlDistributedLock.TransactionLockHandler.TryLock(IDbConnection connection, String schemaName, String resource)
+         at Hangfire.PostgreSql.PostgreSqlDistributedLock.LockHandler.Lock(String resource, TimeSpan timeout, IDbConnection connection, PostgreSqlStorageOptions options)
+warn: Hangfire.PostgreSql.PostgreSqlDistributedLock[0]
+      locks:expirationmanager: Failed to remove lock
+      Npgsql.NpgsqlException (0x80004005): Exception while reading from stream
+       ---> System.TimeoutException: Timeout during reading attempt
+         at Npgsql.Internal.NpgsqlReadBuffer.<Ensure>g__EnsureLong|55_0(NpgsqlReadBuffer buffer, Int32 count, Boolean async, Boolean readingNotifications)
+         at System.Runtime.CompilerServices.PoolingAsyncValueTaskMethodBuilder`1.StateMachineBox`1.System.Threading.Tasks.Sources.IValueTaskSource.GetResult(Int16 token)
+         at Npgsql.Internal.NpgsqlConnector.ReadMessageLong(Boolean async, DataRowLoadingMode dataRowLoadingMode, Boolean readingNotifications, Boolean isReadingPrependedMessage)
+         at System.Runtime.CompilerServices.PoolingAsyncValueTaskMethodBuilder`1.StateMachineBox`1.System.Threading.Tasks.Sources.IValueTaskSource<TResult>.GetResult(Int16 token)
+         at Npgsql.Internal.NpgsqlConnector.ReadMessageLong(Boolean async, DataRowLoadingMode dataRowLoadingMode, Boolean readingNotifications, Boolean isReadingPrependedMessage)
+         at System.Runtime.CompilerServices.PoolingAsyncValueTaskMethodBuilder`1.StateMachineBox`1.System.Threading.Tasks.Sources.IValueTaskSource<TResult>.GetResult(Int16 token)
+         at Npgsql.NpgsqlDataReader.NextResult(Boolean async, Boolean isConsuming, CancellationToken cancellationToken)
+         at Npgsql.NpgsqlDataReader.NextResult(Boolean async, Boolean isConsuming, CancellationToken cancellationToken)
+         at Npgsql.NpgsqlCommand.ExecuteReader(Boolean async, CommandBehavior behavior, CancellationToken cancellationToken)
+         at Npgsql.NpgsqlCommand.ExecuteReader(Boolean async, CommandBehavior behavior, CancellationToken cancellationToken)
+         at Npgsql.NpgsqlCommand.ExecuteNonQuery(Boolean async, CancellationToken cancellationToken)
+         at Npgsql.NpgsqlCommand.ExecuteNonQuery()
+         at Dapper.SqlMapper.ExecuteCommand(IDbConnection cnn, CommandDefinition& command, Action`2 paramReader) in /_/Dapper/SqlMapper.cs:line 2848
+         at Dapper.SqlMapper.ExecuteImpl(IDbConnection cnn, CommandDefinition& command) in /_/Dapper/SqlMapper.cs:line 581
+         at Dapper.SqlMapper.Execute(IDbConnection cnn, String sql, Object param, IDbTransaction transaction, Nullable`1 commandTimeout, Nullable`1 commandType) in /_/Dapper/SqlMapper.cs:line 452
+         at Hangfire.PostgreSql.PostgreSqlDistributedLock.LockHandler.TryRemoveLock(String resource, IDbConnection connection, PostgreSqlStorageOptions options, Boolean onlyExpired)
+warn: Hangfire.PostgreSql.PostgreSqlDistributedLock[0]
+      locks:expirationmanager: Failed to acquire lock
+      System.InvalidOperationException: Connection is not open
+         at Npgsql.ThrowHelper.ThrowInvalidOperationException(String message)
+         at Npgsql.NpgsqlConnection.CheckReady()
+         at Npgsql.NpgsqlConnection.BeginTransaction(Boolean async, IsolationLevel level, CancellationToken cancellationToken)
+         at Npgsql.NpgsqlConnection.BeginTransaction(IsolationLevel level)
+         at Npgsql.NpgsqlConnection.BeginDbTransaction(IsolationLevel isolationLevel)
+         at Hangfire.PostgreSql.PostgreSqlDistributedLock.TransactionLockHandler.BeginTransactionIfNotPresent(IDbConnection connection)
+         at Hangfire.PostgreSql.PostgreSqlDistributedLock.TransactionLockHandler.TryLock(IDbConnection connection, String schemaName, String resource)
+         at Hangfire.PostgreSql.PostgreSqlDistributedLock.LockHandler.Lock(String resource, TimeSpan timeout, IDbConnection connection, PostgreSqlStorageOptions options)
+info: Hangfire.Processing.BackgroundExecution[0]
+      Execution RecurringJobScheduler recovered from the Faulted state after 00:00:19.3231609 and is in the Running state now
+warn: Hangfire.Server.ServerHeartbeatProcess[0]
+      Server pc-20250316mvtl:316668:89e1a2d1 encountered an exception while sending heartbeat
+      Npgsql.NpgsqlException (0x80004005): Exception while reading from stream
+       ---> System.TimeoutException: Timeout during reading attempt
+         at Npgsql.Internal.NpgsqlReadBuffer.<Ensure>g__EnsureLong|55_0(NpgsqlReadBuffer buffer, Int32 count, Boolean async, Boolean readingNotifications)
+         at System.Runtime.CompilerServices.PoolingAsyncValueTaskMethodBuilder`1.StateMachineBox`1.System.Threading.Tasks.Sources.IValueTaskSource.GetResult(Int16 token)
+         at Npgsql.Internal.NpgsqlConnector.ReadMessageLong(Boolean async, DataRowLoadingMode dataRowLoadingMode, Boolean readingNotifications, Boolean isReadingPrependedMessage)
+         at System.Runtime.CompilerServices.PoolingAsyncValueTaskMethodBuilder`1.StateMachineBox`1.System.Threading.Tasks.Sources.IValueTaskSource<TResult>.GetResult(Int16 token)
+         at Npgsql.NpgsqlDataReader.NextResult(Boolean async, Boolean isConsuming, CancellationToken cancellationToken)
+         at Npgsql.NpgsqlDataReader.NextResult(Boolean async, Boolean isConsuming, CancellationToken cancellationToken)
+         at Npgsql.NpgsqlCommand.ExecuteReader(Boolean async, CommandBehavior behavior, CancellationToken cancellationToken)
+         at Npgsql.NpgsqlCommand.ExecuteReader(Boolean async, CommandBehavior behavior, CancellationToken cancellationToken)
+         at Npgsql.NpgsqlCommand.ExecuteNonQuery(Boolean async, CancellationToken cancellationToken)
+         at Npgsql.NpgsqlCommand.ExecuteNonQuery()
+         at Dapper.SqlMapper.ExecuteCommand(IDbConnection cnn, CommandDefinition& command, Action`2 paramReader) in /_/Dapper/SqlMapper.cs:line 2848
+         at Dapper.SqlMapper.ExecuteImpl(IDbConnection cnn, CommandDefinition& command) in /_/Dapper/SqlMapper.cs:line 581
+         at Dapper.SqlMapper.Execute(IDbConnection cnn, String sql, Object param, IDbTransaction transaction, Nullable`1 commandTimeout, Nullable`1 commandType) in /_/Dapper/SqlMapper.cs:line 452
+         at Hangfire.PostgreSql.PostgreSqlConnection.<>c__DisplayClass21_0.<Heartbeat>b__0(DbConnection connection)
+         at Hangfire.PostgreSql.PostgreSqlStorage.UseConnection[T](DbConnection dedicatedConnection, Func`2 func)
+         at Hangfire.PostgreSql.PostgreSqlConnection.Heartbeat(String serverId)
+         at Hangfire.Server.ServerHeartbeatProcess.Execute(BackgroundProcessContext context) in C:\projects\hangfire-525\src\Hangfire.Core\Server\ServerHeartbeatProcess.cs:line 50
+info: Hangfire.Processing.BackgroundExecution[0]
+      Execution RecurringJobScheduler recovered from the Faulted state after 00:00:18.8237837 and is in the Running state now
+info: Hangfire.Server.ServerHeartbeatProcess[0]
+      Server pc-20250316mvtl:316668:89e1a2d1 is now able to continue sending heartbeats
+warn: Hangfire.Server.ServerHeartbeatProcess[0]
+      Server pc-20250316mvtl:316668:89e1a2d1 encountered an exception while sending heartbeat
+      Npgsql.PostgresException (0x80004005): 25001: DISCARD ALL cannot run inside a transaction block
+         at Npgsql.Internal.NpgsqlConnector.ReadMessageLong(Boolean async, DataRowLoadingMode dataRowLoadingMode, Boolean readingNotifications, Boolean isReadingPrependedMessage)
+         at System.Runtime.CompilerServices.PoolingAsyncValueTaskMethodBuilder`1.StateMachineBox`1.System.Threading.Tasks.Sources.IValueTaskSource<TResult>.GetResult(Int16 token)
+         at Npgsql.Internal.NpgsqlConnector.ReadMessageLong(Boolean async, DataRowLoadingMode dataRowLoadingMode, Boolean readingNotifications, Boolean isReadingPrependedMessage)
+         at System.Runtime.CompilerServices.PoolingAsyncValueTaskMethodBuilder`1.StateMachineBox`1.System.Threading.Tasks.Sources.IValueTaskSource<TResult>.GetResult(Int16 token)
+         at Npgsql.NpgsqlDataReader.NextResult(Boolean async, Boolean isConsuming, CancellationToken cancellationToken)
+         at Npgsql.NpgsqlDataReader.NextResult(Boolean async, Boolean isConsuming, CancellationToken cancellationToken)
+         at Npgsql.NpgsqlCommand.ExecuteReader(Boolean async, CommandBehavior behavior, CancellationToken cancellationToken)
+         at Npgsql.NpgsqlCommand.ExecuteReader(Boolean async, CommandBehavior behavior, CancellationToken cancellationToken)
+         at Npgsql.NpgsqlCommand.ExecuteNonQuery(Boolean async, CancellationToken cancellationToken)
+         at Dapper.SqlMapper.ExecuteCommand(IDbConnection cnn, CommandDefinition& command, Action`2 paramReader) in /_/Dapper/SqlMapper.cs:line 2848
+         at Dapper.SqlMapper.ExecuteImpl(IDbConnection cnn, CommandDefinition& command) in /_/Dapper/SqlMapper.cs:line 581
+         at Dapper.SqlMapper.Execute(IDbConnection cnn, String sql, Object param, IDbTransaction transaction, Nullable`1 commandTimeout, Nullable`1 commandType) in /_/Dapper/SqlMapper.cs:line 452
+         at Hangfire.PostgreSql.PostgreSqlConnection.<>c__DisplayClass21_0.<Heartbeat>b__0(DbConnection connection)
+         at Hangfire.PostgreSql.PostgreSqlStorage.UseConnection[T](DbConnection dedicatedConnection, Func`2 func)
+         at Hangfire.PostgreSql.PostgreSqlConnection.Heartbeat(String serverId)
+         at Hangfire.Server.ServerHeartbeatProcess.Execute(BackgroundProcessContext context) in C:\projects\hangfire-525\src\Hangfire.Core\Server\ServerHeartbeatProcess.cs:line 50
+        Exception data:
+          Severity: ERROR
+          SqlState: 25001
+          MessageText: DISCARD ALL cannot run inside a transaction block
+          File: xact.c
+          Line: 3590
+          Routine: PreventInTransactionBlock
+warn: Hangfire.PostgreSql.PostgreSqlDistributedLock[0]
+      hangfire:recurring-jobs:lock: Failed to remove lock
+      Npgsql.NpgsqlException (0x80004005): Exception while reading from stream
+       ---> System.TimeoutException: Timeout during reading attempt
+         at Npgsql.Internal.NpgsqlReadBuffer.<Ensure>g__EnsureLong|55_0(NpgsqlReadBuffer buffer, Int32 count, Boolean async, Boolean readingNotifications)
+         at System.Runtime.CompilerServices.PoolingAsyncValueTaskMethodBuilder`1.StateMachineBox`1.System.Threading.Tasks.Sources.IValueTaskSource.GetResult(Int16 token)
+         at Npgsql.Internal.NpgsqlConnector.ReadMessageLong(Boolean async, DataRowLoadingMode dataRowLoadingMode, Boolean readingNotifications, Boolean isReadingPrependedMessage)
+         at System.Runtime.CompilerServices.PoolingAsyncValueTaskMethodBuilder`1.StateMachineBox`1.System.Threading.Tasks.Sources.IValueTaskSource<TResult>.GetResult(Int16 token)
+         at Npgsql.Internal.NpgsqlConnector.ReadMessageLong(Boolean async, DataRowLoadingMode dataRowLoadingMode, Boolean readingNotifications, Boolean isReadingPrependedMessage)
+         at System.Runtime.CompilerServices.PoolingAsyncValueTaskMethodBuilder`1.StateMachineBox`1.System.Threading.Tasks.Sources.IValueTaskSource<TResult>.GetResult(Int16 token)
+         at Npgsql.NpgsqlDataReader.NextResult(Boolean async, Boolean isConsuming, CancellationToken cancellationToken)
+         at Npgsql.NpgsqlDataReader.NextResult(Boolean async, Boolean isConsuming, CancellationToken cancellationToken)
+         at Npgsql.NpgsqlCommand.ExecuteReader(Boolean async, CommandBehavior behavior, CancellationToken cancellationToken)
+         at Npgsql.NpgsqlCommand.ExecuteReader(Boolean async, CommandBehavior behavior, CancellationToken cancellationToken)
+         at Npgsql.NpgsqlCommand.ExecuteNonQuery(Boolean async, CancellationToken cancellationToken)
+         at Dapper.SqlMapper.ExecuteCommand(IDbConnection cnn, CommandDefinition& command, Action`2 paramReader) in /_/Dapper/SqlMapper.cs:line 2848
+         at Dapper.SqlMapper.ExecuteImpl(IDbConnection cnn, CommandDefinition& command) in /_/Dapper/SqlMapper.cs:line 581
+         at Dapper.SqlMapper.Execute(IDbConnection cnn, String sql, Object param, IDbTransaction transaction, Nullable`1 commandTimeout, Nullable`1 commandType) in /_/Dapper/SqlMapper.cs:line 452
+         at Hangfire.PostgreSql.PostgreSqlDistributedLock.LockHandler.TryRemoveLock(String resource, IDbConnection connection, PostgreSqlStorageOptions options, Boolean onlyExpired)
+warn: Hangfire.PostgreSql.PostgreSqlDistributedLock[0]
+      hangfire:recurring-jobs:lock: Failed to acquire lock
+      System.InvalidOperationException: Connection is not open
+         at Npgsql.ThrowHelper.ThrowInvalidOperationException(String message)
+         at Npgsql.NpgsqlConnection.CheckReady()
+         at Npgsql.NpgsqlConnection.BeginTransaction(Boolean async, IsolationLevel level, CancellationToken cancellationToken)
+         at Hangfire.PostgreSql.PostgreSqlDistributedLock.TransactionLockHandler.BeginTransactionIfNotPresent(IDbConnection connection)
+         at Hangfire.PostgreSql.PostgreSqlDistributedLock.TransactionLockHandler.TryLock(IDbConnection connection, String schemaName, String resource)
+         at Hangfire.PostgreSql.PostgreSqlDistributedLock.LockHandler.Lock(String resource, TimeSpan timeout, IDbConnection connection, PostgreSqlStorageOptions options)
+warn: Hangfire.Server.ServerHeartbeatProcess[0]
+      Server pc-20250316mvtl:316668:89e1a2d1 encountered an exception while sending heartbeat
+      Npgsql.NpgsqlException (0x80004005): Exception while reading from stream
+       ---> System.TimeoutException: Timeout during reading attempt
+         at Npgsql.Internal.NpgsqlReadBuffer.<Ensure>g__EnsureLong|55_0(NpgsqlReadBuffer buffer, Int32 count, Boolean async, Boolean readingNotifications)
+         at System.Runtime.CompilerServices.PoolingAsyncValueTaskMethodBuilder`1.StateMachineBox`1.System.Threading.Tasks.Sources.IValueTaskSource.GetResult(Int16 token)
+         at Npgsql.Internal.NpgsqlConnector.ReadMessageLong(Boolean async, DataRowLoadingMode dataRowLoadingMode, Boolean readingNotifications, Boolean isReadingPrependedMessage)
+         at System.Runtime.CompilerServices.PoolingAsyncValueTaskMethodBuilder`1.StateMachineBox`1.System.Threading.Tasks.Sources.IValueTaskSource<TResult>.GetResult(Int16 token)
+         at Npgsql.NpgsqlDataReader.NextResult(Boolean async, Boolean isConsuming, CancellationToken cancellationToken)
+         at Npgsql.NpgsqlDataReader.NextResult(Boolean async, Boolean isConsuming, CancellationToken cancellationToken)
+         at Npgsql.NpgsqlCommand.ExecuteReader(Boolean async, CommandBehavior behavior, CancellationToken cancellationToken)
+         at Npgsql.NpgsqlCommand.ExecuteReader(Boolean async, CommandBehavior behavior, CancellationToken cancellationToken)
+         at Npgsql.NpgsqlCommand.ExecuteNonQuery(Boolean async, CancellationToken cancellationToken)
+         at Dapper.SqlMapper.ExecuteCommand(IDbConnection cnn, CommandDefinition& command, Action`2 paramReader) in /_/Dapper/SqlMapper.cs:line 2848
+         at Dapper.SqlMapper.ExecuteImpl(IDbConnection cnn, CommandDefinition& command) in /_/Dapper/SqlMapper.cs:line 581
+         at Dapper.SqlMapper.Execute(IDbConnection cnn, String sql, Object param, IDbTransaction transaction, Nullable`1 commandTimeout, Nullable`1 commandType) in /_/Dapper/SqlMapper.cs:line 452
+         at Hangfire.PostgreSql.PostgreSqlConnection.<>c__DisplayClass21_0.<Heartbeat>b__0(DbConnection connection)
+         at Hangfire.PostgreSql.PostgreSqlStorage.UseConnection[T](DbConnection dedicatedConnection, Func`2 func)
+         at Hangfire.PostgreSql.PostgreSqlConnection.Heartbeat(String serverId)
+         at Hangfire.Server.ServerHeartbeatProcess.Execute(BackgroundProcessContext context) in C:\projects\hangfire-525\src\Hangfire.Core\Server\ServerHeartbeatProcess.cs:line 50
+warn: Hangfire.PostgreSql.PostgreSqlDistributedLock[0]
+      hangfire:locks:schedulepoller: Failed to remove lock
+      Npgsql.NpgsqlException (0x80004005): Exception while reading from stream
+       ---> System.TimeoutException: Timeout during reading attempt
+         at Npgsql.Internal.NpgsqlReadBuffer.<Ensure>g__EnsureLong|55_0(NpgsqlReadBuffer buffer, Int32 count, Boolean async, Boolean readingNotifications)
+         at System.Runtime.CompilerServices.PoolingAsyncValueTaskMethodBuilder`1.StateMachineBox`1.System.Threading.Tasks.Sources.IValueTaskSource.GetResult(Int16 token)
+         at Npgsql.Internal.NpgsqlConnector.ReadMessageLong(Boolean async, DataRowLoadingMode dataRowLoadingMode, Boolean readingNotifications, Boolean isReadingPrependedMessage)
+         at System.Runtime.CompilerServices.PoolingAsyncValueTaskMethodBuilder`1.StateMachineBox`1.System.Threading.Tasks.Sources.IValueTaskSource<TResult>.GetResult(Int16 token)
+         at Npgsql.Internal.NpgsqlConnector.ReadMessageLong(Boolean async, DataRowLoadingMode dataRowLoadingMode, Boolean readingNotifications, Boolean isReadingPrependedMessage)
+         at System.Runtime.CompilerServices.PoolingAsyncValueTaskMethodBuilder`1.StateMachineBox`1.System.Threading.Tasks.Sources.IValueTaskSource<TResult>.GetResult(Int16 token)
+         at Npgsql.NpgsqlDataReader.NextResult(Boolean async, Boolean isConsuming, CancellationToken cancellationToken)
+         at Npgsql.NpgsqlDataReader.NextResult(Boolean async, Boolean isConsuming, CancellationToken cancellationToken)
+         at Npgsql.NpgsqlCommand.ExecuteReader(Boolean async, CommandBehavior behavior, CancellationToken cancellationToken)
+         at Npgsql.NpgsqlCommand.ExecuteReader(Boolean async, CommandBehavior behavior, CancellationToken cancellationToken)
+         at Npgsql.NpgsqlCommand.ExecuteNonQuery(Boolean async, CancellationToken cancellationToken)
+         at Dapper.SqlMapper.ExecuteCommand(IDbConnection cnn, CommandDefinition& command, Action`2 paramReader) in /_/Dapper/SqlMapper.cs:line 2848
+         at Dapper.SqlMapper.ExecuteImpl(IDbConnection cnn, CommandDefinition& command) in /_/Dapper/SqlMapper.cs:line 581
+         at Hangfire.PostgreSql.PostgreSqlDistributedLock.LockHandler.TryRemoveLock(String resource, IDbConnection connection, PostgreSqlStorageOptions options, Boolean onlyExpired)
+warn: Hangfire.PostgreSql.PostgreSqlDistributedLock[0]
+      hangfire:locks:schedulepoller: Failed to acquire lock
+      System.InvalidOperationException: Connection is not open
+         at Npgsql.ThrowHelper.ThrowInvalidOperationException(String message)
+         at Npgsql.NpgsqlConnection.CheckReady()
+         at Npgsql.NpgsqlConnection.BeginTransaction(Boolean async, IsolationLevel level, CancellationToken cancellationToken)
+         at Hangfire.PostgreSql.PostgreSqlDistributedLock.TransactionLockHandler.TryLock(IDbConnection connection, String schemaName, String resource)
+         at Hangfire.PostgreSql.PostgreSqlDistributedLock.LockHandler.Lock(String resource, TimeSpan timeout, IDbConnection connection, PostgreSqlStorageOptions options)
+warn: Hangfire.Server.ServerHeartbeatProcess[0]
+      Server pc-20250316mvtl:316668:89e1a2d1 encountered an exception while sending heartbeat
+      Npgsql.NpgsqlException (0x80004005): The operation has timed out
+       ---> System.TimeoutException: The operation has timed out.
+         at Npgsql.ThrowHelper.ThrowNpgsqlExceptionWithInnerTimeoutException(String message)
+         at Npgsql.Util.NpgsqlTimeout.Check()
+         at Npgsql.Util.NpgsqlTimeout.CheckAndGetTimeLeft()
+         at Npgsql.Internal.NpgsqlConnector.RawOpen(SslMode sslMode, NpgsqlTimeout timeout, Boolean async, CancellationToken cancellationToken, Boolean isFirstAttempt)
+         at Npgsql.Internal.NpgsqlConnector.<Open>g__OpenCore|213_1(NpgsqlConnector conn, SslMode sslMode, NpgsqlTimeout timeout, Boolean async, CancellationToken cancellationToken, Boolean isFirstAttempt)
+         at Npgsql.Internal.NpgsqlConnector.Open(NpgsqlTimeout timeout, Boolean async, CancellationToken cancellationToken)
+         at Npgsql.PoolingDataSource.OpenNewConnector(NpgsqlConnection conn, NpgsqlTimeout timeout, Boolean async, CancellationToken cancellationToken)
+         at Npgsql.PoolingDataSource.<Get>g__RentAsync|34_0(NpgsqlConnection conn, NpgsqlTimeout timeout, Boolean async, CancellationToken cancellationToken)
+         at Npgsql.NpgsqlConnection.<Open>g__OpenAsync|42_0(Boolean async, CancellationToken cancellationToken)
+         at Hangfire.PostgreSql.PostgreSqlStorage.CreateAndOpenConnection()
+         at Hangfire.PostgreSql.PostgreSqlStorage.UseConnection[T](DbConnection dedicatedConnection, Func`2 func)
+         at Hangfire.PostgreSql.PostgreSqlConnection.Heartbeat(String serverId)
+         at Hangfire.Server.ServerHeartbeatProcess.Execute(BackgroundProcessContext context) in C:\projects\hangfire-525\src\Hangfire.Core\Server\ServerHeartbeatProcess.cs:line 50
+warn: Hangfire.PostgreSql.PostgreSqlDistributedLock[0]
+      hangfire:recurring-jobs:lock: Failed to remove lock
+      Npgsql.NpgsqlException (0x80004005): Exception while reading from stream
+       ---> System.TimeoutException: Timeout during reading attempt
+         at Npgsql.Internal.NpgsqlReadBuffer.<Ensure>g__EnsureLong|55_0(NpgsqlReadBuffer buffer, Int32 count, Boolean async, Boolean readingNotifications)
+         at System.Runtime.CompilerServices.PoolingAsyncValueTaskMethodBuilder`1.StateMachineBox`1.System.Threading.Tasks.Sources.IValueTaskSource.GetResult(Int16 token)
+         at Npgsql.Internal.NpgsqlConnector.ReadMessageLong(Boolean async, DataRowLoadingMode dataRowLoadingMode, Boolean readingNotifications, Boolean isReadingPrependedMessage)
+         at System.Runtime.CompilerServices.PoolingAsyncValueTaskMethodBuilder`1.StateMachineBox`1.System.Threading.Tasks.Sources.IValueTaskSource<TResult>.GetResult(Int16 token)
+         at Npgsql.Internal.NpgsqlConnector.ReadMessageLong(Boolean async, DataRowLoadingMode dataRowLoadingMode, Boolean readingNotifications, Boolean isReadingPrependedMessage)
+         at System.Runtime.CompilerServices.PoolingAsyncValueTaskMethodBuilder`1.StateMachineBox`1.System.Threading.Tasks.Sources.IValueTaskSource<TResult>.GetResult(Int16 token)
+         at Npgsql.NpgsqlDataReader.NextResult(Boolean async, Boolean isConsuming, CancellationToken cancellationToken)
+         at Npgsql.NpgsqlDataReader.NextResult(Boolean async, Boolean isConsuming, CancellationToken cancellationToken)
+         at Npgsql.NpgsqlCommand.ExecuteReader(Boolean async, CommandBehavior behavior, CancellationToken cancellationToken)
+         at Npgsql.NpgsqlCommand.ExecuteReader(Boolean async, CommandBehavior behavior, CancellationToken cancellationToken)
+         at Npgsql.NpgsqlCommand.ExecuteNonQuery(Boolean async, CancellationToken cancellationToken)
+         at Dapper.SqlMapper.ExecuteCommand(IDbConnection cnn, CommandDefinition& command, Action`2 paramReader) in /_/Dapper/SqlMapper.cs:line 2848
+         at Dapper.SqlMapper.ExecuteImpl(IDbConnection cnn, CommandDefinition& command) in /_/Dapper/SqlMapper.cs:line 581
+         at Hangfire.PostgreSql.PostgreSqlDistributedLock.LockHandler.TryRemoveLock(String resource, IDbConnection connection, PostgreSqlStorageOptions options, Boolean onlyExpired)
+warn: Hangfire.PostgreSql.PostgreSqlDistributedLock[0]
+      hangfire:recurring-jobs:lock: Failed to acquire lock
+      System.InvalidOperationException: Connection is not open
+         at Npgsql.ThrowHelper.ThrowInvalidOperationException(String message)
+         at Npgsql.NpgsqlConnection.CheckReady()
+         at Npgsql.NpgsqlConnection.BeginTransaction(Boolean async, IsolationLevel level, CancellationToken cancellationToken)
+         at Hangfire.PostgreSql.PostgreSqlDistributedLock.TransactionLockHandler.TryLock(IDbConnection connection, String schemaName, String resource)
+         at Hangfire.PostgreSql.PostgreSqlDistributedLock.LockHandler.Lock(String resource, TimeSpan timeout, IDbConnection connection, PostgreSqlStorageOptions options)
+info: Hangfire.Processing.BackgroundExecution[0]
+      Execution DelayedJobScheduler recovered from the Faulted state after 00:00:18.9232679 and is in the Running state now
+warn: Hangfire.Server.ServerHeartbeatProcess[0]
+      Server pc-20250316mvtl:316668:89e1a2d1 encountered an exception while sending heartbeat
+      Npgsql.NpgsqlException (0x80004005): The operation has timed out
+       ---> System.TimeoutException: The operation has timed out.
+         at Npgsql.ThrowHelper.ThrowNpgsqlExceptionWithInnerTimeoutException(String message)
+         at Npgsql.Internal.NpgsqlConnector.Connect(NpgsqlTimeout timeout)
+         at Npgsql.Internal.NpgsqlConnector.RawOpen(SslMode sslMode, NpgsqlTimeout timeout, Boolean async, CancellationToken cancellationToken, Boolean isFirstAttempt)
+         at Npgsql.Internal.NpgsqlConnector.<Open>g__OpenCore|213_1(NpgsqlConnector conn, SslMode sslMode, NpgsqlTimeout timeout, Boolean async, CancellationToken cancellationToken, Boolean isFirstAttempt)
+         at Npgsql.Internal.NpgsqlConnector.Open(NpgsqlTimeout timeout, Boolean async, CancellationToken cancellationToken)
+         at Npgsql.PoolingDataSource.OpenNewConnector(NpgsqlConnection conn, NpgsqlTimeout timeout, Boolean async, CancellationToken cancellationToken)
+         at Npgsql.PoolingDataSource.<Get>g__RentAsync|34_0(NpgsqlConnection conn, NpgsqlTimeout timeout, Boolean async, CancellationToken cancellationToken)
+         at Npgsql.NpgsqlConnection.<Open>g__OpenAsync|42_0(Boolean async, CancellationToken cancellationToken)
+         at Hangfire.PostgreSql.PostgreSqlStorage.CreateAndOpenConnection()
+         at Hangfire.PostgreSql.PostgreSqlStorage.UseConnection[T](DbConnection dedicatedConnection, Func`2 func)
+         at Hangfire.PostgreSql.PostgreSqlConnection.Heartbeat(String serverId)
+         at Hangfire.Server.ServerHeartbeatProcess.Execute(BackgroundProcessContext context) in C:\projects\hangfire-525\src\Hangfire.Core\Server\ServerHeartbeatProcess.cs:line 50
+warn: Hangfire.Server.ServerHeartbeatProcess[0]
+      Server pc-20250316mvtl:316668:89e1a2d1 encountered an exception while sending heartbeat
+      Npgsql.NpgsqlException (0x80004005): The operation has timed out
+       ---> System.TimeoutException: The operation has timed out.
+         at Npgsql.ThrowHelper.ThrowNpgsqlExceptionWithInnerTimeoutException(String message)
+         at Npgsql.Util.NpgsqlTimeout.Check()
+         at Npgsql.Util.NpgsqlTimeout.CheckAndGetTimeLeft()
+         at Npgsql.Internal.NpgsqlConnector.RawOpen(SslMode sslMode, NpgsqlTimeout timeout, Boolean async, CancellationToken cancellationToken, Boolean isFirstAttempt)
+         at Npgsql.Internal.NpgsqlConnector.<Open>g__OpenCore|213_1(NpgsqlConnector conn, SslMode sslMode, NpgsqlTimeout timeout, Boolean async, CancellationToken cancellationToken, Boolean isFirstAttempt)
+         at Npgsql.Internal.NpgsqlConnector.Open(NpgsqlTimeout timeout, Boolean async, CancellationToken cancellationToken)
+         at Npgsql.PoolingDataSource.OpenNewConnector(NpgsqlConnection conn, NpgsqlTimeout timeout, Boolean async, CancellationToken cancellationToken)
+         at Npgsql.PoolingDataSource.<Get>g__RentAsync|34_0(NpgsqlConnection conn, NpgsqlTimeout timeout, Boolean async, CancellationToken cancellationToken)
+         at Npgsql.NpgsqlConnection.<Open>g__OpenAsync|42_0(Boolean async, CancellationToken cancellationToken)
+         at Hangfire.PostgreSql.PostgreSqlStorage.CreateAndOpenConnection()
+         at Hangfire.PostgreSql.PostgreSqlStorage.UseConnection[T](DbConnection dedicatedConnection, Func`2 func)
+         at Hangfire.PostgreSql.PostgreSqlConnection.Heartbeat(String serverId)
+         at Hangfire.Server.ServerHeartbeatProcess.Execute(BackgroundProcessContext context) in C:\projects\hangfire-525\src\Hangfire.Core\Server\ServerHeartbeatProcess.cs:line 50
+info: Hangfire.Processing.BackgroundExecution[0]
+      Execution ServerWatchdog recovered from the Faulted state after 00:05:02.6884605 and is in the Running state now
+info: Hangfire.Server.ServerHeartbeatProcess[0]
+      Server pc-20250316mvtl:316668:89e1a2d1 is now able to continue sending heartbeats
+info: Hangfire.Processing.BackgroundExecution[0]
+      Execution RecurringJobScheduler recovered from the Faulted state after 00:01:17.9179947 and is in the Running state now
+warn: Hangfire.Server.ServerHeartbeatProcess[0]
+      Server pc-20250316mvtl:316668:89e1a2d1 encountered an exception while sending heartbeat
+      Npgsql.NpgsqlException (0x80004005): Exception while reading from stream
+       ---> System.TimeoutException: Timeout during reading attempt
+         at Npgsql.Internal.NpgsqlReadBuffer.<Ensure>g__EnsureLong|55_0(NpgsqlReadBuffer buffer, Int32 count, Boolean async, Boolean readingNotifications)
+         at System.Runtime.CompilerServices.PoolingAsyncValueTaskMethodBuilder`1.StateMachineBox`1.System.Threading.Tasks.Sources.IValueTaskSource.GetResult(Int16 token)
+         at Npgsql.Internal.NpgsqlConnector.ReadMessageLong(Boolean async, DataRowLoadingMode dataRowLoadingMode, Boolean readingNotifications, Boolean isReadingPrependedMessage)
+         at System.Runtime.CompilerServices.PoolingAsyncValueTaskMethodBuilder`1.StateMachineBox`1.System.Threading.Tasks.Sources.IValueTaskSource<TResult>.GetResult(Int16 token)
+         at Npgsql.NpgsqlDataReader.NextResult(Boolean async, Boolean isConsuming, CancellationToken cancellationToken)
+         at Npgsql.NpgsqlDataReader.NextResult(Boolean async, Boolean isConsuming, CancellationToken cancellationToken)
+         at Npgsql.NpgsqlCommand.ExecuteReader(Boolean async, CommandBehavior behavior, CancellationToken cancellationToken)
+         at Npgsql.NpgsqlCommand.ExecuteReader(Boolean async, CommandBehavior behavior, CancellationToken cancellationToken)
+         at Npgsql.NpgsqlCommand.ExecuteNonQuery(Boolean async, CancellationToken cancellationToken)
+         at Dapper.SqlMapper.ExecuteCommand(IDbConnection cnn, CommandDefinition& command, Action`2 paramReader) in /_/Dapper/SqlMapper.cs:line 2848
+         at Dapper.SqlMapper.ExecuteImpl(IDbConnection cnn, CommandDefinition& command) in /_/Dapper/SqlMapper.cs:line 581
+         at Dapper.SqlMapper.Execute(IDbConnection cnn, String sql, Object param, IDbTransaction transaction, Nullable`1 commandTimeout, Nullable`1 commandType) in /_/Dapper/SqlMapper.cs:line 452
+         at Hangfire.PostgreSql.PostgreSqlConnection.<>c__DisplayClass21_0.<Heartbeat>b__0(DbConnection connection)
+         at Hangfire.PostgreSql.PostgreSqlStorage.UseConnection[T](DbConnection dedicatedConnection, Func`2 func)
+         at Hangfire.PostgreSql.PostgreSqlConnection.Heartbeat(String serverId)
+         at Hangfire.Server.ServerHeartbeatProcess.Execute(BackgroundProcessContext context) in C:\projects\hangfire-525\src\Hangfire.Core\Server\ServerHeartbeatProcess.cs:line 50
+info: Hangfire.Processing.BackgroundExecution[0]
+      Execution RecurringJobScheduler recovered from the Faulted state after 00:01:19.0974071 and is in the Running state now
+info: Hangfire.Server.ServerHeartbeatProcess[0]
+      Server pc-20250316mvtl:316668:89e1a2d1 is now able to continue sending heartbeats
+warn: Hangfire.PostgreSql.PostgreSqlDistributedLock[0]
+      hangfire:locks:schedulepoller: Failed to remove lock
+      Npgsql.NpgsqlException (0x80004005): Exception while reading from stream
+       ---> System.TimeoutException: Timeout during reading attempt
+         at Npgsql.Internal.NpgsqlReadBuffer.<Ensure>g__EnsureLong|55_0(NpgsqlReadBuffer buffer, Int32 count, Boolean async, Boolean readingNotifications)
+         at System.Runtime.CompilerServices.PoolingAsyncValueTaskMethodBuilder`1.StateMachineBox`1.System.Threading.Tasks.Sources.IValueTaskSource.GetResult(Int16 token)
+         at Npgsql.Internal.NpgsqlConnector.ReadMessageLong(Boolean async, DataRowLoadingMode dataRowLoadingMode, Boolean readingNotifications, Boolean isReadingPrependedMessage)
+         at System.Runtime.CompilerServices.PoolingAsyncValueTaskMethodBuilder`1.StateMachineBox`1.System.Threading.Tasks.Sources.IValueTaskSource<TResult>.GetResult(Int16 token)
+         at Npgsql.Internal.NpgsqlConnector.ReadMessageLong(Boolean async, DataRowLoadingMode dataRowLoadingMode, Boolean readingNotifications, Boolean isReadingPrependedMessage)
+         at System.Runtime.CompilerServices.PoolingAsyncValueTaskMethodBuilder`1.StateMachineBox`1.System.Threading.Tasks.Sources.IValueTaskSource<TResult>.GetResult(Int16 token)
+         at Npgsql.NpgsqlDataReader.NextResult(Boolean async, Boolean isConsuming, CancellationToken cancellationToken)
+         at Npgsql.NpgsqlDataReader.NextResult(Boolean async, Boolean isConsuming, CancellationToken cancellationToken)
+         at Npgsql.NpgsqlCommand.ExecuteReader(Boolean async, CommandBehavior behavior, CancellationToken cancellationToken)
+         at Npgsql.NpgsqlCommand.ExecuteReader(Boolean async, CommandBehavior behavior, CancellationToken cancellationToken)
+         at Npgsql.NpgsqlCommand.ExecuteNonQuery(Boolean async, CancellationToken cancellationToken)
+         at Dapper.SqlMapper.ExecuteCommand(IDbConnection cnn, CommandDefinition& command, Action`2 paramReader) in /_/Dapper/SqlMapper.cs:line 2848
+         at Dapper.SqlMapper.ExecuteImpl(IDbConnection cnn, CommandDefinition& command) in /_/Dapper/SqlMapper.cs:line 581
+         at Hangfire.PostgreSql.PostgreSqlDistributedLock.LockHandler.TryRemoveLock(String resource, IDbConnection connection, PostgreSqlStorageOptions options, Boolean onlyExpired)
+warn: Hangfire.PostgreSql.PostgreSqlDistributedLock[0]
+      hangfire:locks:schedulepoller: Failed to acquire lock
+      System.InvalidOperationException: Connection is not open
+         at Npgsql.ThrowHelper.ThrowInvalidOperationException(String message)
+         at Npgsql.NpgsqlConnection.CheckReady()
+         at Npgsql.NpgsqlConnection.BeginTransaction(Boolean async, IsolationLevel level, CancellationToken cancellationToken)
+         at Hangfire.PostgreSql.PostgreSqlDistributedLock.TransactionLockHandler.TryLock(IDbConnection connection, String schemaName, String resource)
+         at Hangfire.PostgreSql.PostgreSqlDistributedLock.LockHandler.Lock(String resource, TimeSpan timeout, IDbConnection connection, PostgreSqlStorageOptions options)
+warn: Hangfire.Server.ServerHeartbeatProcess[0]
+      Server pc-20250316mvtl:316668:89e1a2d1 encountered an exception while sending heartbeat
+      Npgsql.NpgsqlException (0x80004005): Exception while reading from stream
+       ---> System.TimeoutException: Timeout during reading attempt
+         at Npgsql.Internal.NpgsqlReadBuffer.<Ensure>g__EnsureLong|55_0(NpgsqlReadBuffer buffer, Int32 count, Boolean async, Boolean readingNotifications)
+         at System.Runtime.CompilerServices.PoolingAsyncValueTaskMethodBuilder`1.StateMachineBox`1.System.Threading.Tasks.Sources.IValueTaskSource.GetResult(Int16 token)
+         at Npgsql.Internal.NpgsqlConnector.ReadMessageLong(Boolean async, DataRowLoadingMode dataRowLoadingMode, Boolean readingNotifications, Boolean isReadingPrependedMessage)
+         at System.Runtime.CompilerServices.PoolingAsyncValueTaskMethodBuilder`1.StateMachineBox`1.System.Threading.Tasks.Sources.IValueTaskSource<TResult>.GetResult(Int16 token)
+         at Npgsql.NpgsqlDataReader.NextResult(Boolean async, Boolean isConsuming, CancellationToken cancellationToken)
+         at Npgsql.NpgsqlDataReader.NextResult(Boolean async, Boolean isConsuming, CancellationToken cancellationToken)
+         at Npgsql.NpgsqlCommand.ExecuteReader(Boolean async, CommandBehavior behavior, CancellationToken cancellationToken)
+         at Npgsql.NpgsqlCommand.ExecuteReader(Boolean async, CommandBehavior behavior, CancellationToken cancellationToken)
+         at Npgsql.NpgsqlCommand.ExecuteNonQuery(Boolean async, CancellationToken cancellationToken)
+         at Dapper.SqlMapper.ExecuteCommand(IDbConnection cnn, CommandDefinition& command, Action`2 paramReader) in /_/Dapper/SqlMapper.cs:line 2848
+         at Dapper.SqlMapper.ExecuteImpl(IDbConnection cnn, CommandDefinition& command) in /_/Dapper/SqlMapper.cs:line 581
+         at Dapper.SqlMapper.Execute(IDbConnection cnn, String sql, Object param, IDbTransaction transaction, Nullable`1 commandTimeout, Nullable`1 commandType) in /_/Dapper/SqlMapper.cs:line 452
+         at Hangfire.PostgreSql.PostgreSqlConnection.<>c__DisplayClass21_0.<Heartbeat>b__0(DbConnection connection)
+         at Hangfire.PostgreSql.PostgreSqlStorage.UseConnection[T](DbConnection dedicatedConnection, Func`2 func)
+         at Hangfire.PostgreSql.PostgreSqlConnection.Heartbeat(String serverId)
+         at Hangfire.Server.ServerHeartbeatProcess.Execute(BackgroundProcessContext context) in C:\projects\hangfire-525\src\Hangfire.Core\Server\ServerHeartbeatProcess.cs:line 50
+info: Hangfire.Processing.BackgroundExecution[0]
+      Execution RecurringJobScheduler recovered from the Faulted state after 00:01:18.8504364 and is in the Running state now
+info: Hangfire.Server.ServerHeartbeatProcess[0]
+      Server pc-20250316mvtl:316668:89e1a2d1 is now able to continue sending heartbeats
+warn: Hangfire.PostgreSql.PostgreSqlDistributedLock[0]
+      hangfire:recurring-jobs:lock: Failed to remove lock
+      Npgsql.NpgsqlException (0x80004005): Exception while reading from stream
+       ---> System.TimeoutException: Timeout during reading attempt
+         at Npgsql.Internal.NpgsqlReadBuffer.<Ensure>g__EnsureLong|55_0(NpgsqlReadBuffer buffer, Int32 count, Boolean async, Boolean readingNotifications)
+         at System.Runtime.CompilerServices.PoolingAsyncValueTaskMethodBuilder`1.StateMachineBox`1.System.Threading.Tasks.Sources.IValueTaskSource.GetResult(Int16 token)
+         at Npgsql.Internal.NpgsqlConnector.ReadMessageLong(Boolean async, DataRowLoadingMode dataRowLoadingMode, Boolean readingNotifications, Boolean isReadingPrependedMessage)
+         at System.Runtime.CompilerServices.PoolingAsyncValueTaskMethodBuilder`1.StateMachineBox`1.System.Threading.Tasks.Sources.IValueTaskSource<TResult>.GetResult(Int16 token)
+         at Npgsql.Internal.NpgsqlConnector.ReadMessageLong(Boolean async, DataRowLoadingMode dataRowLoadingMode, Boolean readingNotifications, Boolean isReadingPrependedMessage)
+         at System.Runtime.CompilerServices.PoolingAsyncValueTaskMethodBuilder`1.StateMachineBox`1.System.Threading.Tasks.Sources.IValueTaskSource<TResult>.GetResult(Int16 token)
+         at Npgsql.NpgsqlDataReader.NextResult(Boolean async, Boolean isConsuming, CancellationToken cancellationToken)
+         at Npgsql.NpgsqlDataReader.NextResult(Boolean async, Boolean isConsuming, CancellationToken cancellationToken)
+         at Npgsql.NpgsqlCommand.ExecuteReader(Boolean async, CommandBehavior behavior, CancellationToken cancellationToken)
+         at Npgsql.NpgsqlCommand.ExecuteReader(Boolean async, CommandBehavior behavior, CancellationToken cancellationToken)
+         at Npgsql.NpgsqlCommand.ExecuteNonQuery(Boolean async, CancellationToken cancellationToken)
+         at Dapper.SqlMapper.ExecuteCommand(IDbConnection cnn, CommandDefinition& command, Action`2 paramReader) in /_/Dapper/SqlMapper.cs:line 2848
+         at Dapper.SqlMapper.ExecuteImpl(IDbConnection cnn, CommandDefinition& command) in /_/Dapper/SqlMapper.cs:line 581
+         at Hangfire.PostgreSql.PostgreSqlDistributedLock.LockHandler.TryRemoveLock(String resource, IDbConnection connection, PostgreSqlStorageOptions options, Boolean onlyExpired)
+warn: Hangfire.PostgreSql.PostgreSqlDistributedLock[0]
+      hangfire:recurring-jobs:lock: Failed to acquire lock
+      System.InvalidOperationException: Connection is not open
+         at Npgsql.ThrowHelper.ThrowInvalidOperationException(String message)
+         at Npgsql.NpgsqlConnection.CheckReady()
+         at Npgsql.NpgsqlConnection.BeginTransaction(Boolean async, IsolationLevel level, CancellationToken cancellationToken)
+         at Hangfire.PostgreSql.PostgreSqlDistributedLock.TransactionLockHandler.TryLock(IDbConnection connection, String schemaName, String resource)
+         at Hangfire.PostgreSql.PostgreSqlDistributedLock.LockHandler.Lock(String resource, TimeSpan timeout, IDbConnection connection, PostgreSqlStorageOptions options)
+warn: Hangfire.PostgreSql.PostgreSqlDistributedLock[0]
+      hangfire:locks:schedulepoller: Failed to remove lock
+      Npgsql.NpgsqlException (0x80004005): Exception while reading from stream
+       ---> System.TimeoutException: Timeout during reading attempt
+         at Npgsql.Internal.NpgsqlReadBuffer.<Ensure>g__EnsureLong|55_0(NpgsqlReadBuffer buffer, Int32 count, Boolean async, Boolean readingNotifications)
+         at System.Runtime.CompilerServices.PoolingAsyncValueTaskMethodBuilder`1.StateMachineBox`1.System.Threading.Tasks.Sources.IValueTaskSource.GetResult(Int16 token)
+         at Npgsql.Internal.NpgsqlConnector.ReadMessageLong(Boolean async, DataRowLoadingMode dataRowLoadingMode, Boolean readingNotifications, Boolean isReadingPrependedMessage)
+         at System.Runtime.CompilerServices.PoolingAsyncValueTaskMethodBuilder`1.StateMachineBox`1.System.Threading.Tasks.Sources.IValueTaskSource<TResult>.GetResult(Int16 token)
+         at Npgsql.Internal.NpgsqlConnector.ReadMessageLong(Boolean async, DataRowLoadingMode dataRowLoadingMode, Boolean readingNotifications, Boolean isReadingPrependedMessage)
+         at System.Runtime.CompilerServices.PoolingAsyncValueTaskMethodBuilder`1.StateMachineBox`1.System.Threading.Tasks.Sources.IValueTaskSource<TResult>.GetResult(Int16 token)
+         at Npgsql.NpgsqlDataReader.NextResult(Boolean async, Boolean isConsuming, CancellationToken cancellationToken)
+         at Npgsql.NpgsqlDataReader.NextResult(Boolean async, Boolean isConsuming, CancellationToken cancellationToken)
+         at Npgsql.NpgsqlCommand.ExecuteReader(Boolean async, CommandBehavior behavior, CancellationToken cancellationToken)
+         at Npgsql.NpgsqlCommand.ExecuteReader(Boolean async, CommandBehavior behavior, CancellationToken cancellationToken)
+         at Npgsql.NpgsqlCommand.ExecuteNonQuery(Boolean async, CancellationToken cancellationToken)
+         at Dapper.SqlMapper.ExecuteCommand(IDbConnection cnn, CommandDefinition& command, Action`2 paramReader) in /_/Dapper/SqlMapper.cs:line 2848
+         at Dapper.SqlMapper.ExecuteImpl(IDbConnection cnn, CommandDefinition& command) in /_/Dapper/SqlMapper.cs:line 581
+         at Hangfire.PostgreSql.PostgreSqlDistributedLock.LockHandler.TryRemoveLock(String resource, IDbConnection connection, PostgreSqlStorageOptions options, Boolean onlyExpired)
+warn: Hangfire.PostgreSql.PostgreSqlDistributedLock[0]
+      hangfire:locks:schedulepoller: Failed to acquire lock
+      System.InvalidOperationException: Connection is not open
+         at Npgsql.ThrowHelper.ThrowInvalidOperationException(String message)
+         at Npgsql.NpgsqlConnection.CheckReady()
+         at Npgsql.NpgsqlConnection.BeginTransaction(Boolean async, IsolationLevel level, CancellationToken cancellationToken)
+         at Hangfire.PostgreSql.PostgreSqlDistributedLock.TransactionLockHandler.TryLock(IDbConnection connection, String schemaName, String resource)
+         at Hangfire.PostgreSql.PostgreSqlDistributedLock.LockHandler.Lock(String resource, TimeSpan timeout, IDbConnection connection, PostgreSqlStorageOptions options)
+info: Hangfire.Processing.BackgroundExecution[0]
+      Execution CountersAggregator recovered from the Faulted state after 00:05:02.6356353 and is in the Running state now
+info: Hangfire.Processing.BackgroundExecution[0]
+      Execution RecurringJobScheduler recovered from the Faulted state after 00:01:21.6164856 and is in the Running state now
+warn: Hangfire.PostgreSql.PostgreSqlDistributedLock[0]
+      hangfire:locks:schedulepoller: Failed to remove lock
+      Npgsql.NpgsqlException (0x80004005): Exception while reading from stream
+       ---> System.TimeoutException: Timeout during reading attempt
+         at Npgsql.Internal.NpgsqlReadBuffer.<Ensure>g__EnsureLong|55_0(NpgsqlReadBuffer buffer, Int32 count, Boolean async, Boolean readingNotifications)
+         at System.Runtime.CompilerServices.PoolingAsyncValueTaskMethodBuilder`1.StateMachineBox`1.System.Threading.Tasks.Sources.IValueTaskSource.GetResult(Int16 token)
+         at Npgsql.Internal.NpgsqlConnector.ReadMessageLong(Boolean async, DataRowLoadingMode dataRowLoadingMode, Boolean readingNotifications, Boolean isReadingPrependedMessage)
+         at System.Runtime.CompilerServices.PoolingAsyncValueTaskMethodBuilder`1.StateMachineBox`1.System.Threading.Tasks.Sources.IValueTaskSource<TResult>.GetResult(Int16 token)
+         at Npgsql.Internal.NpgsqlConnector.ReadMessageLong(Boolean async, DataRowLoadingMode dataRowLoadingMode, Boolean readingNotifications, Boolean isReadingPrependedMessage)
+         at System.Runtime.CompilerServices.PoolingAsyncValueTaskMethodBuilder`1.StateMachineBox`1.System.Threading.Tasks.Sources.IValueTaskSource<TResult>.GetResult(Int16 token)
+         at Npgsql.NpgsqlDataReader.NextResult(Boolean async, Boolean isConsuming, CancellationToken cancellationToken)
+         at Npgsql.NpgsqlDataReader.NextResult(Boolean async, Boolean isConsuming, CancellationToken cancellationToken)
+         at Npgsql.NpgsqlCommand.ExecuteReader(Boolean async, CommandBehavior behavior, CancellationToken cancellationToken)
+         at Npgsql.NpgsqlCommand.ExecuteReader(Boolean async, CommandBehavior behavior, CancellationToken cancellationToken)
+         at Npgsql.NpgsqlCommand.ExecuteNonQuery(Boolean async, CancellationToken cancellationToken)
+         at Dapper.SqlMapper.ExecuteCommand(IDbConnection cnn, CommandDefinition& command, Action`2 paramReader) in /_/Dapper/SqlMapper.cs:line 2848
+         at Dapper.SqlMapper.ExecuteImpl(IDbConnection cnn, CommandDefinition& command) in /_/Dapper/SqlMapper.cs:line 581
+         at Hangfire.PostgreSql.PostgreSqlDistributedLock.LockHandler.TryRemoveLock(String resource, IDbConnection connection, PostgreSqlStorageOptions options, Boolean onlyExpired)
+warn: Hangfire.PostgreSql.PostgreSqlDistributedLock[0]
+      hangfire:locks:schedulepoller: Failed to acquire lock
+      System.InvalidOperationException: Connection is not open
+         at Npgsql.ThrowHelper.ThrowInvalidOperationException(String message)
+         at Npgsql.NpgsqlConnection.CheckReady()
+         at Npgsql.NpgsqlConnection.BeginTransaction(Boolean async, IsolationLevel level, CancellationToken cancellationToken)
+         at Hangfire.PostgreSql.PostgreSqlDistributedLock.TransactionLockHandler.TryLock(IDbConnection connection, String schemaName, String resource)
+         at Hangfire.PostgreSql.PostgreSqlDistributedLock.LockHandler.Lock(String resource, TimeSpan timeout, IDbConnection connection, PostgreSqlStorageOptions options)
+info: Hangfire.Processing.BackgroundExecution[0]
+      Execution ServerWatchdog recovered from the Faulted state after 00:05:02.7248010 and is in the Running state now
+warn: Hangfire.PostgreSql.PostgreSqlDistributedLock[0]
+      hangfire:recurring-jobs:lock: Failed to remove lock
+      Npgsql.NpgsqlException (0x80004005): Exception while reading from stream
+       ---> System.TimeoutException: Timeout during reading attempt
+         at Npgsql.Internal.NpgsqlReadBuffer.<Ensure>g__EnsureLong|55_0(NpgsqlReadBuffer buffer, Int32 count, Boolean async, Boolean readingNotifications)
+         at System.Runtime.CompilerServices.PoolingAsyncValueTaskMethodBuilder`1.StateMachineBox`1.System.Threading.Tasks.Sources.IValueTaskSource.GetResult(Int16 token)
+         at Npgsql.Internal.NpgsqlConnector.ReadMessageLong(Boolean async, DataRowLoadingMode dataRowLoadingMode, Boolean readingNotifications, Boolean isReadingPrependedMessage)
+         at System.Runtime.CompilerServices.PoolingAsyncValueTaskMethodBuilder`1.StateMachineBox`1.System.Threading.Tasks.Sources.IValueTaskSource<TResult>.GetResult(Int16 token)
+         at Npgsql.Internal.NpgsqlConnector.ReadMessageLong(Boolean async, DataRowLoadingMode dataRowLoadingMode, Boolean readingNotifications, Boolean isReadingPrependedMessage)
+         at System.Runtime.CompilerServices.PoolingAsyncValueTaskMethodBuilder`1.StateMachineBox`1.System.Threading.Tasks.Sources.IValueTaskSource<TResult>.GetResult(Int16 token)
+         at Npgsql.NpgsqlDataReader.NextResult(Boolean async, Boolean isConsuming, CancellationToken cancellationToken)
+         at Npgsql.NpgsqlDataReader.NextResult(Boolean async, Boolean isConsuming, CancellationToken cancellationToken)
+         at Npgsql.NpgsqlCommand.ExecuteReader(Boolean async, CommandBehavior behavior, CancellationToken cancellationToken)
+         at Npgsql.NpgsqlCommand.ExecuteReader(Boolean async, CommandBehavior behavior, CancellationToken cancellationToken)
+         at Npgsql.NpgsqlCommand.ExecuteNonQuery(Boolean async, CancellationToken cancellationToken)
+         at Dapper.SqlMapper.ExecuteCommand(IDbConnection cnn, CommandDefinition& command, Action`2 paramReader) in /_/Dapper/SqlMapper.cs:line 2848
+         at Dapper.SqlMapper.ExecuteImpl(IDbConnection cnn, CommandDefinition& command) in /_/Dapper/SqlMapper.cs:line 581
+         at Hangfire.PostgreSql.PostgreSqlDistributedLock.LockHandler.TryRemoveLock(String resource, IDbConnection connection, PostgreSqlStorageOptions options, Boolean onlyExpired)
+warn: Hangfire.PostgreSql.PostgreSqlDistributedLock[0]
+      hangfire:recurring-jobs:lock: Failed to acquire lock
+      System.InvalidOperationException: Connection is not open
+         at Npgsql.ThrowHelper.ThrowInvalidOperationException(String message)
+         at Npgsql.NpgsqlConnection.CheckReady()
+         at Npgsql.NpgsqlConnection.BeginTransaction(Boolean async, IsolationLevel level, CancellationToken cancellationToken)
+         at Hangfire.PostgreSql.PostgreSqlDistributedLock.TransactionLockHandler.TryLock(IDbConnection connection, String schemaName, String resource)
+         at Hangfire.PostgreSql.PostgreSqlDistributedLock.LockHandler.Lock(String resource, TimeSpan timeout, IDbConnection connection, PostgreSqlStorageOptions options)
+warn: Hangfire.Server.ServerHeartbeatProcess[0]
+      Server pc-20250316mvtl:316668:89e1a2d1 encountered an exception while sending heartbeat
+      Npgsql.NpgsqlException (0x80004005): Exception while reading from stream
+       ---> System.TimeoutException: Timeout during reading attempt
+         at Npgsql.Internal.NpgsqlReadBuffer.<Ensure>g__EnsureLong|55_0(NpgsqlReadBuffer buffer, Int32 count, Boolean async, Boolean readingNotifications)
+         at System.Runtime.CompilerServices.PoolingAsyncValueTaskMethodBuilder`1.StateMachineBox`1.System.Threading.Tasks.Sources.IValueTaskSource.GetResult(Int16 token)
+         at Npgsql.Internal.NpgsqlConnector.ReadMessageLong(Boolean async, DataRowLoadingMode dataRowLoadingMode, Boolean readingNotifications, Boolean isReadingPrependedMessage)
+         at System.Runtime.CompilerServices.PoolingAsyncValueTaskMethodBuilder`1.StateMachineBox`1.System.Threading.Tasks.Sources.IValueTaskSource<TResult>.GetResult(Int16 token)
+         at Npgsql.NpgsqlDataReader.NextResult(Boolean async, Boolean isConsuming, CancellationToken cancellationToken)
+         at Npgsql.NpgsqlDataReader.NextResult(Boolean async, Boolean isConsuming, CancellationToken cancellationToken)
+         at Npgsql.NpgsqlCommand.ExecuteReader(Boolean async, CommandBehavior behavior, CancellationToken cancellationToken)
+         at Npgsql.NpgsqlCommand.ExecuteReader(Boolean async, CommandBehavior behavior, CancellationToken cancellationToken)
+         at Npgsql.NpgsqlCommand.ExecuteNonQuery(Boolean async, CancellationToken cancellationToken)
+         at Dapper.SqlMapper.ExecuteCommand(IDbConnection cnn, CommandDefinition& command, Action`2 paramReader) in /_/Dapper/SqlMapper.cs:line 2848
+         at Dapper.SqlMapper.ExecuteImpl(IDbConnection cnn, CommandDefinition& command) in /_/Dapper/SqlMapper.cs:line 581
+         at Dapper.SqlMapper.Execute(IDbConnection cnn, String sql, Object param, IDbTransaction transaction, Nullable`1 commandTimeout, Nullable`1 commandType) in /_/Dapper/SqlMapper.cs:line 452
+         at Hangfire.PostgreSql.PostgreSqlConnection.<>c__DisplayClass21_0.<Heartbeat>b__0(DbConnection connection)
+         at Hangfire.PostgreSql.PostgreSqlStorage.UseConnection[T](DbConnection dedicatedConnection, Func`2 func)
+         at Hangfire.PostgreSql.PostgreSqlConnection.Heartbeat(String serverId)
+         at Hangfire.Server.ServerHeartbeatProcess.Execute(BackgroundProcessContext context) in C:\projects\hangfire-525\src\Hangfire.Core\Server\ServerHeartbeatProcess.cs:line 50
