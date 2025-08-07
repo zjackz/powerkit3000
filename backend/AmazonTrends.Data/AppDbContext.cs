@@ -17,6 +17,8 @@ public class AppDbContext : DbContext
     public DbSet<Category> Categories { get; set; }
     public DbSet<ProductDataPoint> ProductDataPoints { get; set; }
     public DbSet<DataCollectionRun> DataCollectionRuns { get; set; }
+    public DbSet<AnalysisResult> AnalysisResults { get; set; }
+    public DbSet<ProductTrend> ProductTrends { get; set; }
 
     /// <summary>
     /// 配置数据模型和它们之间的关系
@@ -57,6 +59,24 @@ public class AppDbContext : DbContext
             .HasOne(dcr => dcr.Category)          // 一次采集任务针对一个分类
             .WithMany()                           // Category 没有直接的 DataCollectionRuns 集合，因为是单向关系
             .HasForeignKey(dcr => dcr.CategoryId); // 外键是 CategoryId
+
+        // 配置 AnalysisResult 和 DataCollectionRun 之间的关系
+        modelBuilder.Entity<AnalysisResult>()
+            .HasOne(ar => ar.DataCollectionRun)
+            .WithMany()
+            .HasForeignKey(ar => ar.DataCollectionRunId);
+
+        // 配置 ProductTrend 和 AnalysisResult 之间的关系
+        modelBuilder.Entity<ProductTrend>()
+            .HasOne(pt => pt.AnalysisResult)
+            .WithMany(ar => ar.Trends)
+            .HasForeignKey(pt => pt.AnalysisResultId);
+
+        // 配置 ProductTrend 和 Product 之间的关系
+        modelBuilder.Entity<ProductTrend>()
+            .HasOne(pt => pt.Product)
+            .WithMany()
+            .HasForeignKey(pt => pt.ProductId);
 
         // ----- 添加索引 -----
 

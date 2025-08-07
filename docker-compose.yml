@@ -1,0 +1,54 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:16-alpine
+    restart: always
+    environment:
+      POSTGRES_DB: amazontrends
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: your_password # 请替换为强密码
+    ports:
+      - "5432:5432"
+    volumes:
+      - db_data:/var/lib/postgresql/data
+
+  redis:
+    image: redis:7-alpine
+    restart: always
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+
+  backend:
+    build:
+      context: .
+      dockerfile: backend/AmazonTrends.WebApp/Dockerfile
+    restart: always
+    ports:
+      - "5001:8080" # 将容器的 8080 端口映射到主机的 5001 端口
+    environment:
+      ASPNETCORE_URLS: http://+:8080
+      ConnectionStrings__DefaultConnection: Host=db;Port=5432;Database=amazontrends;Username=postgres;Password=your_password
+      ConnectionStrings__RedisConnection: redis:6379
+    depends_on:
+      - db
+      - redis
+
+  frontend:
+    build:
+      context: .
+      dockerfile: frontend/Dockerfile
+    restart: always
+    ports:
+      - "3000:3000"
+    environment:
+      # Next.js 环境变量，用于在生产环境中指向后端 API
+      NEXT_PUBLIC_API_BASE_URL: http://backend:8080 # 容器内部通过服务名访问后端
+    depends_on:
+      - backend
+
+volumes:
+  db_data:
+  redis_data:

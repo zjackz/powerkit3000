@@ -20,8 +20,8 @@ public class AnalysisService
     /// 分析指定数据采集运行的结果，发现热销趋势和潜力新品。
     /// </summary>
     /// <param name="dataCollectionRunId">要分析的数据采集运行ID。</param>
-    /// <returns>包含趋势分析结果的列表。</returns>
-    public async Task<List<ProductTrend>> AnalyzeTrendsAsync(long dataCollectionRunId)
+    /// <returns>本次分析结果的ID。</returns>
+    public async Task<long> AnalyzeTrendsAsync(long dataCollectionRunId)
     {
         _logger.LogInformation("开始分析数据采集运行 {DataCollectionRunId} 的产品趋势。", dataCollectionRunId);
 
@@ -29,8 +29,16 @@ public class AnalysisService
         if (run == null)
         {
             _logger.LogWarning("未找到 ID 为 {DataCollectionRunId} 的数据采集运行记录。", dataCollectionRunId);
-            return new List<ProductTrend>();
+            return -1;
         }
+
+        var analysisResult = new AnalysisResult
+        {
+            DataCollectionRunId = dataCollectionRunId,
+            AnalysisTime = DateTime.UtcNow
+        };
+        _dbContext.AnalysisResults.Add(analysisResult);
+        await _dbContext.SaveChangesAsync(); // 保存 AnalysisResult 以获取其 ID
 
         var trends = new List<ProductTrend>();
 
@@ -54,7 +62,9 @@ public class AnalysisService
                 {
                     ProductId = currentDataPoint.ProductId,
                     TrendType = "NewEntry",
-                    Description = $"新产品首次进入榜单，当前排名 {currentDataPoint.Rank}。"
+                    Description = $"新产品首次进入榜单，当前排名 {currentDataPoint.Rank}。",
+                    AnalysisResultId = analysisResult.Id,
+                    AnalysisTime = DateTime.UtcNow
                 });
                 continue;
             }
@@ -66,7 +76,9 @@ public class AnalysisService
                 {
                     ProductId = currentDataPoint.ProductId,
                     TrendType = "RankSurge",
-                    Description = $"排名从 {previousDataPoint.Rank} 上升到 {currentDataPoint.Rank}，上升了 {previousDataPoint.Rank - currentDataPoint.Rank} 位。"
+                    Description = $"排名从 {previousDataPoint.Rank} 上升到 {currentDataPoint.Rank}，上升了 {previousDataPoint.Rank - currentDataPoint.Rank} 位。",
+                    AnalysisResultId = analysisResult.Id,
+                    AnalysisTime = DateTime.UtcNow
                 });
             }
 
@@ -77,32 +89,19 @@ public class AnalysisService
                 {
                     ProductId = currentDataPoint.ProductId,
                     TrendType = "ConsistentPerformer",
-                    Description = $"持续在 Top 100 榜单内，当前排名 {currentDataPoint.Rank}。"
+                    Description = $"持续在 Top 100 榜单内，当前排名 {currentDataPoint.Rank}。",
+                    AnalysisResultId = analysisResult.Id,
+                    AnalysisTime = DateTime.UtcNow
                 });
             }
         }
 
-        // 注意：这里的分析结果可以存入数据库或直接返回
-        // 为了简单起见，我们暂时只记录日志并返回
-        _logger.LogInformation("数据采集运行 {DataCollectionRunId} 的趋势分析完成，发现 {Count} 条趋势。", dataCollectionRunId, trends.Count);
-        
-        // 可以在这里将分析结果存入数据库
-        // var analysisResult = new AnalysisResult { ... };
-        // _dbContext.AnalysisResults.Add(analysisResult);
-        // await _dbContext.SaveChangesAsync();
+        _dbContext.ProductTrends.AddRange(trends);
+        await _dbContext.SaveChangesAsync();
 
-        return trends;
+        _logger.LogInformation("数据采集运行 {DataCollectionRunId} 的趋势分析完成，发现 {Count} 条趋势，并已保存。", dataCollectionRunId, trends.Count);
+        
+        return analysisResult.Id;
     }
 }
 
-/// <summary>
-/// 用于表示产品趋势的 DTO。
-/// </summary>
-public class ProductTrend
-{
-    public string ProductId { get; set; } = null!;
-    public string ProductTitle { get; set; } = null!;
-    public string TrendType { get; set; } = null!; // 例如: RankSurge, NewEntry, ConsistentPerformer
-    public string Description { get; set; } = null!;
-    public DateTime AnalysisTime { get; set; } = DateTime.UtcNow;
-}

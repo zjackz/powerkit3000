@@ -45,6 +45,14 @@ try
     // 注册核心业务服务
     builder.Services.AddScoped<ScrapingService>();
     builder.Services.AddScoped<AnalysisService>();
+    builder.Services.AddScoped<ReportService>();
+
+    // 配置 Redis 缓存
+    builder.Services.AddStackExchangeRedisCache(options =>
+    {
+        options.Configuration = builder.Configuration.GetConnectionString("RedisConnection");
+        options.InstanceName = "AmazonTrends:"; // 缓存键前缀
+    });
 
     // 配置并注册 Hangfire 服务
     builder.Services.AddHangfire(config => config
@@ -88,12 +96,30 @@ try
 
     app.UseHttpsRedirection();
 
+    // 全局异常处理中间件
+    app.UseExceptionHandler("/error");
+
     // 启用 Hangfire Dashboard，默认路径是 /hangfire
     // TODO: 在生产环境中，需要为 Dashboard 添加授权验证
     app.UseHangfireDashboard();
 
     // 映射 API 控制器
     app.MapControllers();
+
+    // 添加一个通用的错误处理路由
+    app.Map("/error", (HttpContext context) =>
+    {
+        var exceptionHandlerPathFeature = context.Features.Get<Microsoft.AspNetCore.Diagnostics.IExceptionHandlerPathFeature>();
+        var exception = exceptionHandlerPathFeature?.Error;
+
+        Log.Error(exception, "发生未处理的异常: {Message}", exception?.Message);
+
+        return Results.Problem(
+            detail: exception?.Message,
+            title: "服务器内部错误",
+            statusCode: StatusCodes.Status500InternalServerError
+        );
+    });
 
     // 动态调度后台任务
     ScheduleRecurringJobs(app.Services);
@@ -137,15 +163,43 @@ void ScheduleRecurringJobs(IServiceProvider services)
         foreach (var category in categories)
         {
             // 为每个分类定义一个每日运行的、唯一的重复性作业
-            string jobId = $"daily-scrape-and-analyze-category-{category.Id}";
+            string jobIdBestSellers = $"daily-scrape-best-sellers-category-{category.Id}";
             recurringJobManager.AddOrUpdate<ScrapingService>(
-                jobId,
-                service => service.ScrapeBestsellersAsync(category.Id),
+                jobIdBestSellers,
+                service => service.ScrapeBestsellersAsync(category.Id, BestsellerType.BestSellers),
                 Cron.Daily(3), // 每日 UTC 时间凌晨3点运行
                 new RecurringJobOptions { TimeZone = TimeZoneInfo.Utc }
             );
-            logger.LogInformation("已为分类 '{CategoryName}' (ID: {CategoryId}) 调度每日任务，Job ID: {JobId}", category.Name, category.Id, jobId);
+            logger.LogInformation("已为分类 '{CategoryName}' (ID: {CategoryId}) 调度每日 Best Sellers 任务，Job ID: {JobId}", category.Name, category.Id, jobIdBestSellers);
+
+            string jobIdNewReleases = $"daily-scrape-new-releases-category-{category.Id}";
+            recurringJobManager.AddOrUpdate<ScrapingService>(
+                jobIdNewReleases,
+                service => service.ScrapeBestsellersAsync(category.Id, BestsellerType.NewReleases),
+                Cron.Daily(4), // 每日 UTC 时间凌晨4点运行
+                new RecurringJobOptions { TimeZone = TimeZoneInfo.Utc }
+            );
+            logger.LogInformation("已为分类 '{CategoryName}' (ID: {CategoryId}) 调度每日 New Releases 任务，Job ID: {JobId}", category.Name, category.Id, jobIdNewReleases);
+
+            string jobIdMoversAndShakers = $"daily-scrape-movers-and-shakers-category-{category.Id}";
+            recurringJobManager.AddOrUpdate<ScrapingService>(
+                jobIdMoversAndShakers,
+                service => service.ScrapeBestsellersAsync(category.Id, BestsellerType.MoversAndShakers),
+                Cron.Daily(5), // 每日 UTC 时间凌晨5点运行
+                new RecurringJobOptions { TimeZone = TimeZoneInfo.Utc }
+            );
+            logger.LogInformation("已为分类 '{CategoryName}' (ID: {CategoryId}) 调度每日 Movers & Shakers 任务，Job ID: {JobId}", category.Name, category.Id, jobIdMoversAndShakers);
         }
+
+        // 调度每日报告生成任务
+        recurringJobManager.AddOrUpdate<ReportService>(
+            "daily-report-generation",
+            service => service.GenerateDailyReportAsync(),
+            Cron.Daily(6), // 每日 UTC 时间凌晨6点运行
+            new RecurringJobOptions { TimeZone = TimeZoneInfo.Utc }
+        );
+        logger.LogInformation("已调度每日报告生成任务，Job ID: daily-report-generation");
+
         logger.LogInformation("所有分类的每日后台任务调度完成。");
     }
     catch (Exception ex)
