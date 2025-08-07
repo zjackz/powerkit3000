@@ -17,76 +17,80 @@ public class AnalysisService
     }
 
     /// <summary>
-    /// 分析产品数据点，发现热销趋势和潜力新品。
+    /// 分析指定数据采集运行的结果，发现热销趋势和潜力新品。
     /// </summary>
-    /// <param name="categoryId">要分析的分类ID。</param>
+    /// <param name="dataCollectionRunId">要分析的数据采集运行ID。</param>
     /// <returns>包含趋势分析结果的列表。</returns>
-    public async Task<List<ProductTrend>> AnalyzeTrendsAsync(int categoryId)
+    public async Task<List<ProductTrend>> AnalyzeTrendsAsync(long dataCollectionRunId)
     {
-        _logger.LogInformation("开始分析分类 {CategoryId} 的产品趋势。", categoryId);
+        _logger.LogInformation("开始分析数据采集运行 {DataCollectionRunId} 的产品趋势。", dataCollectionRunId);
+
+        var run = await _dbContext.DataCollectionRuns.FindAsync(dataCollectionRunId);
+        if (run == null)
+        {
+            _logger.LogWarning("未找到 ID 为 {DataCollectionRunId} 的数据采集运行记录。", dataCollectionRunId);
+            return new List<ProductTrend>();
+        }
 
         var trends = new List<ProductTrend>();
 
-        // 获取指定分类下的所有产品及其最近的数据点
-        var products = await _dbContext.Products
-            .Where(p => p.CategoryId == categoryId)
-            .Include(p => p.DataPoints.OrderByDescending(dp => dp.Timestamp).Take(2)) // 获取最近的两个数据点用于比较
+        // 获取本次运行抓取到的所有产品的数据点
+        var currentDataPoints = await _dbContext.ProductDataPoints
+            .Where(p => p.DataCollectionRunId == dataCollectionRunId)
             .ToListAsync();
 
-        foreach (var product in products)
+        foreach (var currentDataPoint in currentDataPoints)
         {
-            if (product.DataPoints.Count < 2)
+            // 获取该产品上一次的数据点（不包括本次运行）
+            var previousDataPoint = await _dbContext.ProductDataPoints
+                .Where(p => p.ProductId == currentDataPoint.ProductId && p.DataCollectionRunId != dataCollectionRunId)
+                .OrderByDescending(p => p.Timestamp)
+                .FirstOrDefaultAsync();
+
+            if (previousDataPoint == null)
             {
-                // 数据点不足，无法进行趋势分析
+                // 这是该产品第一次被抓取，标记为新上榜
+                trends.Add(new ProductTrend
+                {
+                    ProductId = currentDataPoint.ProductId,
+                    TrendType = "NewEntry",
+                    Description = $"新产品首次进入榜单，当前排名 {currentDataPoint.Rank}。"
+                });
                 continue;
             }
 
-            var latestDataPoint = product.DataPoints.OrderByDescending(dp => dp.Timestamp).First();
-            var previousDataPoint = product.DataPoints.OrderByDescending(dp => dp.Timestamp).Skip(1).First();
-
             // 排名飙升 (Rank Surge)
-            if (latestDataPoint.Rank < previousDataPoint.Rank)
+            if (currentDataPoint.Rank < previousDataPoint.Rank)
             {
                 trends.Add(new ProductTrend
                 {
-                    ProductId = product.Id,
-                    ProductTitle = product.Title,
+                    ProductId = currentDataPoint.ProductId,
                     TrendType = "RankSurge",
-                    Description = $"排名从 {previousDataPoint.Rank} 上升到 {latestDataPoint.Rank}，上升了 {previousDataPoint.Rank - latestDataPoint.Rank} 位。"
-                });
-            }
-
-            // 新晋上榜 (New Entry - 假设之前不在榜单，现在进入)
-            // 这里的逻辑需要更精确，可能需要检查更长时间的历史数据
-            // 暂时简化为：如果之前排名很高（不在Top 100），现在进入Top 100
-            if (previousDataPoint.Rank > 100 && latestDataPoint.Rank <= 100)
-            {
-                trends.Add(new ProductTrend
-                {
-                    ProductId = product.Id,
-                    ProductTitle = product.Title,
-                    TrendType = "NewEntry",
-                    Description = $"新晋进入 Top 100 榜单，当前排名 {latestDataPoint.Rank}。"
+                    Description = $"排名从 {previousDataPoint.Rank} 上升到 {currentDataPoint.Rank}，上升了 {previousDataPoint.Rank - currentDataPoint.Rank} 位。"
                 });
             }
 
             // 持续霸榜 (Consistent Performer)
-            // 假设连续多次数据采集都在 Top 100 内
-            // 这里需要更复杂的逻辑，例如检查过去7天或30天的数据点
-            // 暂时简化为：如果两次数据采集都在 Top 100 内
-            if (latestDataPoint.Rank <= 100 && previousDataPoint.Rank <= 100)
+            if (currentDataPoint.Rank <= 100 && previousDataPoint.Rank <= 100)
             {
                 trends.Add(new ProductTrend
                 {
-                    ProductId = product.Id,
-                    ProductTitle = product.Title,
+                    ProductId = currentDataPoint.ProductId,
                     TrendType = "ConsistentPerformer",
-                    Description = $"持续在 Top 100 榜单内，当前排名 {latestDataPoint.Rank}。"
+                    Description = $"持续在 Top 100 榜单内，当前排名 {currentDataPoint.Rank}。"
                 });
             }
         }
 
-        _logger.LogInformation("分类 {CategoryId} 的趋势分析完成，发现 {Count} 条趋势。", categoryId, trends.Count);
+        // 注意：这里的分析结果可以存入数据库或直接返回
+        // 为了简单起见，我们暂时只记录日志并返回
+        _logger.LogInformation("数据采集运行 {DataCollectionRunId} 的趋势分析完成，发现 {Count} 条趋势。", dataCollectionRunId, trends.Count);
+        
+        // 可以在这里将分析结果存入数据库
+        // var analysisResult = new AnalysisResult { ... };
+        // _dbContext.AnalysisResults.Add(analysisResult);
+        // await _dbContext.SaveChangesAsync();
+
         return trends;
     }
 }

@@ -71,7 +71,7 @@ public class ProductsController : ControllerBase
     }
 
     /// <summary>
-    /// 根据 ASIN 获取单个产品详情及其历史数据点。
+    /// 根据 ASIN 获取单个产品的完整信息。
     /// </summary>
     /// <param name="asin">产品的 ASIN。</param>
     [HttpGet("{asin}")]
@@ -80,7 +80,6 @@ public class ProductsController : ControllerBase
         _logger.LogInformation("获取产品 {Asin} 的详情。", asin);
         var product = await _dbContext.Products
             .Include(p => p.Category)
-            .Include(p => p.DataPoints.OrderBy(dp => dp.Timestamp))
             .FirstOrDefaultAsync(p => p.Id == asin);
 
         if (product == null)
@@ -92,42 +91,31 @@ public class ProductsController : ControllerBase
     }
 
     /// <summary>
-    /// 触发一次指定分类的 Best Sellers 榜单抓取。
+    /// 根据 ASIN 获取单个产品的历史数据点，用于绘制图表。
     /// </summary>
-    /// <param name="categoryId">要抓取的分类ID。</param>
-    [HttpPost("scrape/{categoryId}")]
-    public async Task<IActionResult> TriggerScrape(int categoryId)
+    /// <param name="asin">产品的 ASIN。</param>
+    [HttpGet("{asin}/history")]
+    public async Task<IActionResult> GetProductHistory(string asin)
     {
-        _logger.LogInformation("手动触发分类 {CategoryId} 的数据抓取。", categoryId);
-        try
-        {
-            var dataPoints = await _scrapingService.ScrapeBestsellersAsync(categoryId);
-            return Ok($"成功触发抓取任务，抓取到 {dataPoints.Count} 个数据点。");
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "触发抓取任务失败: {Message}", ex.Message);
-            return StatusCode(500, $"触发抓取任务失败: {ex.Message}");
-        }
-    }
+        _logger.LogInformation("获取产品 {Asin} 的历史数据点。", asin);
+        var history = await _dbContext.ProductDataPoints
+            .Where(p => p.ProductId == asin)
+            .OrderBy(p => p.Timestamp)
+            .Select(p => new
+            {
+                p.Timestamp,
+                p.Rank,
+                p.Price,
+                p.Rating,
+                p.ReviewsCount
+            })
+            .ToListAsync();
 
-    /// <summary>
-    /// 获取指定分类的产品趋势分析结果。
-    /// </summary>
-    /// <param name="categoryId">要分析的分类ID。</param>
-    [HttpGet("trends/{categoryId}")]
-    public async Task<IActionResult> GetTrends(int categoryId)
-    {
-        _logger.LogInformation("获取分类 {CategoryId} 的趋势分析结果。", categoryId);
-        try
+        if (!history.Any())
         {
-            var trends = await _analysisService.AnalyzeTrendsAsync(categoryId);
-            return Ok(trends);
+            _logger.LogWarning("未找到产品 ASIN: {Asin} 的任何历史数据。", asin);
+            return NotFound();
         }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "获取趋势分析结果失败: {Message}", ex.Message);
-            return StatusCode(500, $"获取趋势分析结果失败: {ex.Message}");
-        }
+        return Ok(history);
     }
 }

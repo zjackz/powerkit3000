@@ -1,5 +1,6 @@
 using AmazonTrends.Data;
 using AmazonTrends.Data.Models;
+using Hangfire;
 using HtmlAgilityPack;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
@@ -14,28 +15,31 @@ public class ScrapingService
     private readonly AppDbContext _dbContext;
     private readonly HttpClient _httpClient;
     private readonly ILogger<ScrapingService> _logger;
+    private readonly IBackgroundJobClient _backgroundJobClient;
 
-    public ScrapingService(AppDbContext dbContext, HttpClient httpClient, ILogger<ScrapingService> logger)
+    public ScrapingService(AppDbContext dbContext, HttpClient httpClient, ILogger<ScrapingService> logger, IBackgroundJobClient backgroundJobClient)
     {
         _dbContext = dbContext;
         _httpClient = httpClient;
         _logger = logger;
+        _backgroundJobClient = backgroundJobClient;
     }
 
     /// <summary>
     /// 抓取亚马逊指定类目的 Best Sellers 榜单数据。
     /// </summary>
     /// <param name="categoryId">要抓取的分类ID。</param>
-    /// <returns>抓取到的产品数据点列表。</returns>
-    public async Task<List<ProductDataPoint>> ScrapeBestsellersAsync(int categoryId)
+    /// <returns>本次数据采集运行记录的ID。</returns>
+    public async Task<long> ScrapeBestsellersAsync(int categoryId)
     {
         _logger.LogInformation("开始抓取分类 {CategoryId} 的 Best Sellers 榜单。", categoryId);
 
         var category = await _dbContext.Categories.FindAsync(categoryId);
         if (category == null)
         {
-            _logger.LogWarning("未找到分类 ID: {CategoryId}。", categoryId);
-            return new List<ProductDataPoint>();
+            _logger.LogWarning("未找到分类 ID: {CategoryId}，无法开始抓取。", categoryId);
+            // 返回一个无效ID，表示任务未执行
+            return -1;
         }
 
         // 构建亚马逊 Best Sellers 页面的 URL
@@ -68,7 +72,7 @@ public class ScrapingService
                 _logger.LogWarning("在分类 {CategoryId} 的页面上没有找到产品节点，URL: {Url}。页面结构可能已更改。", categoryId, url);
                 dataCollectionRun.Status = "CompletedWithNoData";
                 await _dbContext.SaveChangesAsync();
-                return dataPoints;
+                return dataCollectionRun.Id;
             }
 
             foreach (var node in productNodes)
@@ -114,7 +118,12 @@ public class ScrapingService
             await _dbContext.SaveChangesAsync();
 
             _logger.LogInformation("成功为分类 {CategoryId} 抓取并保存了 {Count} 个产品数据点。", categoryId, dataPoints.Count);
-            return dataPoints;
+
+            // 抓取成功后，自动触发一个后台分析任务
+            _backgroundJobClient.Enqueue<AnalysisService>(service => service.AnalyzeTrendsAsync(dataCollectionRun.Id));
+            _logger.LogInformation("已为数据采集运行 {DataCollectionRunId} 触发了一个后台分析任务。", dataCollectionRun.Id);
+
+            return dataCollectionRun.Id;
         }
         catch (HttpRequestException ex)
         {
@@ -145,7 +154,13 @@ public class ScrapingService
 
     private string ExtractTitle(HtmlNode productNode)
     {
-        var titleNode = productNode.SelectSingleNode(".//div[contains(@class, '_cDEzb_p13n-sc-css-line-clamp-3_g3dy1')]");
+        // 亚马逊的标题 class 经常变化，但通常包含 'p13n-sc-css-line-clamp'
+        var titleNode = productNode.SelectSingleNode(".//div[contains(@class, '_cDEzb_p13n-sc-css-line-clamp-')]");
+        if (titleNode == null)
+        {
+            // 备用选择器
+            titleNode = productNode.SelectSingleNode(".//a/span/div");
+        }
         return titleNode != null ? WebUtility.HtmlDecode(titleNode.InnerText.Trim()) : "未知标题";
     }
 
@@ -159,8 +174,15 @@ public class ScrapingService
 
     private decimal ExtractPrice(HtmlNode productNode)
     {
+        // 价格通常在 class 包含 'a-color-price' 的 span 中
         var priceNode = productNode.SelectSingleNode(".//span[contains(@class, 'a-color-price')]");
+        if (priceNode == null)
+        {
+            // 备用选择器，有时价格在另一个结构里
+            priceNode = productNode.SelectSingleNode(".//span[contains(@class, '_cDEzb_p13n-sc-price_')]");
+        }
         string priceText = priceNode?.InnerText.Trim() ?? "$0.00";
+        
         // 移除货币符号和逗号，然后解析
         priceText = Regex.Replace(priceText, @"[$,]", "");
         decimal.TryParse(priceText, NumberStyles.Currency, CultureInfo.GetCultureInfo("en-US"), out decimal price);
@@ -171,6 +193,8 @@ public class ScrapingService
     {
         var ratingNode = productNode.SelectSingleNode(".//span[contains(@class, 'a-icon-alt')]");
         string ratingText = ratingNode?.InnerText.Trim() ?? "0.0 out of 5 stars";
+        
+        // 正则表达式匹配 "4.5 out of 5 stars" 中的 "4.5"
         var match = Regex.Match(ratingText, @"^(\d+(\.\d+)?)");
         if (match.Success)
         {
@@ -182,7 +206,12 @@ public class ScrapingService
 
     private int ExtractReviewsCount(HtmlNode productNode)
     {
-        var reviewsNode = productNode.SelectSingleNode(".//span[contains(@class, 'a-size-small') and contains(text(), '')]");
+        // 评论数通常在链接的 span 中
+        var reviewsNode = productNode.SelectSingleNode(".//a[contains(@href, 'customerReviews')]//span[@class='a-size-small']");
+        if (reviewsNode == null)
+        {
+             reviewsNode = productNode.SelectSingleNode(".//span[contains(@class, 'a-size-small')]");
+        }
         string reviewsText = reviewsNode?.InnerText.Trim().Replace(",", "") ?? "0";
         int.TryParse(reviewsText, out int reviewsCount);
         return reviewsCount;
