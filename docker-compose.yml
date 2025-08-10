@@ -1,54 +1,67 @@
 version: '3.8'
-
 services:
   db:
     image: postgres:16-alpine
+    container_name: amazontrends-db
     restart: always
     environment:
       POSTGRES_DB: amazontrends
       POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: your_password # 请替换为强密码
+      POSTGRES_PASSWORD: postgres123  # 修改为具体密码
     ports:
       - "5432:5432"
     volumes:
       - db_data:/var/lib/postgresql/data
-
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
   redis:
     image: redis:7-alpine
+    container_name: amazontrends-redis
     restart: always
     ports:
       - "6379:6379"
     volumes:
       - redis_data:/data
-
+    command: redis-server --appendonly yes
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
   backend:
     build:
       context: .
       dockerfile: backend/AmazonTrends.WebApp/Dockerfile
+    container_name: amazontrends-backend
     restart: always
     ports:
-      - "5001:8080" # 将容器的 8080 端口映射到主机的 5001 端口
+      - "5001:8080"
     environment:
+      ASPNETCORE_ENVIRONMENT: Development
       ASPNETCORE_URLS: http://+:8080
-      ConnectionStrings__DefaultConnection: Host=db;Port=5432;Database=amazontrends;Username=postgres;Password=your_password
+      ConnectionStrings__DefaultConnection: Host=db;Port=5432;Database=amazontrends;Username=postgres;Password=postgres123
       ConnectionStrings__RedisConnection: redis:6379
     depends_on:
-      - db
-      - redis
-
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
   frontend:
     build:
       context: .
       dockerfile: frontend/Dockerfile
+    container_name: amazontrends-frontend
     restart: always
     ports:
       - "3000:3000"
     environment:
-      # Next.js 环境变量，用于在生产环境中指向后端 API
-      NEXT_PUBLIC_API_BASE_URL: http://backend:8080 # 容器内部通过服务名访问后端
+      NEXT_PUBLIC_API_BASE_URL: http://localhost:5001  # 浏览器访问地址
+      API_BASE_URL: http://backend:8080  # 服务端访问地址
     depends_on:
       - backend
-
 volumes:
   db_data:
   redis_data:

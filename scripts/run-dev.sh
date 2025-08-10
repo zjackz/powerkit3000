@@ -9,6 +9,6 @@ set -e
 
 echo -e "${GREEN}Starting services with Docker Compose...${NC}"
 # 使用 docker-compose 启动所有服务
-docker-compose up --build
+docker compose up --build
 
 echo -e "\n${GREEN}Services stopped.${NC}"

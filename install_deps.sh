@@ -1,3 +1,4 @@
 #!/bin/bash
-cd /home/dministrator/code/test/amazon-trends-dashboard
-npm install antd axios @ant-design/charts
+
+# Install .NET SDK
+curl -sSL https://dot.net/v1/dotnet-install.sh | bash /dev/stdin --channel 8.0

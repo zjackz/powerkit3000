@@ -32,7 +32,7 @@ public class CategoriesController : ControllerBase
         string cacheKey = "AllCategories";
         string? cachedCategoriesJson = await _cache.GetStringAsync(cacheKey);
 
-        List<object>? categories;
+        object? categories;
 
         if (!string.IsNullOrEmpty(cachedCategoriesJson))
         {
@@ -42,9 +42,10 @@ public class CategoriesController : ControllerBase
         else
         {
             _logger.LogInformation("从数据库中获取分类数据并写入缓存。");
-            categories = await _dbContext.Categories
+            var categoriesData = await _dbContext.Categories
                 .Select(c => new { c.Id, c.Name, c.AmazonCategoryId })
                 .ToListAsync();
+            categories = categoriesData;
 
             var options = new DistributedCacheEntryOptions()
                 .SetAbsoluteExpiration(TimeSpan.FromMinutes(60)); // 缓存 60 分钟

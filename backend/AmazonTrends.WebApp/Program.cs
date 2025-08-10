@@ -1,6 +1,7 @@
 
 using AmazonTrends.Core.Services;
 using AmazonTrends.Data;
+using AmazonTrends.Data.Models;
 using Hangfire;
 using Hangfire.PostgreSql;
 using Microsoft.EntityFrameworkCore;
@@ -79,8 +80,10 @@ try
 
     var app = builder.Build();
 
+    // 5. 初始化数据库和种子数据
+    InitializeDatabase(app);
 
-    // 4. 配置 HTTP 请求处理管道
+    // 6. 配置 HTTP 请求处理管道
 
     // 在开发环境中启用 Swagger UI
     if (app.Environment.IsDevelopment())
@@ -137,7 +140,58 @@ finally
 }
 
 
-// 5. 辅助方法
+// 辅助方法
+
+/// <summary>
+/// 初始化数据库：如果不存在则创建，并应用所有挂起的迁移。
+/// 然后，如果数据库是空的，则填充种子数据。
+/// </summary>
+void InitializeDatabase(IHost app)
+{
+    using var scope = app.Services.CreateScope();
+    var services = scope.ServiceProvider;
+    var logger = services.GetRequiredService<ILogger<Program>>();
+    var dbContext = services.GetRequiredService<AppDbContext>();
+
+    try
+    {
+        logger.LogInformation("正在检查并应用数据库迁移...");
+        dbContext.Database.Migrate();
+        logger.LogInformation("数据库迁移完成。");
+
+        logger.LogInformation("正在检查是否需要填充种子数据...");
+        if (!dbContext.Categories.Any())
+        {
+            logger.LogInformation("数据库为空，开始填充种子数据。");
+
+            var electronics = new Category { Name = "Electronics", AmazonCategoryId = "172282" };
+            var books = new Category { Name = "Books", AmazonCategoryId = "283155" };
+            var homeAndKitchen = new Category { Name = "Home & Kitchen", AmazonCategoryId = "1055398" };
+
+            dbContext.Categories.AddRange(electronics, books, homeAndKitchen);
+            dbContext.SaveChanges(); // 先保存分类以获取ID
+
+            dbContext.Products.AddRange(
+                new Product { Id = "B0863FR3S9", Title = "Echo Dot (4th Gen) | Smart speaker with Alexa", Brand = "Amazon", CategoryId = electronics.Id, ListingDate = new DateTime(2020, 10, 22) },
+                new Product { Id = "B07WCS3G78", Title = "Kindle Paperwhite (8 GB) – Now with a 6.8" display and adjustable warm light", Brand = "Amazon", CategoryId = electronics.Id, ListingDate = new DateTime(2021, 10, 27) },
+                new Product { Id = "B08P3QVFMK", Title = "Atomic Habits: An Easy & Proven Way to Build Good Habits & Break Bad Ones", Brand = "James Clear", CategoryId = books.Id, ListingDate = new DateTime(2018, 10, 16) },
+                new Product { Id = "B07Y8B6B7X", Title = "Instant Pot Duo 7-in-1 Electric Pressure Cooker, 6 Quart", Brand = "Instant Pot", CategoryId = homeAndKitchen.Id, ListingDate = new DateTime(2017, 10, 4) }
+            );
+
+            dbContext.SaveChanges();
+            logger.LogInformation("种子数据填充成功。");
+        }
+        else
+        {
+            logger.LogInformation("数据库中已存在数据，无需填充。");
+        }
+    }
+    catch (Exception ex)
+    {
+        logger.LogError(ex, "在初始化数据库或填充种子数据时发生错误。");
+    }
+}
+
 
 /// <summary>
 /// 从数据库加载所有分类，并为每个分类调度一个每日运行的抓取任务。
@@ -156,7 +210,7 @@ void ScheduleRecurringJobs(IServiceProvider services)
         var categories = dbContext.Categories.ToList();
         if (!categories.Any())
         {
-            logger.LogWarning("数据库中未找到任何分类，无法调度任务。");
+            logger.LogWarning("数据库中未找到任何分类，无法调度任务。请先填充种子数据。");
             return;
         }
 
