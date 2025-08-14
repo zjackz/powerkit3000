@@ -1,11 +1,14 @@
-
 using AmazonTrends.Core.Services;
 using AmazonTrends.Data;
 using AmazonTrends.Data.Models;
 using Hangfire;
 using Hangfire.PostgreSql;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
 using Serilog;
+using System.Text;
 
 // 1. 配置 Serilog 日志记录器
 Log.Logger = new LoggerConfiguration()
@@ -39,6 +42,31 @@ try
     // 配置并注册 EF Core DbContext
     builder.Services.AddDbContext<AppDbContext>(options =>
         options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
+
+    // 添加并配置 ASP.NET Core Identity
+    builder.Services.AddIdentity<ApplicationUser, IdentityRole>()
+        .AddEntityFrameworkStores<AppDbContext>()
+        .AddDefaultTokenProviders();
+
+    // 添加JWT认证
+    builder.Services.AddAuthentication(options =>
+    {
+        options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+        options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+    })
+    .AddJwtBearer(options =>
+    {
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuer = true,
+            ValidateAudience = true,
+            ValidateLifetime = true,
+            ValidateIssuerSigningKey = true,
+            ValidIssuer = builder.Configuration["Jwt:Issuer"],
+            ValidAudience = builder.Configuration["Jwt:Audience"],
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]))
+        };
+    });
 
     // 注册 HttpClient
     builder.Services.AddHttpClient();
@@ -81,7 +109,7 @@ try
     var app = builder.Build();
 
     // 5. 初始化数据库和种子数据
-    InitializeDatabase(app);
+    await InitializeDatabaseAsync(app);
 
     // 6. 配置 HTTP 请求处理管道
 
@@ -98,6 +126,9 @@ try
     }
 
     app.UseHttpsRedirection();
+
+    app.UseAuthentication();
+    app.UseAuthorization();
 
     // 全局异常处理中间件
     app.UseExceptionHandler("/error");
@@ -146,7 +177,7 @@ finally
 /// 初始化数据库：如果不存在则创建，并应用所有挂起的迁移。
 /// 然后，如果数据库是空的，则填充种子数据。
 /// </summary>
-void InitializeDatabase(IHost app)
+async Task InitializeDatabaseAsync(IHost app)
 {
     using var scope = app.Services.CreateScope();
     var services = scope.ServiceProvider;
@@ -156,11 +187,12 @@ void InitializeDatabase(IHost app)
     try
     {
         logger.LogInformation("正在检查并应用数据库迁移...");
-        dbContext.Database.Migrate();
+        await dbContext.Database.MigrateAsync();
         logger.LogInformation("数据库迁移完成。");
 
         logger.LogInformation("正在检查是否需要填充种子数据...");
-        if (!dbContext.Categories.Any())
+        await SeedIdentityDataAsync(services);
+        if (!await dbContext.Categories.AnyAsync())
         {
             logger.LogInformation("数据库为空，开始填充种子数据。");
 
@@ -169,7 +201,7 @@ void InitializeDatabase(IHost app)
             var homeAndKitchen = new Category { Name = "Home & Kitchen", AmazonCategoryId = "1055398" };
 
             dbContext.Categories.AddRange(electronics, books, homeAndKitchen);
-            dbContext.SaveChanges(); // 先保存分类以获取ID
+            await dbContext.SaveChangesAsync(); // 先保存分类以获取ID
 
             dbContext.Products.AddRange(
                 new Product { Id = "B0863FR3S9", Title = "Echo Dot (4th Gen) | Smart speaker with Alexa", Brand = "Amazon", CategoryId = electronics.Id, ListingDate = new DateTime(2020, 10, 22) },
@@ -178,7 +210,7 @@ void InitializeDatabase(IHost app)
                 new Product { Id = "B07Y8B6B7X", Title = "Instant Pot Duo 7-in-1 Electric Pressure Cooker, 6 Quart", Brand = "Instant Pot", CategoryId = homeAndKitchen.Id, ListingDate = new DateTime(2017, 10, 4) }
             );
 
-            dbContext.SaveChanges();
+            await dbContext.SaveChangesAsync();
             logger.LogInformation("种子数据填充成功。");
         }
         else
@@ -189,6 +221,61 @@ void InitializeDatabase(IHost app)
     catch (Exception ex)
     {
         logger.LogError(ex, "在初始化数据库或填充种子数据时发生错误。");
+    }
+}
+
+/// <summary>
+/// 检查并创建管理员角色和用户
+/// </summary>
+async Task SeedIdentityDataAsync(IServiceProvider services)
+{
+    var userManager = services.GetRequiredService<UserManager<ApplicationUser>>();
+    var roleManager = services.GetRequiredService<RoleManager<IdentityRole>>();
+    var logger = services.GetRequiredService<ILogger<Program>>();
+
+    try
+    {
+        logger.LogInformation("开始检查并填充 Identity 种子数据...");
+
+        // 1. 创建角色
+        string adminRoleName = "Admin";
+        if (!await roleManager.RoleExistsAsync(adminRoleName))
+        {
+            await roleManager.CreateAsync(new IdentityRole(adminRoleName));
+            logger.LogInformation("成功创建角色: {RoleName}", adminRoleName);
+        }
+
+        // 2. 创建管理员用户
+        string adminUserName = "admin";
+        var adminUser = await userManager.FindByNameAsync(adminUserName);
+        if (adminUser == null)
+        {
+            adminUser = new ApplicationUser { UserName = adminUserName, Email = "admin@example.com", EmailConfirmed = true };
+            var result = await userManager.CreateAsync(adminUser, "123456");
+            if (result.Succeeded)
+            {
+                logger.LogInformation("成功创建管理员用户: {UserName}", adminUserName);
+                await userManager.AddToRoleAsync(adminUser, adminRoleName);
+                logger.LogInformation("已将用户 {UserName} 添加到角色 {RoleName}", adminUserName, adminRoleName);
+            }
+            else
+            {
+                foreach (var error in result.Errors)
+                {
+                    logger.LogError("创建用户 {UserName} 失败: {Error}", adminUserName, error.Description);
+                }
+            }
+        }
+        else
+        {
+            logger.LogInformation("管理员用户 {UserName} 已存在，无需创建。", adminUserName);
+        }
+        
+        logger.LogInformation("Identity 种子数据检查和填充完成。");
+    }
+    catch (Exception ex)
+    {
+        logger.LogError(ex, "填充 Identity 种子数据时发生错误。");
     }
 }
 
@@ -261,4 +348,3 @@ void ScheduleRecurringJobs(IServiceProvider services)
         logger.LogError(ex, "调度后台任务时发生错误。");
     }
 }
-
