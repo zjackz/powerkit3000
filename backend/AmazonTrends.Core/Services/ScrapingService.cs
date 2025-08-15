@@ -192,93 +192,77 @@ public class ScrapingService
 
     private string ExtractAsin(HtmlNode productNode)
     {
+        // ASIN is often in the 'data-asin' attribute of a parent div
+        var parentWithAsin = productNode.SelectSingleNode("./div[@data-asin]");
+        string? asin = parentWithAsin?.GetAttributeValue("data-asin", "").Trim();
+        if (!string.IsNullOrEmpty(asin))
+        {
+            return asin;
+        }
+
+        // Fallback: check the link's href
         var linkNode = productNode.SelectSingleNode(".//a[contains(@class, 'a-link-normal')]");
         string? href = linkNode?.GetAttributeValue("href", "");
         if (string.IsNullOrEmpty(href)) return string.Empty;
 
-        // ASIN 通常是 URL 中的 /dp/ 之后的部分
         var match = Regex.Match(href, @"/dp/([A-Z0-9]{10})");
         return match.Success ? match.Groups[1].Value : string.Empty;
     }
 
     private string ExtractTitle(HtmlNode productNode)
     {
-        // 亚马逊的标题 class 经常变化，但通常包含 'p13n-sc-css-line-clamp'
+        // The title is usually within a specific div with a clamp class
         var titleNode = productNode.SelectSingleNode(".//div[contains(@class, '_cDEzb_p13n-sc-css-line-clamp-')]");
         if (titleNode == null)
         {
-            // 备用选择器
-            titleNode = productNode.SelectSingleNode(".//a/span/div");
+            // Fallback for other possible title structures
+            titleNode = productNode.SelectSingleNode(".//a/span/div[contains(@class, 'p13n-sc-truncate')]");
         }
-        return titleNode != null ? WebUtility.HtmlDecode(titleNode.InnerText.Trim()) : "未知标题";
+        return titleNode != null ? WebUtility.HtmlDecode(titleNode.InnerText.Trim()) : "Unknown Title";
     }
 
     private int ExtractRank(HtmlNode productNode)
     {
-        // 尝试匹配排名文本，例如 "#1"
         var rankNode = productNode.SelectSingleNode(".//span[contains(@class, 'zg-bdg-text')]");
-        if (rankNode == null)
-        {
-            // 备用选择器，有时排名可能在其他位置，例如直接在列表项的某个 div 中
-            rankNode = productNode.SelectSingleNode(".//span[contains(@class, 'a-list-item')]//span[contains(@class, 'a-text-bold')]");
-        }
-
         string rankText = rankNode?.InnerText.Trim() ?? "";
         if (string.IsNullOrEmpty(rankText))
         {
-            _logger.LogWarning("未能从产品节点中提取排名文本。");
             return 0;
         }
 
-        // 移除 "#" 符号并尝试解析
         rankText = rankText.Replace("#", "").Trim();
         if (int.TryParse(rankText, out int rank))
         {
             return rank;
         }
-        _logger.LogWarning("无法将排名文本 '{RankText}' 解析为整数。", rankText);
         return 0;
     }
 
     private decimal ExtractPrice(HtmlNode productNode)
     {
-        // 价格通常在 class 包含 'a-color-price' 的 span 中
-        var priceNode = productNode.SelectSingleNode(".//span[contains(@class, 'a-color-price')]");
+        var priceNode = productNode.SelectSingleNode(".//span[contains(@class, '_cDEzb_p13n-sc-price_')]");
         if (priceNode == null)
         {
-            // 备用选择器，有时价格在另一个结构里
-            priceNode = productNode.SelectSingleNode(".//span[contains(@class, '_cDEzb_p13n-sc-price_')]");
+            // Fallback for price, sometimes it's in a different span structure
+            priceNode = productNode.SelectSingleNode(".//span[contains(@class, 'a-color-price')]");
         }
-        if (priceNode == null)
-        {
-            _logger.LogWarning("未能从产品节点中提取价格节点。");
-            return 0.00m;
-        }
+        if (priceNode == null) return 0.00m;
 
         string priceText = priceNode.InnerText.Trim();
-        
-        // 移除货币符号和逗号，然后解析
         priceText = Regex.Replace(priceText, @"[$,]", "");
-        if (decimal.TryParse(priceText, NumberStyles.Currency, CultureInfo.GetCultureInfo("en-US"), out decimal price))
+        if (decimal.TryParse(priceText, NumberStyles.Any, CultureInfo.InvariantCulture, out decimal price))
         {
             return price;
         }
-        _logger.LogWarning("无法将价格文本 '{PriceText}' 解析为 decimal。", priceText);
         return 0.00m;
     }
 
     private float ExtractRating(HtmlNode productNode)
     {
         var ratingNode = productNode.SelectSingleNode(".//span[contains(@class, 'a-icon-alt')]");
-        if (ratingNode == null)
-        {
-            _logger.LogWarning("未能从产品节点中提取评分节点。");
-            return 0.0f;
-        }
+        if (ratingNode == null) return 0.0f;
 
         string ratingText = ratingNode.InnerText.Trim();
-        
-        // 正则表达式匹配 "4.5 out of 5 stars" 中的 "4.5"
         var match = Regex.Match(ratingText, @"^(\d+(\.\d+)?)");
         if (match.Success)
         {
@@ -286,37 +270,22 @@ public class ScrapingService
             {
                 return rating;
             }
-            _logger.LogWarning("无法将评分文本 '{RatingText}' 解析为 float。", match.Groups[1].Value);
-        }
-        else
-        {
-            _logger.LogWarning("评分文本 '{RatingText}' 不符合预期格式。", ratingText);
         }
         return 0.0f;
     }
 
     private int ExtractReviewsCount(HtmlNode productNode)
     {
-        // 评论数通常在链接的 span 中
-        var reviewsNode = productNode.SelectSingleNode(".//a[contains(@href, 'customerReviews')]//span[@class='a-size-small']");
-        if (reviewsNode == null)
-        {
-             reviewsNode = productNode.SelectSingleNode(".//span[contains(@class, 'a-size-small')]");
-        }
-        if (reviewsNode == null)
-        {
-            _logger.LogWarning("未能从产品节点中提取评论数节点。");
-            return 0;
-        }
+        // Reviews count is usually in a span next to the rating stars
+        var reviewsNode = productNode.SelectSingleNode(".//span[contains(@class, 'a-size-small')]");
+        if (reviewsNode == null) return 0;
 
         string reviewsText = reviewsNode.InnerText.Trim();
-        // 移除逗号并尝试解析
         reviewsText = reviewsText.Replace(",", "");
-        if (int.TryParse(reviewsText, out int reviewsCount))
+        if (int.TryParse(reviewsText, NumberStyles.Any, CultureInfo.InvariantCulture, out int reviewsCount))
         {
             return reviewsCount;
         }
-        _logger.LogWarning("无法将评论数文本 '{ReviewsText}' 解析为整数。", reviewsText);
         return 0;
     }
 
