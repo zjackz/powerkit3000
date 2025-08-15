@@ -205,7 +205,7 @@ async Task InitializeDatabaseAsync(IHost app)
 
             dbContext.Products.AddRange(
                 new Product { Id = "B0863FR3S9", Title = "Echo Dot (4th Gen) | Smart speaker with Alexa", Brand = "Amazon", CategoryId = electronics.Id, ListingDate = new DateTime(2020, 10, 22) },
-                new Product { Id = "B07WCS3G78", Title = "Kindle Paperwhite (8 GB) – Now with a 6.8" display and adjustable warm light", Brand = "Amazon", CategoryId = electronics.Id, ListingDate = new DateTime(2021, 10, 27) },
+                new Product { Id = "B07WCS3G78", Title = "Kindle Paperwhite (8 GB) – Now with a 6.8\" display and adjustable warm light", Brand = "Amazon", CategoryId = electronics.Id, ListingDate = new DateTime(2021, 10, 27) },
                 new Product { Id = "B08P3QVFMK", Title = "Atomic Habits: An Easy & Proven Way to Build Good Habits & Break Bad Ones", Brand = "James Clear", CategoryId = books.Id, ListingDate = new DateTime(2018, 10, 16) },
                 new Product { Id = "B07Y8B6B7X", Title = "Instant Pot Duo 7-in-1 Electric Pressure Cooker, 6 Quart", Brand = "Instant Pot", CategoryId = homeAndKitchen.Id, ListingDate = new DateTime(2017, 10, 4) }
             );
@@ -289,7 +289,7 @@ void ScheduleRecurringJobs(IServiceProvider services)
     using var scope = services.CreateScope();
     var recurringJobManager = scope.ServiceProvider.GetRequiredService<IRecurringJobManager>();
     var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-    var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
+    var logger = services.GetRequiredService<ILogger<Program>>();
 
     try
     {

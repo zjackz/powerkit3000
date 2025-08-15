@@ -32,13 +32,13 @@ public class AppDbContext : IdentityDbContext<ApplicationUser>
         // ----- 配置关系 -----
 
         // Identity apec-related configurations, if any, should be called after base.OnModelCreating(builder);
-        modelBuilder.Entity<ApplicationUser>().ToTable("Users", "security");
-        modelBuilder.Entity<IdentityRole>().ToTable("Roles", "security");
-        modelBuilder.Entity<IdentityUserRole<string>>().ToTable("UserRoles", "security");
-        modelBuilder.Entity<IdentityUserClaim<string>>().ToTable("UserClaims", "security");
-        modelBuilder.Entity<IdentityUserLogin<string>>().ToTable("UserLogins", "security");
-        modelBuilder.Entity<IdentityRoleClaim<string>>().ToTable("RoleClaims", "security");
-        modelBuilder.Entity<IdentityUserToken<string>>().ToTable("UserTokens", "security");
+        // modelBuilder.Entity<ApplicationUser>().ToTable("Users", "security");
+        // modelBuilder.Entity<IdentityRole>().ToTable("Roles", "security");
+        // modelBuilder.Entity<IdentityUserRole<string>>().ToTable("UserRoles", "security");
+        // modelBuilder.Entity<IdentityUserClaim<string>>().ToTable("UserClaims", "security");
+        // modelBuilder.Entity<IdentityUserLogin<string>>().ToTable("UserLogins", "security");
+        // modelBuilder.Entity<IdentityRoleClaim<string>>().ToTable("RoleClaims", "security");
+        // modelBuilder.Entity<IdentityUserToken<string>>().ToTable("UserTokens", "security");
 
         // 配置 Category 的父子自引用关系
         modelBuilder.Entity<Category>()

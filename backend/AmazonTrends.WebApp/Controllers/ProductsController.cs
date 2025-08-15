@@ -57,47 +57,65 @@ public class ProductsController : ControllerBase
     }
 
     /// <summary>
-    /// 获取所有产品及其最新的数据点。
+    /// 获取产品列表，支持按分类和关键词进行筛选。
     /// </summary>
     [HttpGet]
-    public async Task<IActionResult> GetProducts()
+    public async Task<IActionResult> GetProducts([FromQuery] int? categoryId = null, [FromQuery] string? searchTerm = null)
     {
-        _logger.LogInformation("获取所有产品及其最新数据点。");
+        _logger.LogInformation("获取产品列表，分类ID: {CategoryId}，搜索词: {SearchTerm}。", categoryId, searchTerm);
 
-        string cacheKey = "AllProductsWithLatestData";
-        string? cachedProductsJson = await _cache.GetStringAsync(cacheKey);
+        // 只有在没有筛选条件时才使用缓存
+        bool useCache = !categoryId.HasValue && string.IsNullOrEmpty(searchTerm);
+        string cacheKey = $"Products_Category_{categoryId}_Search_{searchTerm}";
 
-        List<ProductDto>? productsWithLatestData;
-
-        if (!string.IsNullOrEmpty(cachedProductsJson))
+        if (useCache)
         {
-            _logger.LogInformation("从缓存中获取产品数据。");
-            productsWithLatestData = JsonSerializer.Deserialize<List<ProductDto>>(cachedProductsJson);
+            string? cachedProductsJson = await _cache.GetStringAsync(cacheKey);
+            if (!string.IsNullOrEmpty(cachedProductsJson))
+            {
+                _logger.LogInformation("从缓存中获取产品数据。");
+                var cachedProducts = JsonSerializer.Deserialize<List<ProductDto>>(cachedProductsJson);
+                return Ok(cachedProducts);
+            }
         }
-        else
-        {
-            _logger.LogInformation("从数据库中获取产品数据并写入缓存。");
-            productsWithLatestData = await _dbContext.Products
-                .Include(p => p.Category)
-                .Select(p => new {
-                    Product = p,
-                    LatestDataPoint = p.DataPoints.OrderByDescending(dp => dp.Timestamp).FirstOrDefault()
-                })
-                .Select(x => new ProductDto
-                {
-                    Id = x.Product.Id,
-                    Title = x.Product.Title,
-                    CategoryName = x.Product.Category.Name,
-                    ListingDate = x.Product.ListingDate ?? default,
-                    LatestRank = x.LatestDataPoint != null ? x.LatestDataPoint.Rank : null,
-                    LatestPrice = x.LatestDataPoint != null ? x.LatestDataPoint.Price : null,
-                    LatestRating = x.LatestDataPoint != null ? x.LatestDataPoint.Rating : null,
-                    LatestReviewsCount = x.LatestDataPoint != null ? x.LatestDataPoint.ReviewsCount : null,
-                    LastUpdated = x.LatestDataPoint != null ? x.LatestDataPoint.Timestamp : null
-                })
-                .ToListAsync();
 
-            // 设置缓存，过期时间为 5 分钟
+        _logger.LogInformation("从数据库中查询产品数据。");
+        var query = _dbContext.Products.AsQueryable();
+
+        if (categoryId.HasValue)
+        {
+            query = query.Where(p => p.CategoryId == categoryId.Value);
+        }
+
+        if (!string.IsNullOrEmpty(searchTerm))
+        {
+            query = query.Where(p => p.Title.Contains(searchTerm) || p.Id.Contains(searchTerm));
+        }
+
+        var productsWithLatestData = await query
+            .Include(p => p.Category)
+            .Select(p => new {
+                Product = p,
+                LatestDataPoint = p.DataPoints.OrderByDescending(dp => dp.Timestamp).FirstOrDefault()
+            })
+            .Select(x => new ProductDto
+            {
+                Id = x.Product.Id,
+                Title = x.Product.Title,
+                CategoryName = x.Product.Category.Name,
+                ListingDate = x.Product.ListingDate ?? default,
+                LatestRank = x.LatestDataPoint != null ? x.LatestDataPoint.Rank : null,
+                LatestPrice = x.LatestDataPoint != null ? x.LatestDataPoint.Price : null,
+                LatestRating = x.LatestDataPoint != null ? x.LatestDataPoint.Rating : null,
+                LatestReviewsCount = x.LatestDataPoint != null ? x.LatestDataPoint.ReviewsCount : null,
+                LastUpdated = x.LatestDataPoint != null ? x.LatestDataPoint.Timestamp : null
+            })
+            .ToListAsync();
+
+        // 只有在没有筛选条件时才写入缓存
+        if (useCache)
+        {
+            _logger.LogInformation("将产品数据写入缓存。");
             var options = new DistributedCacheEntryOptions()
                 .SetAbsoluteExpiration(TimeSpan.FromMinutes(5));
             await _cache.SetStringAsync(cacheKey, JsonSerializer.Serialize(productsWithLatestData), options);

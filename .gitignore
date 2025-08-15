@@ -13,6 +13,10 @@ node_modules/
 dist/
 build/
 logs/
+run.log
+
+
+
 
 # .NET build artifacts
 bin/
