@@ -1,0 +1,156 @@
+{
+  "Version": 1,
+  "WorkspaceRootPath": "C:\\Users\\Administrator\\source\\repos\\zjackz\\amazon-trends-dashboard\\",
+  "Documents": [
+    {
+      "AbsoluteMoniker": "D:0:0:{02EA681E-C7D8-13C7-8484-4AC65E1B71E8}|Document{02EA681E-C7D8-13C7-8484-4AC65E1B71E8}|C:\\Users\\Administrator\\source\\repos\\zjackz\\amazon-trends-dashboard\\GEMINI.md||{24510B54-A648-4D69-A6C5-F68CBDF07546}",
+      "RelativeMoniker": "D:0:0:{02EA681E-C7D8-13C7-8484-4AC65E1B71E8}|Document{02EA681E-C7D8-13C7-8484-4AC65E1B71E8}|solutionrelative:GEMINI.md||{24510B54-A648-4D69-A6C5-F68CBDF07546}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{02EA681E-C7D8-13C7-8484-4AC65E1B71E8}|Document{02EA681E-C7D8-13C7-8484-4AC65E1B71E8}|C:\\Users\\Administrator\\source\\repos\\zjackz\\amazon-trends-dashboard\\README.md||{24510B54-A648-4D69-A6C5-F68CBDF07546}",
+      "RelativeMoniker": "D:0:0:{02EA681E-C7D8-13C7-8484-4AC65E1B71E8}|Document{02EA681E-C7D8-13C7-8484-4AC65E1B71E8}|solutionrelative:README.md||{24510B54-A648-4D69-A6C5-F68CBDF07546}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{02EA681E-C7D8-13C7-8484-4AC65E1B71E8}|Document{02EA681E-C7D8-13C7-8484-4AC65E1B71E8}|C:\\Users\\Administrator\\source\\repos\\zjackz\\amazon-trends-dashboard\\docs\\\u9700\u6C42\u6587\u6863.md||{24510B54-A648-4D69-A6C5-F68CBDF07546}",
+      "RelativeMoniker": "D:0:0:{02EA681E-C7D8-13C7-8484-4AC65E1B71E8}|Document{02EA681E-C7D8-13C7-8484-4AC65E1B71E8}|solutionrelative:docs\\\u9700\u6C42\u6587\u6863.md||{24510B54-A648-4D69-A6C5-F68CBDF07546}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{02EA681E-C7D8-13C7-8484-4AC65E1B71E8}|Document{02EA681E-C7D8-13C7-8484-4AC65E1B71E8}|C:\\Users\\Administrator\\source\\repos\\zjackz\\amazon-trends-dashboard\\docs\\TODO.md||{24510B54-A648-4D69-A6C5-F68CBDF07546}",
+      "RelativeMoniker": "D:0:0:{02EA681E-C7D8-13C7-8484-4AC65E1B71E8}|Document{02EA681E-C7D8-13C7-8484-4AC65E1B71E8}|solutionrelative:docs\\TODO.md||{24510B54-A648-4D69-A6C5-F68CBDF07546}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{02EA681E-C7D8-13C7-8484-4AC65E1B71E8}|Document{02EA681E-C7D8-13C7-8484-4AC65E1B71E8}|C:\\Users\\Administrator\\source\\repos\\zjackz\\amazon-trends-dashboard\\run.log||{8B382828-6202-11D1-8870-0000F87579D2}",
+      "RelativeMoniker": "D:0:0:{02EA681E-C7D8-13C7-8484-4AC65E1B71E8}|Document{02EA681E-C7D8-13C7-8484-4AC65E1B71E8}|solutionrelative:run.log||{8B382828-6202-11D1-8870-0000F87579D2}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{02EA681E-C7D8-13C7-8484-4AC65E1B71E8}|Document{02EA681E-C7D8-13C7-8484-4AC65E1B71E8}|C:\\Users\\Administrator\\source\\repos\\zjackz\\amazon-trends-dashboard\\docs\\\u8FDB\u5EA6.md||{24510B54-A648-4D69-A6C5-F68CBDF07546}",
+      "RelativeMoniker": "D:0:0:{02EA681E-C7D8-13C7-8484-4AC65E1B71E8}|Document{02EA681E-C7D8-13C7-8484-4AC65E1B71E8}|solutionrelative:docs\\\u8FDB\u5EA6.md||{24510B54-A648-4D69-A6C5-F68CBDF07546}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{02EA681E-C7D8-13C7-8484-4AC65E1B71E8}|Document{02EA681E-C7D8-13C7-8484-4AC65E1B71E8}|C:\\Users\\Administrator\\source\\repos\\zjackz\\amazon-trends-dashboard\\docs\\\u6280\u672F\u65B9\u6848.md||{24510B54-A648-4D69-A6C5-F68CBDF07546}",
+      "RelativeMoniker": "D:0:0:{02EA681E-C7D8-13C7-8484-4AC65E1B71E8}|Document{02EA681E-C7D8-13C7-8484-4AC65E1B71E8}|solutionrelative:docs\\\u6280\u672F\u65B9\u6848.md||{24510B54-A648-4D69-A6C5-F68CBDF07546}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{8D105E8C-8D6F-49AF-A597-C53E80F6E696}|backend\\AmazonTrends.WebApp\\AmazonTrends.WebApp.csproj|c:\\users\\administrator\\source\\repos\\zjackz\\amazon-trends-dashboard\\backend\\amazontrends.webapp\\amazontrends.webapp.csproj||{FA3CD31E-987B-443A-9B81-186104E8DAC1}|",
+      "RelativeMoniker": "D:0:0:{8D105E8C-8D6F-49AF-A597-C53E80F6E696}|backend\\AmazonTrends.WebApp\\AmazonTrends.WebApp.csproj|solutionrelative:backend\\amazontrends.webapp\\amazontrends.webapp.csproj||{FA3CD31E-987B-443A-9B81-186104E8DAC1}|"
+    }
+  ],
+  "DocumentGroupContainers": [
+    {
+      "Orientation": 0,
+      "VerticalTabListWidth": 256,
+      "DocumentGroups": [
+        {
+          "DockedWidth": 200,
+          "SelectedChildIndex": 0,
+          "Children": [
+            {
+              "$type": "Document",
+              "DocumentIndex": 0,
+              "Title": "GEMINI.md",
+              "DocumentMoniker": "C:\\Users\\Administrator\\source\\repos\\zjackz\\amazon-trends-dashboard\\GEMINI.md",
+              "RelativeDocumentMoniker": "GEMINI.md",
+              "ToolTip": "C:\\Users\\Administrator\\source\\repos\\zjackz\\amazon-trends-dashboard\\GEMINI.md",
+              "RelativeToolTip": "GEMINI.md",
+              "ViewState": "AgIAAEgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001818|",
+              "WhenOpened": "2025-08-15T11:14:10.142Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 1,
+              "Title": "README.md",
+              "DocumentMoniker": "C:\\Users\\Administrator\\source\\repos\\zjackz\\amazon-trends-dashboard\\README.md",
+              "RelativeDocumentMoniker": "README.md",
+              "ToolTip": "C:\\Users\\Administrator\\source\\repos\\zjackz\\amazon-trends-dashboard\\README.md",
+              "RelativeToolTip": "README.md",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001818|",
+              "WhenOpened": "2025-08-15T11:13:52.951Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 4,
+              "Title": "run.log",
+              "DocumentMoniker": "C:\\Users\\Administrator\\source\\repos\\zjackz\\amazon-trends-dashboard\\run.log",
+              "RelativeDocumentMoniker": "run.log",
+              "ToolTip": "C:\\Users\\Administrator\\source\\repos\\zjackz\\amazon-trends-dashboard\\run.log",
+              "RelativeToolTip": "run.log",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001001|",
+              "WhenOpened": "2025-08-15T11:13:10.878Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 3,
+              "Title": "TODO.md",
+              "DocumentMoniker": "C:\\Users\\Administrator\\source\\repos\\zjackz\\amazon-trends-dashboard\\docs\\TODO.md",
+              "RelativeDocumentMoniker": "docs\\TODO.md",
+              "ToolTip": "C:\\Users\\Administrator\\source\\repos\\zjackz\\amazon-trends-dashboard\\docs\\TODO.md",
+              "RelativeToolTip": "docs\\TODO.md",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001818|",
+              "WhenOpened": "2025-08-15T11:13:08.35Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 6,
+              "Title": "\u6280\u672F\u65B9\u6848.md",
+              "DocumentMoniker": "C:\\Users\\Administrator\\source\\repos\\zjackz\\amazon-trends-dashboard\\docs\\\u6280\u672F\u65B9\u6848.md",
+              "RelativeDocumentMoniker": "docs\\\u6280\u672F\u65B9\u6848.md",
+              "ToolTip": "C:\\Users\\Administrator\\source\\repos\\zjackz\\amazon-trends-dashboard\\docs\\\u6280\u672F\u65B9\u6848.md",
+              "RelativeToolTip": "docs\\\u6280\u672F\u65B9\u6848.md",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001818|",
+              "WhenOpened": "2025-08-15T11:12:46.606Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 5,
+              "Title": "\u8FDB\u5EA6.md",
+              "DocumentMoniker": "C:\\Users\\Administrator\\source\\repos\\zjackz\\amazon-trends-dashboard\\docs\\\u8FDB\u5EA6.md",
+              "RelativeDocumentMoniker": "docs\\\u8FDB\u5EA6.md",
+              "ToolTip": "C:\\Users\\Administrator\\source\\repos\\zjackz\\amazon-trends-dashboard\\docs\\\u8FDB\u5EA6.md",
+              "RelativeToolTip": "docs\\\u8FDB\u5EA6.md",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001818|",
+              "WhenOpened": "2025-08-15T11:12:44.31Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 2,
+              "Title": "\u9700\u6C42\u6587\u6863.md",
+              "DocumentMoniker": "C:\\Users\\Administrator\\source\\repos\\zjackz\\amazon-trends-dashboard\\docs\\\u9700\u6C42\u6587\u6863.md",
+              "RelativeDocumentMoniker": "docs\\\u9700\u6C42\u6587\u6863.md",
+              "ToolTip": "C:\\Users\\Administrator\\source\\repos\\zjackz\\amazon-trends-dashboard\\docs\\\u9700\u6C42\u6587\u6863.md",
+              "RelativeToolTip": "docs\\\u9700\u6C42\u6587\u6863.md",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001818|",
+              "WhenOpened": "2025-08-15T11:12:27.907Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 7,
+              "Title": "AmazonTrends.WebApp",
+              "DocumentMoniker": "C:\\Users\\Administrator\\source\\repos\\zjackz\\amazon-trends-dashboard\\backend\\AmazonTrends.WebApp\\AmazonTrends.WebApp.csproj",
+              "RelativeDocumentMoniker": "backend\\AmazonTrends.WebApp\\AmazonTrends.WebApp.csproj",
+              "ToolTip": "C:\\Users\\Administrator\\source\\repos\\zjackz\\amazon-trends-dashboard\\backend\\AmazonTrends.WebApp\\AmazonTrends.WebApp.csproj",
+              "RelativeToolTip": "backend\\AmazonTrends.WebApp\\AmazonTrends.WebApp.csproj",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000758|",
+              "WhenOpened": "2025-08-15T11:12:18.048Z",
+              "EditorCaption": ""
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
