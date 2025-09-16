@@ -1,21 +1,9 @@
-// src/app/page.tsx
-import Dashboard from './components/Dashboard';
-
 export default function Home() {
   return (
-    <div className="min-h-screen bg-gray-50 text-gray-800">
-      <header className="bg-white shadow-sm">
-        <div className="max-w-7xl mx-auto py-4 px-4 sm:px-6 lg:px-8">
-          <h1 className="text-2xl font-bold leading-tight text-gray-900">
-            Amazon Trends Dashboard
-          </h1>
-        </div>
-      </header>
-      <main>
-        <div className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
-          <Dashboard />
-        </div>
-      </main>
-    </div>
+    <main className="flex min-h-screen flex-col items-center justify-center p-24">
+      <div className="z-10 w-full max-w-5xl items-center justify-between font-mono text-sm lg:flex">
+        <h1 className="text-4xl font-bold">Hello, World!</h1>
+      </div>
+    </main>
   );
 }
