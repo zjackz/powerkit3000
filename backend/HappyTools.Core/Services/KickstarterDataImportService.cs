@@ -64,7 +64,7 @@ namespace HappyTools.Core.Services
                         CreatedAt = DateTimeOffset.FromUnixTimeSeconds(data.GetProperty("created_at").GetInt64()).UtcDateTime,
                         LaunchedAt = DateTimeOffset.FromUnixTimeSeconds(data.GetProperty("launched_at").GetInt64()).UtcDateTime,
                         BackersCount = data.GetProperty("backers_count").GetInt32(),
-                        UsdPledged = decimal.Parse(data.GetProperty("usd_pledged").GetString()),
+                        UsdPledged = decimal.TryParse(data.GetProperty("usd_pledged").GetString(), out var usdPledged) ? usdPledged : 0,
                         Photo = data.GetProperty("photo").GetRawText(),
                         Urls = data.GetProperty("urls").GetRawText(),
                         StateChangedAt = DateTimeOffset.FromUnixTimeSeconds(data.GetProperty("state_changed_at").GetInt64()).UtcDateTime,

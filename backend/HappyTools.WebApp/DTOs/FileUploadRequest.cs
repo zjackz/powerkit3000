@@ -4,6 +4,6 @@ namespace HappyTools.WebApp.DTOs
 {
     public class FileUploadRequest
     {
-        public IFormFile File { get; set; }
+        public IFormFile? File { get; set; }
     }
 }

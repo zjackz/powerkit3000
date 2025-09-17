@@ -79,7 +79,7 @@ namespace HappyTools.WebApp.Controllers
 
                 if (!string.IsNullOrWhiteSpace(queryDto.CategoryName))
                 {
-                    query = query.Where(p => p.Category != null && p.Category.Name.Contains(queryDto.CategoryName));
+                    query = query.Where(p => p.Category != null && p.Category.Name != null && p.Category.Name.Contains(queryDto.CategoryName));
                 }
 
                 if (!string.IsNullOrWhiteSpace(queryDto.ProjectName))
