@@ -7,8 +7,9 @@ NC='\033[0m' # No Color
 # 设置脚本在任何命令失败时退出
 set -e
 
-echo -e "${GREEN}Starting services with Docker Compose...${NC}"
-# 使用 docker-compose 启动所有服务
-docker compose up --build
+echo -e "${GREEN}Starting frontend development server...${NC}"
 
-echo -e "\n${GREEN}Services stopped.${NC}"
+# Navigate to the frontend directory and run the application
+(cd frontend && npm install && npm run dev)
+
+echo -e "\n${GREEN}Frontend development server stopped.${NC}"

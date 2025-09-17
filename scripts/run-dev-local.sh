@@ -12,7 +12,7 @@ trap cleanup EXIT
 
 # Start backend
 echo "Starting backend..."
-(cd backend/AmazonTrends.WebApp && dotnet run) &
+(cd backend/HappyTools.WebApp && dotnet run) &
 
 # Start frontend
 echo "Starting frontend..."

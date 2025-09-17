@@ -1,9 +1,11 @@
-##必读
+# AI 必读【重要】
 
-docs/需求文档.md
-docs/技术方案.md
-docs/进度.md
-docs/TODO.md
+以下为项目过程中的文档，AI 在开始工作前必须阅读此文档，在完成对应的修改后应该完善此文档
+
+/docs/需求文档.md
+/docs/工程进度.md
+/docs/待办事项.md
+/docs/技术方案.md
 
 
-##
+

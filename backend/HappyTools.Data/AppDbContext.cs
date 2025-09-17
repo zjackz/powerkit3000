@@ -1,6 +1,7 @@
+using HappyTools.Data.Models;
 using Microsoft.EntityFrameworkCore;
 
-namespace AmazonTrends.Data;
+namespace HappyTools.Data;
 
 /// <summary>
 /// 数据库上下文类，负责与数据库进行交互。
@@ -11,8 +12,11 @@ public class AppDbContext : DbContext
     {
     }
 
-    // 在这里定义你的数据模型
-    // public DbSet<YourModel> YourModels { get; set; }
+    public DbSet<KickstarterProject> KickstarterProjects { get; set; }
+    public DbSet<Creator> Creators { get; set; }
+    public DbSet<Category> Categories { get; set; }
+    public DbSet<Location> Locations { get; set; }
+
 
     /// <summary>
     /// 配置数据模型和它们之间的关系

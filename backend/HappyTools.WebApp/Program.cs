@@ -1,7 +1,11 @@
-
-using AmazonTrends.Data;
+using HappyTools.Core.Services;
+using HappyTools.Data;
 using Microsoft.EntityFrameworkCore;
 using Serilog;
+using System.Reflection;
+using Microsoft.OpenApi.Models;
+using System.IO;
+using HappyTools.WebApp.Filters;
 
 // 1. 配置 Serilog 日志记录器
 Log.Logger = new LoggerConfiguration()
@@ -34,52 +38,23 @@ try
     builder.Services.AddDbContext<AppDbContext>(options =>
         options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 
-    // --- 如需用户认证，请取消以下注释 ---
-    // builder.Services.AddIdentity<ApplicationUser, IdentityRole>()
-    //     .AddEntityFrameworkStores<AppDbContext>()
-    //     .AddDefaultTokenProviders();
-    // 
-    // builder.Services.AddAuthentication(options =>
-    // {
-    //     options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-    //     options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-    // })
-    // .AddJwtBearer(options =>
-    // {
-    //     options.TokenValidationParameters = new TokenValidationParameters
-    //     {
-    //         ValidateIssuer = true,
-    //         ValidateAudience = true,
-    //         ValidateLifetime = true,
-    //         ValidateIssuerSigningKey = true,
-    //         ValidIssuer = builder.Configuration["Jwt:Issuer"],
-    //         ValidAudience = builder.Configuration["Jwt:Audience"],
-    //         IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]))
-    //     };
-    // });
-
     builder.Services.AddHttpClient();
 
     // --- 在此注册你的核心业务服务 ---
-    // builder.Services.AddScoped<MyService>();
-
-    // --- 如需后台任务，请取消以下注释 ---
-    // builder.Services.AddHangfire(config => config
-    //     .SetDataCompatibilityLevel(CompatibilityLevel.Version_180)
-    //     .UseSimpleAssemblyNameTypeSerializer()
-    //     .UseRecommendedSerializerSettings()
-    //     .UseSerilogLogProvider()
-    //     .UsePostgreSqlStorage(c => c.UseNpgsqlConnection(builder.Configuration.GetConnectionString("DefaultConnection"))));
-    //
-    // builder.Services.AddHangfireServer(options =>
-    // {
-    //     options.WorkerCount = Environment.ProcessorCount * 2;
-    // });
+    builder.Services.AddScoped<KickstarterDataImportService>();
 
     builder.Services.AddEndpointsApiExplorer();
     builder.Services.AddSwaggerGen(options =>
     {
-        options.SwaggerDoc("v1", new() { Title = "My API", Version = "v1" });
+        options.SwaggerDoc("v1", new OpenApiInfo { Title = "HappyTools API", Version = "v1", Description = "HappyTools 后端 API 文档" });
+        options.OperationFilter<FileUploadOperationFilter>();
+
+        var xmlFile = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
+        var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
+        if (File.Exists(xmlPath))
+        {
+            options.IncludeXmlComments(xmlPath);
+        }
     });
 
 
@@ -98,13 +73,6 @@ try
     }
 
     app.UseHttpsRedirection();
-
-    // --- 如需用户认证，请取消以下注释 ---
-    // app.UseAuthentication();
-    // app.UseAuthorization();
-
-    // --- 如需后台任务，请取消以下注释 ---
-    // app.UseHangfireDashboard();
 
     app.MapControllers();
 

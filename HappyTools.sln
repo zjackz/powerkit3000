@@ -9,14 +9,19 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HappyTools.Core", "backend\
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HappyTools.Data", "backend\HappyTools.Data\HappyTools.Data.csproj", "{344F9F38-6107-48B0-9B8E-6EC20BFC205B}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Document", "Document", "{02EA681E-C7D8-13C7-8484-4AC65E1B71E8}"
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "docs", "docs", "{02EA681E-C7D8-13C7-8484-4AC65E1B71E8}"
 	ProjectSection(SolutionItems) = preProject
 		GEMINI.md = GEMINI.md
 		README.md = README.md
-		docs\TODO.md = docs\TODO.md
 		docs\技术方案.md = docs\技术方案.md
-		docs\进度.md = docs\进度.md
+		docs\待办事项.md = docs\待办事项.md
+		docs\工程进度.md = docs\工程进度.md
 		docs\需求文档.md = docs\需求文档.md
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "data", "data", "{9BD4B5B6-07DF-4C8D-A513-E1C7624049DD}"
+	ProjectSection(SolutionItems) = preProject
+		data\sample.json = data\sample.json
 	EndProjectSection
 EndProject
 Global
