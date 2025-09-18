@@ -18,8 +18,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\backend\PowerKit3000.Core\PowerKit3000.Core.csproj" />
-    <ProjectReference Include="..\backend\PowerKit3000.Data\PowerKit3000.Data.csproj" />
+    <ProjectReference Include="..\PowerKit3000.Core\PowerKit3000.Core.csproj" />
+    <ProjectReference Include="..\PowerKit3000.Data\PowerKit3000.Data.csproj" />
   </ItemGroup>
 
   <ItemGroup>

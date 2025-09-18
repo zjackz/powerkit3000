@@ -11,8 +11,13 @@ public class Program
 {
     public static async Task Main(string[] args)
     {
+        await RunAppAsync(args);
+    }
+
+    public static async Task RunAppAsync(string[] args, Action<IServiceCollection>? testServiceConfig = null)
+    {
         // ASCII Art Logo
-        AnsiConsole.MarkupLine(@"
+        AnsiConsole.MarkupLine(@"""
 [cyan]╔══════════════════════════════════════════════════════════════════╗[/]
 [cyan]║[/]  [yellow]____                          _  ___ _   _____  ___   ___   ___ [/] [cyan]║[/]
 [cyan]║[/] [yellow]|  _ \ _____      _____ _ __  | |/ (_) |_|___ / / _ \ / _ \ / _ \ [/] [cyan]║[/]
@@ -21,15 +26,22 @@ public class Program
 [cyan]║[/] [yellow]|_|   \___/ \_/\_/ \___|_|    |_|\_\_|_\__|____/ \___/ \___/ \___/ [/] [cyan]║[/]
 [cyan]║[/]                                                                  [cyan]║[/]
 [cyan]║[/]                   [grey]🔧[/] [white]Universal Toolkit Suite[/] [red]🚀[/]                  [cyan]║[/]
-[cyan]╚══════════════════════════════════════════════════════════════════╝[/]");
+[cyan]╚══════════════════════════════════════════════════════════════════╝[/]""");
         AnsiConsole.MarkupLine("欢迎使用 [yellow]PowerKit3000[/] CLI！");
         AnsiConsole.WriteLine("-----------------------------------");
 
         var host = Host.CreateDefaultBuilder(args)
             .ConfigureServices((context, services) =>
             {
-                services.AddDbContext<AppDbContext>(options =>
-                    options.UseNpgsql("Host=192.168.0.124;Port=5432;Database=postgres;Username=postgres;Password=123321"));
+                if (testServiceConfig == null) // Only use Npgsql if not in test mode
+                {
+                    services.AddDbContext<AppDbContext>(options =>
+                        options.UseNpgsql("Host=192.168.0.124;Port=5432;Database=postgres;Username=postgres;Password=123321"));
+                }
+                else
+                {
+                    testServiceConfig(services); // Apply test-specific service configuration
+                }
                 services.AddScoped<KickstarterDataImportService>(provider =>
                     new KickstarterDataImportService(
                         provider.GetRequiredService<AppDbContext>(),

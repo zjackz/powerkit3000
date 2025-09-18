@@ -18,10 +18,11 @@ namespace ConsoleApp.Commands
         public async Task ExecuteAsync()
         {
             Console.WriteLine("正在清空数据库。");
-            await _context.Database.ExecuteSqlRawAsync("TRUNCATE TABLE \"KickstarterProjects\" RESTART IDENTITY CASCADE;");
-            await _context.Database.ExecuteSqlRawAsync("TRUNCATE TABLE \"Creators\" RESTART IDENTITY CASCADE;");
-            await _context.Database.ExecuteSqlRawAsync("TRUNCATE TABLE \"Categories\" RESTART IDENTITY CASCADE;");
-            await _context.Database.ExecuteSqlRawAsync("TRUNCATE TABLE \"Locations\" RESTART IDENTITY CASCADE;");
+            _context.KickstarterProjects.RemoveRange(_context.KickstarterProjects);
+            _context.Creators.RemoveRange(_context.Creators);
+            _context.Categories.RemoveRange(_context.Categories);
+            _context.Locations.RemoveRange(_context.Locations);
+            await _context.SaveChangesAsync();
             Console.WriteLine("数据库清空成功。");
         }
     }

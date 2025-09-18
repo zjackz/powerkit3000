@@ -195,54 +195,36 @@ namespace PowerKit3000.Core.Services
                             };
 
                             var creatorData = data.GetProperty("creator");
-                            var creatorId = creatorData.GetProperty("id").GetInt64();
-                            var creator = _context.Creators.Find(creatorId);
-                            if (creator == null)
+                            var creator = new Creator
                             {
-                                creator = new Creator
-                                {
-                                    Id = creatorId,
-                                    Name = creatorData.GetProperty("name").GetString(),
-                                };
-                                _context.Creators.Add(creator);
-                            }
+                                Id = creatorData.GetProperty("id").GetInt64(),
+                                Name = creatorData.GetProperty("name").GetString(),
+                            };
                             project.Creator = creator;
 
                             var categoryData = data.GetProperty("category");
-                            var categoryId = categoryData.GetProperty("id").GetInt64();
-                            var category = _context.Categories.Find(categoryId);
-                            if (category == null)
+                            var category = new Category
                             {
-                                category = new Category
-                                {
-                                    Id = categoryId,
-                                    Name = categoryData.GetProperty("name").GetString(),
-                                    Slug = categoryData.GetProperty("slug").GetString(),
-                                    ParentId = categoryData.TryGetProperty("parent_id", out var parentId) ? parentId.GetInt64() : null,
-                                    ParentName = categoryData.TryGetProperty("parent_name", out var parentName) ? parentName.GetString() : null,
-                                };
-                                _context.Categories.Add(category);
-                            }
+                                Id = categoryData.GetProperty("id").GetInt64(),
+                                Name = categoryData.GetProperty("name").GetString(),
+                                Slug = categoryData.GetProperty("slug").GetString(),
+                                ParentId = categoryData.TryGetProperty("parent_id", out var parentId) ? parentId.GetInt64() : null,
+                                ParentName = categoryData.TryGetProperty("parent_name", out var parentName) ? parentName.GetString() : null,
+                            };
                             project.Category = category;
 
                             var locationData = data.GetProperty("location");
                             if (locationData.ValueKind != System.Text.Json.JsonValueKind.Null)
                             {
-                                var locationId = locationData.GetProperty("id").GetInt64();
-                                var location = _context.Locations.Find(locationId);
-                                if (location == null)
+                                var location = new Location
                                 {
-                                    location = new Location
-                                    {
-                                        Id = locationId,
-                                        Name = locationData.GetProperty("name").GetString(),
-                                        DisplayableName = locationData.GetProperty("displayable_name").GetString(),
-                                        Country = locationData.GetProperty("country").GetString(),
-                                        State = locationData.GetProperty("state").GetString(),
-                                        Type = locationData.GetProperty("type").GetString(),
-                                    };
-                                    _context.Locations.Add(location);
-                                }
+                                    Id = locationData.GetProperty("id").GetInt64(),
+                                    Name = locationData.GetProperty("name").GetString(),
+                                    DisplayableName = locationData.GetProperty("displayable_name").GetString(),
+                                    Country = locationData.GetProperty("country").GetString(),
+                                    State = locationData.GetProperty("state").GetString(),
+                                    Type = locationData.GetProperty("type").GetString(),
+                                };
                                 project.Location = location;
                             }
 
