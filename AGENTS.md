@@ -32,5 +32,5 @@
 - PRs should summarize impacted modules, list manual verification steps (`dotnet test`, `scripts/run-console.sh counts`), and note any updates under `docs/`.
 
 ## Configuration Tips
-- The CLI defaults to Postgres at `192.168.0.124`; update `Program.cs` or inject `UseNpgsql` options via environment configuration before committing.
+- The CLI defaults to Postgres at `192.168.1.120`; update `Program.cs` or inject `UseNpgsql` options via environment configuration before committing.
 - Keep credentials in user secrets or environment variables and document new setup steps for teammates.

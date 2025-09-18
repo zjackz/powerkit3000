@@ -2,6 +2,7 @@ using PowerKit3000.Core.Services;
 using PowerKit3000.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using ConsoleApp.Commands;
@@ -17,16 +18,17 @@ public class Program
     public static async Task RunAppAsync(string[] args, Action<IServiceCollection>? testServiceConfig = null)
     {
         // ASCII Art Logo
-        AnsiConsole.MarkupLine(@"""
-[cyan]╔══════════════════════════════════════════════════════════════════╗[/]
-[cyan]║[/]  [yellow]____                          _  ___ _   _____  ___   ___   ___ [/] [cyan]║[/]
+        AnsiConsole.MarkupLine("""
+[cyan]╔════════════════════════════════════════════════════════════════════╗[/]
+[cyan]║[/]  [yellow]____                          _  ___ _   _____  ___   ___   ___ [/] [cyan] ║[/]
 [cyan]║[/] [yellow]|  _ \ _____      _____ _ __  | |/ (_) |_|___ / / _ \ / _ \ / _ \ [/] [cyan]║[/]
 [cyan]║[/] [yellow]| |_) / _ \ \ /\ / / _ \ '__| | ' /| | __| |_ \| | | | | | | | | |[/] [cyan]║[/]
 [cyan]║[/] [yellow]|  __/ (_) \ V  V /  __/ |    | . \| | |_ ___) | |_| | |_| | |_| |[/] [cyan]║[/]
 [cyan]║[/] [yellow]|_|   \___/ \_/\_/ \___|_|    |_|\_\_|_\__|____/ \___/ \___/ \___/ [/] [cyan]║[/]
-[cyan]║[/]                                                                  [cyan]║[/]
-[cyan]║[/]                   [grey]🔧[/] [white]Universal Toolkit Suite[/] [red]🚀[/]                  [cyan]║[/]
-[cyan]╚══════════════════════════════════════════════════════════════════╝[/]""");
+[cyan]║[/]                                                                    [cyan]║[/]
+[cyan]║[/]                   [grey]🔧[/] [white]Universal Toolkit Suite[/] [red]🚀[/]                    [cyan]║[/]
+[cyan]╚════════════════════════════════════════════════════════════════════╝[/]
+""");
         AnsiConsole.MarkupLine("欢迎使用 [yellow]PowerKit3000[/] CLI！");
         AnsiConsole.WriteLine("-----------------------------------");
 
@@ -35,8 +37,13 @@ public class Program
             {
                 if (testServiceConfig == null) // Only use Npgsql if not in test mode
                 {
-                    services.AddDbContext<AppDbContext>(options =>
-                        options.UseNpgsql("Host=192.168.0.124;Port=5432;Database=postgres;Username=postgres;Password=123321"));
+                    var connectionString = context.Configuration.GetConnectionString("AppDb");
+                    if (string.IsNullOrWhiteSpace(connectionString))
+                    {
+                        throw new InvalidOperationException("Connection string 'AppDb' was not found. Please configure it via appsettings.json or environment variables.");
+                    }
+
+                    services.AddDbContext<AppDbContext>(options => options.UseNpgsql(connectionString));
                 }
                 else
                 {
