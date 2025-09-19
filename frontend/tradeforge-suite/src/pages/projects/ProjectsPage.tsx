@@ -103,29 +103,32 @@ export const ProjectsPage = () => {
     }));
   };
 
+  const currentItems = data?.items ?? [];
+  const totalCount = data?.total ?? 0;
+
   const stats = useMemo(() => {
-    if (!data) {
+    if (!currentItems.length) {
       return null;
     }
 
-    const fundedAverage = data.items.reduce((sum, project) => sum + project.percentFunded, 0) /
-      (data.items.length || 1);
+    const fundedAverage = currentItems.reduce((sum, project) => sum + project.percentFunded, 0) /
+      currentItems.length;
     return (
       <Space size="large">
-        <Statistic title="匹配项目" value={data.total} suffix="个" />
+        <Statistic title="匹配项目" value={totalCount} suffix="个" />
         <Statistic title="平均达成率" value={fundedAverage} suffix="%" precision={1} />
       </Space>
     );
-  }, [data]);
+  }, [currentItems, totalCount]);
 
   const handleExport = () => {
-    if (!data || data.items.length === 0) {
+    if (!currentItems.length) {
       message.info('当前无可导出的项目。');
       return;
     }
 
     const headers = ['Id', 'Name', 'Category', 'Country', 'State', 'Goal', 'Pledged', 'PercentFunded', 'Backers', 'Currency', 'LaunchedAt', 'Deadline'];
-    const rows = data.items.map((project) => [
+    const rows = currentItems.map((project) => [
       project.id,
       project.name,
       project.categoryName,
@@ -144,8 +147,12 @@ export const ProjectsPage = () => {
       .map((row) =>
         row
           .map((cell) => {
-            if (typeof cell === 'string' && cell.includes(',')) {
-              return `"${cell.replace(/"/g, '""')}"`;
+            if (cell === null || cell === undefined) {
+              return '';
+            }
+            if (typeof cell === 'string') {
+              const escaped = cell.replace(/"/g, '""');
+              return /[",\n]/.test(escaped) ? `"${escaped}"` : escaped;
             }
             return cell;
           })
@@ -187,13 +194,13 @@ export const ProjectsPage = () => {
       >
         <Table<Project>
           columns={columns}
-          dataSource={data?.items ?? []}
+          dataSource={currentItems}
           rowKey={(record) => record.id}
           loading={isFetching}
           pagination={{
             current: filters.page,
             pageSize: filters.pageSize,
-            total: data?.total ?? 0,
+            total: totalCount,
             onChange: handlePageChange,
             showSizeChanger: true,
             pageSizeOptions: PAGE_SIZE_OPTIONS.map(String),

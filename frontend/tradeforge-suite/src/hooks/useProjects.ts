@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
-import { useQuery } from '@tanstack/react-query';
-import { ProjectQueryParams } from '@/types/project';
+import { keepPreviousData, useQuery } from '@tanstack/react-query';
+import { ProjectQueryParams, ProjectQueryResponse } from '@/types/project';
 import { DEFAULT_PAGE_SIZE } from '@/constants/projectOptions';
 import { fetchProjects } from '@/services/projectsService';
 
@@ -15,10 +15,10 @@ export const useProjects = (params: ProjectQueryParams = {}) => {
     };
   }, [params]);
 
-  const queryResult = useQuery({
+  const queryResult = useQuery<ProjectQueryResponse>({
     queryKey: [PROJECTS_QUERY_KEY, normalizedParams],
     queryFn: () => fetchProjects(normalizedParams),
-    keepPreviousData: true,
+    placeholderData: keepPreviousData,
   });
 
   return queryResult;

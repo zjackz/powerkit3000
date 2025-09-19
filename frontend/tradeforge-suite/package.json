@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@ant-design/icons": "^5.3.7",
+    "@ant-design/plots": "^2.2.10",
     "@tanstack/react-query": "^5.51.10",
     "antd": "^5.19.2",
     "axios": "^1.7.7",
