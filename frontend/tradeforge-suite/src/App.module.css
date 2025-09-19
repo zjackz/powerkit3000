@@ -1,0 +1,13 @@
+.appLayout {
+  min-height: 100vh;
+}
+
+.appSider {
+  background: #0b1b32;
+  color: #f5f7fa;
+}
+
+.appContent {
+  padding: 24px;
+  background: #f7f9fc;
+}

@@ -8,8 +8,8 @@ public class GenerateDuplicateJson
 {
     public static void Main(string[] args)
     {
-        string sourceFilePath = "/home/dministrator/code/HappyTools/ConsoleApp/data/sample2_part1.json";
-        string destFilePath = "/home/dministrator/code/HappyTools/ConsoleApp/data/test_duplicate.json";
+        string sourceFilePath = "/home/dministrator/code/HappyTools/consoleapp/data/sample2_part1.json";
+        string destFilePath = "/home/dministrator/code/HappyTools/consoleapp/data/test_duplicate.json";
 
         try
         {
