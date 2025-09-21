@@ -30,7 +30,6 @@ public class Program
 [cyan]╚════════════════════════════════════════════════════════════════════╝[/]
 """);
         AnsiConsole.MarkupLine("欢迎使用 [yellow]powerkit3000[/] CLI！");
-        AnsiConsole.WriteLine("-----------------------------------");
 
         var host = Host.CreateDefaultBuilder(args)
             .UseContentRoot(AppContext.BaseDirectory)
@@ -83,7 +82,6 @@ public class Program
             else // 交互模式: REPL
             {
                 ShowCommandTable();
-                AnsiConsole.WriteLine("-----------------------------------");
 
                 while (true)
                 {
