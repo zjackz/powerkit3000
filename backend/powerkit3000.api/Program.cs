@@ -69,28 +69,59 @@ app.MapGet("/projects", async (
 
     var result = await queryService.QueryAsync(options, cancellationToken);
 
+    var items = result.Items
+        .Select(item => new ProjectListItemDto(
+            item.Id,
+            item.Name,
+            item.Blurb,
+            item.CategoryName,
+            item.Country,
+            item.State,
+            item.Goal,
+            item.Pledged,
+            item.PercentFunded,
+            item.BackersCount,
+            item.Currency,
+            item.LaunchedAt,
+            item.Deadline,
+            item.CreatorName,
+            item.LocationName
+        ))
+        .ToList();
+
+    var topProjectDto = result.Stats.TopProject is not null
+        ? new ProjectListItemDto(
+            result.Stats.TopProject.Id,
+            result.Stats.TopProject.Name,
+            result.Stats.TopProject.Blurb,
+            result.Stats.TopProject.CategoryName,
+            result.Stats.TopProject.Country,
+            result.Stats.TopProject.State,
+            result.Stats.TopProject.Goal,
+            result.Stats.TopProject.Pledged,
+            result.Stats.TopProject.PercentFunded,
+            result.Stats.TopProject.BackersCount,
+            result.Stats.TopProject.Currency,
+            result.Stats.TopProject.LaunchedAt,
+            result.Stats.TopProject.Deadline,
+            result.Stats.TopProject.CreatorName,
+            result.Stats.TopProject.LocationName
+        )
+        : null;
+
     var response = new ProjectQueryResponseDto
     {
         Total = result.TotalCount,
-        Items = result.Items
-            .Select(item => new ProjectListItemDto(
-                item.Id,
-                item.Name,
-                item.Blurb,
-                item.CategoryName,
-                item.Country,
-                item.State,
-                item.Goal,
-                item.Pledged,
-                item.PercentFunded,
-                item.BackersCount,
-                item.Currency,
-                item.LaunchedAt,
-                item.Deadline,
-                item.CreatorName,
-                item.LocationName
-            ))
-            .ToList()
+        Items = items,
+        Stats = new ProjectQueryStatsDto
+        {
+            SuccessfulCount = result.Stats.SuccessfulCount,
+            TotalPledged = result.Stats.TotalPledged,
+            AveragePercentFunded = result.Stats.AveragePercentFunded,
+            TotalBackers = result.Stats.TotalBackers,
+            AverageGoal = result.Stats.AverageGoal,
+            TopProject = topProjectDto,
+        }
     };
 
     return Results.Ok(response);
@@ -100,42 +131,57 @@ app.MapGet("/projects", async (
 
 app.MapGet("/filters", async (AppDbContext dbContext, CancellationToken cancellationToken) =>
 {
-    var states = await dbContext.KickstarterProjects
+    var stateCounts = await dbContext.KickstarterProjects
         .AsNoTracking()
-        .Select(p => p.State)
-        .Where(s => s != null && s != string.Empty)
-        .Distinct()
-        .OrderBy(s => s)
+        .Where(p => p.State != null && p.State != string.Empty)
+        .GroupBy(p => p.State!)
+        .Select(g => new { Value = g.Key, Count = g.Count() })
+        .OrderByDescending(x => x.Count)
+        .ThenBy(x => x.Value)
         .ToListAsync(cancellationToken);
 
-    var countries = await dbContext.KickstarterProjects
+    var countryCounts = await dbContext.KickstarterProjects
         .AsNoTracking()
-        .Select(p => p.Country)
-        .Where(c => c != null && c != string.Empty)
-        .Distinct()
-        .OrderBy(c => c)
+        .Where(p => p.Country != null && p.Country != string.Empty)
+        .GroupBy(p => new { p.Country, p.CountryDisplayableName })
+        .Select(g => new
+        {
+            Value = g.Key.Country!,
+            Label = g.Key.CountryDisplayableName ?? g.Key.Country!,
+            Count = g.Count()
+        })
+        .OrderByDescending(x => x.Count)
+        .ThenBy(x => x.Label)
         .ToListAsync(cancellationToken);
 
-    var categories = await dbContext.Categories
+    var categoryCounts = await dbContext.KickstarterProjects
         .AsNoTracking()
-        .Select(c => c.Name)
-        .Where(n => n != null && n != string.Empty)
-        .Distinct()
-        .OrderBy(n => n)
+        .Where(p => p.Category != null && p.Category.Name != null && p.Category.Name != string.Empty)
+        .GroupBy(p => p.Category!.Name!)
+        .Select(g => new
+        {
+            Value = g.Key,
+            Label = g.Key,
+            Count = g.Count()
+        })
+        .OrderByDescending(x => x.Count)
+        .ThenBy(x => x.Label)
         .ToListAsync(cancellationToken);
 
-    return Results.Ok(new ProjectFiltersDto
+    var response = new ProjectFiltersDto
     {
-        States = states!
-            .Select(s => s!)
+        States = stateCounts
+            .Select(s => new FilterOptionDto(s.Value, s.Value, s.Count))
             .ToList(),
-        Countries = countries!
-            .Select(c => c!)
+        Countries = countryCounts
+            .Select(c => new FilterOptionDto(c.Value, c.Label, c.Count))
             .ToList(),
-        Categories = categories!
-            .Select(c => c!)
+        Categories = categoryCounts
+            .Select(c => new FilterOptionDto(c.Value, c.Label, c.Count))
             .ToList(),
-    });
+    };
+
+    return Results.Ok(response);
 }).WithName("GetFilters").WithOpenApi();
 
 app.MapGet("/projects/summary", async (

@@ -1,5 +1,6 @@
+import dayjs from 'dayjs';
 import { PROJECTS_MOCK } from '@/mocks/projects';
-import { DEFAULT_PAGE_SIZE } from '@/constants/projectOptions';
+import { DEFAULT_PAGE_SIZE, PROJECT_CATEGORIES, PROJECT_COUNTRIES, PROJECT_STATES } from '@/constants/projectOptions';
 import {
   AnalyticsFilterRequest,
   CategoryInsight,
@@ -7,13 +8,54 @@ import {
   CreatorPerformance,
   FundingDistributionBin,
   MonthlyTrendPoint,
+  Project,
   ProjectFilters,
   ProjectHighlight,
   ProjectQueryParams,
   ProjectQueryResponse,
+  ProjectQueryStats,
   ProjectSummary,
 } from '@/types/project';
 import { httpClient } from './httpClient';
+
+const buildQueryStats = (projects: Project[]): ProjectQueryStats => {
+  const total = projects.length;
+  if (total === 0) {
+    return {
+      successfulCount: 0,
+      totalPledged: 0,
+      averagePercentFunded: 0,
+      totalBackers: 0,
+      averageGoal: 0,
+      topProject: null,
+    };
+  }
+
+  const successfulCount = projects.filter((project) => project.state === 'successful').length;
+  const totalPledged = projects.reduce((sum, project) => sum + project.pledged, 0);
+  const totalBackers = projects.reduce((sum, project) => sum + project.backersCount, 0);
+  const averagePercentFunded = Math.round(
+    (projects.reduce((sum, project) => sum + project.percentFunded, 0) / total) * 10,
+  ) / 10;
+  const averageGoal = Math.round(
+    (projects.reduce((sum, project) => sum + project.goal, 0) / total) * 100,
+  ) / 100;
+  const topProject = [...projects].sort((a, b) => {
+    if (b.percentFunded === a.percentFunded) {
+      return b.pledged - a.pledged;
+    }
+    return b.percentFunded - a.percentFunded;
+  })[0];
+
+  return {
+    successfulCount,
+    totalPledged,
+    averagePercentFunded,
+    totalBackers,
+    averageGoal,
+    topProject,
+  };
+};
 
 const filterProjects = (params: ProjectQueryParams): ProjectQueryResponse => {
   const {
@@ -89,6 +131,7 @@ const filterProjects = (params: ProjectQueryParams): ProjectQueryResponse => {
   return {
     total: filtered.length,
     items: filtered.slice(start, end),
+    stats: buildQueryStats(filtered),
   };
 };
 
@@ -100,7 +143,16 @@ export const fetchProjects = async (
     const response = await httpClient.get<ProjectQueryResponse>('/projects', {
       params,
     });
-    return response.data;
+    if (response.data.stats) {
+      return response.data;
+    }
+
+    // 兼容旧版本后端：如果缺少 stats 字段，则在前端补齐
+    const derivedStats = buildQueryStats(response.data.items);
+    return {
+      ...response.data,
+      stats: derivedStats,
+    };
   } catch (error) {
     if (!useMockFallback) {
       throw error;
@@ -122,10 +174,49 @@ export const fetchProjectFilters = async (useMockFallback = true): Promise<Proje
       throw error;
     }
 
+    const stateCounts = PROJECTS_MOCK.reduce<Record<string, number>>((acc, project) => {
+      acc[project.state] = (acc[project.state] ?? 0) + 1;
+      return acc;
+    }, {});
+
+    const countryCounts = PROJECTS_MOCK.reduce<Record<string, number>>((acc, project) => {
+      acc[project.country] = (acc[project.country] ?? 0) + 1;
+      return acc;
+    }, {});
+
+    const categoryCounts = PROJECTS_MOCK.reduce<Record<string, number>>((acc, project) => {
+      acc[project.categoryName] = (acc[project.categoryName] ?? 0) + 1;
+      return acc;
+    }, {});
+
+    const states = Object.entries(stateCounts)
+      .map(([value, count]) => ({
+        value,
+        label: PROJECT_STATES.find((item) => item.value === value)?.label ?? value,
+        count,
+      }))
+      .sort((a, b) => (b.count - a.count) || a.label.localeCompare(b.label));
+
+    const countries = Object.entries(countryCounts)
+      .map(([value, count]) => ({
+        value,
+        label: PROJECT_COUNTRIES.find((item) => item.value === value)?.label ?? value,
+        count,
+      }))
+      .sort((a, b) => (b.count - a.count) || a.label.localeCompare(b.label));
+
+    const categories = Object.entries(categoryCounts)
+      .map(([value, count]) => ({
+        value,
+        label: PROJECT_CATEGORIES.find((item) => item.value === value)?.label ?? value,
+        count,
+      }))
+      .sort((a, b) => (b.count - a.count) || a.label.localeCompare(b.label));
+
     return {
-      states: Array.from(new Set(PROJECTS_MOCK.map((project) => project.state))).sort(),
-      countries: Array.from(new Set(PROJECTS_MOCK.map((project) => project.country))).sort(),
-      categories: Array.from(new Set(PROJECTS_MOCK.map((project) => project.categoryName))).sort(),
+      states,
+      countries,
+      categories,
     };
   }
 };

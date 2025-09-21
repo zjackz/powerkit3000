@@ -3,6 +3,8 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using powerkit3000.core.contracts;
 using powerkit3000.data;
+using powerkit3000.data.Models;
+using System.Linq.Expressions;
 
 namespace powerkit3000.core.services;
 
@@ -77,30 +79,73 @@ public class KickstarterProjectQueryService
             );
         }
 
-        var totalCount = await query.CountAsync(cancellationToken);
+        var filteredQuery = query;
 
-        var items = await query
+        var aggregate = await filteredQuery
+            .GroupBy(_ => 1)
+            .Select(g => new
+            {
+                Total = g.Count(),
+                Successful = g.Count(p => p.State == "successful"),
+                TotalPledged = g.Sum(p => p.Pledged),
+                TotalBackers = g.Sum(p => p.BackersCount),
+                AveragePercentFunded = g.Average(p => (decimal?)p.PercentFunded),
+                AverageGoal = g.Average(p => (decimal?)p.Goal)
+            })
+            .FirstOrDefaultAsync(cancellationToken);
+
+        var totalCount = aggregate?.Total ?? 0;
+
+        Expression<Func<KickstarterProject, ProjectListItem>> projectSelector = p => new ProjectListItem(
+            p.Id,
+            p.Name ?? string.Empty,
+            p.Blurb,
+            p.Category != null ? p.Category.Name ?? string.Empty : string.Empty,
+            p.Country ?? string.Empty,
+            p.State ?? string.Empty,
+            p.Goal,
+            p.Pledged,
+            p.PercentFunded,
+            p.BackersCount,
+            p.Currency ?? string.Empty,
+            p.LaunchedAt,
+            p.Deadline,
+            p.Creator != null ? p.Creator.Name ?? string.Empty : string.Empty,
+            p.Location != null ? p.Location.DisplayableName ?? p.Location.Name : null
+        );
+
+        var items = await filteredQuery
             .OrderByDescending(p => p.LaunchedAt)
             .Skip((options.Page - 1) * options.PageSize)
             .Take(options.PageSize)
-            .Select(p => new ProjectListItem(
-                p.Id,
-                p.Name ?? string.Empty,
-                p.Blurb,
-                p.Category != null ? p.Category.Name ?? string.Empty : string.Empty,
-                p.Country ?? string.Empty,
-                p.State ?? string.Empty,
-                p.Goal,
-                p.Pledged,
-                p.PercentFunded,
-                p.BackersCount,
-                p.Currency ?? string.Empty,
-                p.LaunchedAt,
-                p.Deadline,
-                p.Creator != null ? p.Creator.Name ?? string.Empty : string.Empty,
-                p.Location != null ? p.Location.DisplayableName ?? p.Location.Name : null
-            ))
+            .Select(projectSelector)
             .ToListAsync(cancellationToken);
+
+        ProjectListItem? topProject = null;
+        if (totalCount > 0)
+        {
+            topProject = await filteredQuery
+                .OrderByDescending(p => p.PercentFunded)
+                .ThenByDescending(p => p.Pledged)
+                .Select(projectSelector)
+                .FirstOrDefaultAsync(cancellationToken);
+        }
+
+        var stats = new ProjectQueryStats
+        {
+            SuccessfulCount = aggregate?.Successful ?? 0,
+            TotalPledged = aggregate?.TotalPledged is decimal pledged
+                ? decimal.Round(pledged, 2, MidpointRounding.AwayFromZero)
+                : 0m,
+            AveragePercentFunded = aggregate?.AveragePercentFunded is decimal avgFunded
+                ? decimal.Round(avgFunded, 1, MidpointRounding.AwayFromZero)
+                : 0m,
+            TotalBackers = aggregate?.TotalBackers ?? 0,
+            AverageGoal = aggregate?.AverageGoal is decimal avgGoal
+                ? decimal.Round(avgGoal, 2, MidpointRounding.AwayFromZero)
+                : 0m,
+            TopProject = topProject
+        };
 
         _logger.LogInformation("查询 Kickstarter 项目，共匹配 {Total} 条记录。", totalCount);
 
@@ -108,6 +153,7 @@ public class KickstarterProjectQueryService
         {
             TotalCount = totalCount,
             Items = items,
+            Stats = stats,
         };
     }
 

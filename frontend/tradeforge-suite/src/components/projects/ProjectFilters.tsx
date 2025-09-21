@@ -35,12 +35,28 @@ const sanitizeFilters = (filters: ProjectQueryParams): ProjectQueryParams => {
   return sanitized;
 };
 
+const ITEM_STYLE = { marginBottom: 12 };
+
 export const ProjectFilters = ({ value, onChange, isLoading, options }: ProjectFiltersProps) => {
   const [form] = Form.useForm();
 
-  const stateOptions = options?.states?.map((state) => ({ label: state, value: state })) ?? PROJECT_STATES;
-  const countryOptions = options?.countries?.map((country) => ({ label: country, value: country })) ?? PROJECT_COUNTRIES;
-  const categoryOptions = options?.categories?.map((category) => ({ label: category, value: category })) ?? PROJECT_CATEGORIES;
+  const stateOptions =
+    options?.states?.map((option) => ({
+      label: `${option.label} (${option.count.toLocaleString()})`,
+      value: option.value,
+    })) ?? PROJECT_STATES;
+
+  const countryOptions =
+    options?.countries?.map((option) => ({
+      label: `${option.label} (${option.count.toLocaleString()})`,
+      value: option.value,
+    })) ?? PROJECT_COUNTRIES;
+
+  const categoryOptions =
+    options?.categories?.map((option) => ({
+      label: `${option.label} (${option.count.toLocaleString()})`,
+      value: option.value,
+    })) ?? PROJECT_CATEGORIES;
 
   useEffect(() => {
     const { launchedAfter, launchedBefore, ...rest } = value;
@@ -75,19 +91,20 @@ export const ProjectFilters = ({ value, onChange, isLoading, options }: ProjectF
     <Form
       form={form}
       layout="vertical"
+      size="small"
       onValuesChange={handleValuesChange}
       initialValues={{
         page: 1,
       }}
     >
-      <Row gutter={[16, 16]}>
+      <Row gutter={[12, 12]}>
         <Col xs={24} md={12} lg={8}>
-          <Form.Item name="search" label="关键词">
+          <Form.Item name="search" label="关键词" style={ITEM_STYLE}>
             <Input placeholder="项目名称 / 创作者 / 描述" allowClear />
           </Form.Item>
         </Col>
         <Col xs={24} md={12} lg={8}>
-          <Form.Item name="states" label="项目状态">
+          <Form.Item name="states" label="项目状态" style={ITEM_STYLE}>
             <Select
               mode="multiple"
               placeholder="选择状态"
@@ -97,7 +114,7 @@ export const ProjectFilters = ({ value, onChange, isLoading, options }: ProjectF
           </Form.Item>
         </Col>
         <Col xs={24} md={12} lg={8}>
-          <Form.Item name="countries" label="国家/地区">
+          <Form.Item name="countries" label="国家/地区" style={ITEM_STYLE}>
             <Select
               mode="multiple"
               placeholder="选择国家"
@@ -107,7 +124,7 @@ export const ProjectFilters = ({ value, onChange, isLoading, options }: ProjectF
           </Form.Item>
         </Col>
         <Col xs={24} md={12} lg={8}>
-          <Form.Item name="categories" label="品类">
+          <Form.Item name="categories" label="品类" style={ITEM_STYLE}>
             <Select
               mode="multiple"
               placeholder="选择品类"
@@ -117,19 +134,21 @@ export const ProjectFilters = ({ value, onChange, isLoading, options }: ProjectF
           </Form.Item>
         </Col>
         <Col xs={24} md={12} lg={8}>
-          <Form.Item name="minPercentFunded" label="最低达成率 (%)">
+          <Form.Item name="minPercentFunded" label="最低达成率 (%)" style={ITEM_STYLE}>
             <InputNumber min={0} max={1000} style={{ width: '100%' }} placeholder="例如 120" />
           </Form.Item>
         </Col>
         <Col xs={24} md={12} lg={8}>
-          <Form.Item name="launchedAt" label="上线时间">
+          <Form.Item name="launchedAt" label="上线时间" style={ITEM_STYLE}>
             <RangePicker style={{ width: '100%' }} format="YYYY-MM-DD" />
           </Form.Item>
         </Col>
       </Row>
-      <Space>
-        <Button onClick={handleReset}>重置</Button>
-        <Button type="primary" loading={isLoading} onClick={handleValuesChange}>
+      <Space size="small" wrap>
+        <Button size="small" onClick={handleReset}>
+          重置
+        </Button>
+        <Button type="primary" size="small" loading={isLoading} onClick={handleValuesChange}>
           应用筛选
         </Button>
       </Space>

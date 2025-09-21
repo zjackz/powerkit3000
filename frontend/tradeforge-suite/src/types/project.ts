@@ -34,12 +34,28 @@ export interface ProjectQueryParams {
 export interface ProjectQueryResponse {
   total: number;
   items: Project[];
+  stats: ProjectQueryStats;
+}
+
+export interface ProjectQueryStats {
+  successfulCount: number;
+  totalPledged: number;
+  averagePercentFunded: number;
+  totalBackers: number;
+  averageGoal: number;
+  topProject?: Project | null;
+}
+
+export interface FilterOption {
+  value: string;
+  label: string;
+  count: number;
 }
 
 export interface ProjectFilters {
-  states: string[];
-  countries: string[];
-  categories: string[];
+  states: FilterOption[];
+  countries: FilterOption[];
+  categories: FilterOption[];
 }
 
 export interface ProjectSummary {

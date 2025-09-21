@@ -1,12 +1,41 @@
-import { useMemo, useState } from 'react';
-import { Button, Card, message, Space, Statistic, Table, Tag, Typography } from 'antd';
+import { useState } from 'react';
+import {
+  Button,
+  Card,
+  Col,
+  message,
+  Progress,
+  Row,
+  Space,
+  Statistic,
+  Table,
+  Tag,
+  Tooltip,
+  Typography,
+} from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import dayjs from 'dayjs';
 import { ProjectFilters } from '@/components/projects/ProjectFilters';
+import { ProjectDetailDrawer } from '@/components/projects/ProjectDetailDrawer';
 import { useProjects } from '@/hooks/useProjects';
 import { useProjectFilters } from '@/hooks/useProjectFilters';
 import { Project, ProjectQueryParams } from '@/types/project';
 import { DEFAULT_PAGE_SIZE, PAGE_SIZE_OPTIONS } from '@/constants/projectOptions';
+
+const formatCurrencyValue = (value: number, currency: string) => `${currency} ${value.toLocaleString()}`;
+
+const getMomentumMeta = (percent: number) => {
+  if (percent >= 200) {
+    return { color: 'magenta', label: '爆款' };
+  }
+  if (percent >= 120) {
+    return { color: 'gold', label: '高潜' };
+  }
+  if (percent >= 80) {
+    return { color: 'blue', label: '稳健' };
+  }
+  return { color: 'default', label: '观察' };
+};
 
 const columns: ColumnsType<Project> = [
   {
@@ -37,6 +66,21 @@ const columns: ColumnsType<Project> = [
     },
   },
   {
+    title: '热度',
+    dataIndex: 'percentFunded',
+    key: 'momentum',
+    width: 110,
+    render: (percent: number) => {
+      const meta = getMomentumMeta(Number(percent));
+      return (
+        <Tooltip title={`达成率 ${percent.toFixed(1)}%`}>
+          <Tag color={meta.color}>{meta.label}</Tag>
+        </Tooltip>
+      );
+    },
+    responsive: ['md'],
+  },
+  {
     title: '品类',
     dataIndex: 'categoryName',
     key: 'categoryName',
@@ -47,22 +91,59 @@ const columns: ColumnsType<Project> = [
     key: 'country',
   },
   {
+    title: '创作者 / 地点',
+    key: 'creator',
+    render: (_, record) => (
+      <Space direction="vertical" size={0}>
+        <Typography.Text>{record.creatorName || '未提供'}</Typography.Text>
+        {record.locationName && (
+          <Typography.Text type="secondary" style={{ fontSize: 12 }}>
+            {record.locationName}
+          </Typography.Text>
+        )}
+      </Space>
+    ),
+    responsive: ['lg'],
+  },
+  {
     title: '目标金额',
     dataIndex: 'goal',
     key: 'goal',
-    render: (goal, record) => `${record.currency} ${goal.toLocaleString()}`,
+    align: 'right',
+    render: (goal, record) => formatCurrencyValue(goal, record.currency),
   },
   {
     title: '已筹金额',
     dataIndex: 'pledged',
     key: 'pledged',
-    render: (pledged, record) => `${record.currency} ${pledged.toLocaleString()}`,
+    align: 'right',
+    render: (pledged, record) => (
+      <Typography.Text strong>{formatCurrencyValue(pledged, record.currency)}</Typography.Text>
+    ),
   },
   {
     title: '达成率',
     dataIndex: 'percentFunded',
     key: 'percentFunded',
-    render: (percent) => `${percent.toFixed(1)}%`,
+    width: 200,
+    render: (percent: number) => {
+      const capped = Math.min(Number(percent), 100);
+      const strokeColor = percent >= 100 ? '#52c41a' : '#1890ff';
+      return (
+        <Space size={8} align="center">
+          <Tooltip title={`达成率 ${percent.toFixed(1)}%`}>
+            <Progress
+              percent={capped}
+              size="small"
+              strokeColor={strokeColor}
+              showInfo={false}
+              style={{ width: 90 }}
+            />
+          </Tooltip>
+          <Typography.Text>{percent.toFixed(1)}%</Typography.Text>
+        </Space>
+      );
+    },
   },
   {
     title: '支持者',
@@ -76,13 +157,34 @@ const columns: ColumnsType<Project> = [
     key: 'launchedAt',
     render: (value) => dayjs(value).format('YYYY-MM-DD'),
   },
+  {
+    title: '截止时间',
+    dataIndex: 'deadline',
+    key: 'deadline',
+    render: (value) => dayjs(value).format('YYYY-MM-DD'),
+    responsive: ['md'],
+  },
+  {
+    title: '筹资周期',
+    key: 'campaignDuration',
+    render: (_, record) => {
+      const launched = dayjs(record.launchedAt);
+      const deadline = dayjs(record.deadline);
+      const duration = Math.max(1, Math.round(deadline.diff(launched, 'day', true)));
+      return `${duration} 天`;
+    },
+    responsive: ['lg'],
+  },
 ];
+
+const CARD_BODY_STYLE = { padding: 14 };
 
 export const ProjectsPage = () => {
   const [filters, setFilters] = useState<ProjectQueryParams>({
     page: 1,
     pageSize: DEFAULT_PAGE_SIZE,
   });
+  const [activeProject, setActiveProject] = useState<Project | null>(null);
 
   const { data, isFetching } = useProjects(filters);
   const { data: filterOptions, isLoading: filtersLoading } = useProjectFilters();
@@ -105,21 +207,7 @@ export const ProjectsPage = () => {
 
   const currentItems = data?.items ?? [];
   const totalCount = data?.total ?? 0;
-
-  const stats = useMemo(() => {
-    if (!currentItems.length) {
-      return null;
-    }
-
-    const fundedAverage = currentItems.reduce((sum, project) => sum + project.percentFunded, 0) /
-      currentItems.length;
-    return (
-      <Space size="large">
-        <Statistic title="匹配项目" value={totalCount} suffix="个" />
-        <Statistic title="平均达成率" value={fundedAverage} suffix="%" precision={1} />
-      </Space>
-    );
-  }, [currentItems, totalCount]);
+  const aggregated = data?.stats;
 
   const handleExport = () => {
     if (!currentItems.length) {
@@ -174,22 +262,101 @@ export const ProjectsPage = () => {
   };
 
   return (
-    <Space direction="vertical" size={24} style={{ width: '100%' }}>
-      <Card title="筛选条件">
-        <ProjectFilters
-          value={filters}
-          onChange={handleFiltersChange}
-          isLoading={isFetching || filtersLoading}
-          options={filterOptions}
-        />
-      </Card>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+      <Row gutter={[12, 12]} align="stretch">
+        <Col xs={24} xl={10}>
+          <Card
+            title="筛选条件"
+            size="small"
+            bodyStyle={CARD_BODY_STYLE}
+            headStyle={{ fontSize: 14, fontWeight: 600, padding: '8px 16px' }}
+          >
+            <ProjectFilters
+              value={filters}
+              onChange={handleFiltersChange}
+              isLoading={isFetching || filtersLoading}
+              options={filterOptions}
+            />
+          </Card>
+        </Col>
+        <Col xs={24} xl={14}>
+          <Card
+            title="数据概览"
+            size="small"
+            bodyStyle={CARD_BODY_STYLE}
+            headStyle={{ fontSize: 14, fontWeight: 600, padding: '8px 16px' }}
+          >
+            <Row gutter={[12, 12]}>
+              <Col xs={12} md={8}>
+                <Statistic title="匹配项目" value={totalCount} suffix="个" valueStyle={{ color: '#1f6feb' }} />
+              </Col>
+              <Col xs={12} md={8}>
+                <Statistic title="成功项目" value={aggregated?.successfulCount ?? 0} suffix="个" />
+              </Col>
+              <Col xs={12} md={8}>
+                <Statistic
+                  title="平均达成率"
+                  value={aggregated?.averagePercentFunded ?? 0}
+                  suffix="%"
+                  precision={1}
+                />
+              </Col>
+              <Col xs={12} md={8}>
+                <Statistic
+                  title="总支持者"
+                  value={aggregated?.totalBackers ?? 0}
+                  formatter={(value) => Number(value).toLocaleString()}
+                />
+              </Col>
+              <Col xs={12} md={8}>
+                <Statistic
+                  title="总筹资"
+                  value={aggregated?.totalPledged ?? 0}
+                  formatter={(value) => Number(value).toLocaleString()}
+                />
+              </Col>
+              <Col xs={12} md={8}>
+                <Statistic
+                  title="平均目标金额"
+                  value={aggregated?.averageGoal ?? 0}
+                  formatter={(value) =>
+                    Number(value).toLocaleString(undefined, { maximumFractionDigits: 2 })
+                  }
+                />
+              </Col>
+            </Row>
+            {aggregated?.topProject && (
+              <Card
+                type="inner"
+                size="small"
+                title="最高热度项目"
+                style={{ marginTop: 12 }}
+                bodyStyle={{ padding: 12 }}
+              >
+                <Space direction="vertical" size={4}>
+                  <Typography.Link>{aggregated.topProject.name}</Typography.Link>
+                  <Typography.Text type="secondary">
+                    {aggregated.topProject.categoryName} · {aggregated.topProject.country}
+                  </Typography.Text>
+                  <Typography.Text>
+                    达成率 {aggregated.topProject.percentFunded.toFixed(1)}% · 支持者{' '}
+                    {aggregated.topProject.backersCount.toLocaleString()}
+                  </Typography.Text>
+                </Space>
+              </Card>
+            )}
+          </Card>
+        </Col>
+      </Row>
       <Card
         title="项目列表"
+        size="small"
+        bodyStyle={{ padding: 0 }}
+        headStyle={{ fontSize: 14, fontWeight: 600, padding: '8px 16px' }}
         extra={
-          <Space size="middle">
-            {stats}
-            <Button onClick={handleExport}>导出 CSV</Button>
-          </Space>
+          <Button size="small" onClick={handleExport}>
+            导出 CSV
+          </Button>
         }
       >
         <Table<Project>
@@ -197,6 +364,10 @@ export const ProjectsPage = () => {
           dataSource={currentItems}
           rowKey={(record) => record.id}
           loading={isFetching}
+          size="middle"
+          onRow={(record) => ({
+            onClick: () => setActiveProject(record),
+          })}
           pagination={{
             current: filters.page,
             pageSize: filters.pageSize,
@@ -207,6 +378,11 @@ export const ProjectsPage = () => {
           }}
         />
       </Card>
-    </Space>
+      <ProjectDetailDrawer
+        project={activeProject}
+        open={Boolean(activeProject)}
+        onClose={() => setActiveProject(null)}
+      />
+    </div>
   );
 };
