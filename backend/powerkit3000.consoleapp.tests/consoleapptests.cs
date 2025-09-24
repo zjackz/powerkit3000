@@ -210,6 +210,25 @@ namespace powerkit3000.consoleapp.Tests
         }
 
         [Test]
+        public async Task TranslateCommand_Should_PopulateChineseFields()
+        {
+            // Arrange
+            var samplePath = GetSampleDataPath();
+            await Program.RunAppAsync(new[] { "import", samplePath }, _testServiceConfig);
+
+            // Act
+            await Program.RunAppAsync(new[] { "translate", "--max-projects", "5" }, _testServiceConfig);
+
+            // Assert
+            await using var scope = BuildServiceProvider();
+            var context = scope.GetRequiredService<AppDbContext>();
+            var translatedCount = await context.KickstarterProjects
+                .CountAsync(p => !string.IsNullOrEmpty(p.NameCn) || !string.IsNullOrEmpty(p.BlurbCn));
+
+            Assert.That(translatedCount, Is.GreaterThan(0), "预期至少有一条记录写入了中文字段。");
+        }
+
+        [Test]
         public async Task ImportCommand_Should_ImportDirectoryData()
         {
             // Arrange

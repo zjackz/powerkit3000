@@ -4,40 +4,64 @@ using powerkit3000.api.Contracts;
 using powerkit3000.core.contracts;
 using powerkit3000.core.services;
 using powerkit3000.data;
+using Serilog;
 
-var builder = WebApplication.CreateBuilder(args);
+Log.Logger = new LoggerConfiguration()
+    .WriteTo.Console()
+    .CreateBootstrapLogger();
 
-builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
-
-var connectionString = builder.Configuration.GetConnectionString("AppDb")
-    ?? throw new InvalidOperationException("Connection string 'AppDb' was not found.");
-
-builder.Services.AddDbContext<AppDbContext>(options =>
-    options.UseNpgsql(connectionString));
-
-builder.Services.AddScoped<KickstarterProjectQueryService>();
-
-builder.Services.AddCors(options =>
+try
 {
-    options.AddPolicy("tradeforge", policy =>
+    var builder = WebApplication.CreateBuilder(args);
+
+    builder.Host.UseSerilog((context, services, loggerConfiguration) =>
     {
-        var origins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>() ?? Array.Empty<string>();
-        policy.WithOrigins(origins)
-            .AllowAnyHeader()
-            .AllowAnyMethod();
+        loggerConfiguration
+            .ReadFrom.Configuration(context.Configuration)
+            .ReadFrom.Services(services)
+            .Enrich.FromLogContext()
+            .Enrich.WithEnvironmentName()
+            .Enrich.WithMachineName()
+            .Enrich.WithProcessId()
+            .Enrich.WithThreadId();
     });
-});
 
-var app = builder.Build();
+    builder.Services.AddEndpointsApiExplorer();
+    builder.Services.AddSwaggerGen();
 
-app.UseCors("tradeforge");
+    var connectionString = builder.Configuration.GetConnectionString("AppDb")
+        ?? throw new InvalidOperationException("Connection string 'AppDb' was not found.");
 
-if (app.Environment.IsDevelopment())
-{
-    app.UseSwagger();
-    app.UseSwaggerUI();
-}
+    builder.Services.AddDbContext<AppDbContext>(options =>
+        options.UseNpgsql(connectionString));
+
+    builder.Services.AddScoped<KickstarterProjectQueryService>();
+
+    builder.Services.AddCors(options =>
+    {
+        options.AddPolicy("tradeforge", policy =>
+        {
+            var origins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>() ?? Array.Empty<string>();
+            policy.WithOrigins(origins)
+                .AllowAnyHeader()
+                .AllowAnyMethod();
+        });
+    });
+
+    builder.Services.AddHealthChecks()
+        .AddDbContextCheck<AppDbContext>("database");
+
+    var app = builder.Build();
+
+    app.UseCors("tradeforge");
+
+    if (app.Environment.IsDevelopment())
+    {
+        app.UseSwagger();
+        app.UseSwaggerUI();
+    }
+
+    app.MapHealthChecks("/health").WithName("Health");
 
 app.MapGet("/projects", async (
     [AsParameters] ProjectQueryRequest request,
@@ -73,13 +97,16 @@ app.MapGet("/projects", async (
         .Select(item => new ProjectListItemDto(
             item.Id,
             item.Name,
+            item.NameCn,
             item.Blurb,
+            item.BlurbCn,
             item.CategoryName,
             item.Country,
             item.State,
             item.Goal,
             item.Pledged,
             item.PercentFunded,
+            item.FundingVelocity,
             item.BackersCount,
             item.Currency,
             item.LaunchedAt,
@@ -93,13 +120,16 @@ app.MapGet("/projects", async (
         ? new ProjectListItemDto(
             result.Stats.TopProject.Id,
             result.Stats.TopProject.Name,
+            result.Stats.TopProject.NameCn,
             result.Stats.TopProject.Blurb,
+            result.Stats.TopProject.BlurbCn,
             result.Stats.TopProject.CategoryName,
             result.Stats.TopProject.Country,
             result.Stats.TopProject.State,
             result.Stats.TopProject.Goal,
             result.Stats.TopProject.Pledged,
             result.Stats.TopProject.PercentFunded,
+            result.Stats.TopProject.FundingVelocity,
             result.Stats.TopProject.BackersCount,
             result.Stats.TopProject.Currency,
             result.Stats.TopProject.LaunchedAt,
@@ -206,6 +236,7 @@ static AnalyticsFilterOptions MapFilters(AnalyticsFilterRequest request) => new(
     LaunchedBefore = request.LaunchedBefore,
     Countries = request.Countries?.Where(c => !string.IsNullOrWhiteSpace(c)).Select(c => c.Trim()).ToArray(),
     Categories = request.Categories?.Where(c => !string.IsNullOrWhiteSpace(c)).Select(c => c.Trim()).ToArray(),
+    MinPercentFunded = request.MinPercentFunded,
 };
 
 app.MapGet("/analytics/categories", async (
@@ -257,15 +288,65 @@ app.MapGet("/analytics/top-projects", async (
     {
         Id = item.Id,
         Name = item.Name,
+        NameCn = item.NameCn,
         CategoryName = item.CategoryName,
         Country = item.Country,
         PercentFunded = item.PercentFunded,
         Pledged = item.Pledged,
+        FundingVelocity = item.FundingVelocity,
         BackersCount = item.BackersCount,
         Currency = item.Currency,
         LaunchedAt = item.LaunchedAt,
     }));
 }).WithName("GetTopProjects").WithOpenApi();
+
+app.MapGet("/analytics/hype", async (
+    int? limit,
+    decimal? minPercentFunded,
+    [AsParameters] AnalyticsFilterRequest request,
+    KickstarterProjectQueryService queryService,
+    CancellationToken cancellationToken) =>
+{
+    var result = await queryService.GetHypeProjectsAsync(limit ?? 10, minPercentFunded, MapFilters(request), cancellationToken);
+
+    return Results.Ok(result.Select(item => new ProjectHighlightDto
+    {
+        Id = item.Id,
+        Name = item.Name,
+        NameCn = item.NameCn,
+        CategoryName = item.CategoryName,
+        Country = item.Country,
+        PercentFunded = item.PercentFunded,
+        Pledged = item.Pledged,
+        FundingVelocity = item.FundingVelocity,
+        BackersCount = item.BackersCount,
+        Currency = item.Currency,
+        LaunchedAt = item.LaunchedAt,
+    }));
+}).WithName("GetHypeProjects").WithOpenApi();
+
+app.MapGet("/analytics/category-keywords", async (
+    string? category,
+    int? top,
+    [AsParameters] AnalyticsFilterRequest request,
+    KickstarterProjectQueryService queryService,
+    CancellationToken cancellationToken) =>
+{
+    if (string.IsNullOrWhiteSpace(category))
+    {
+        return Results.BadRequest("Category is required.");
+    }
+
+    var result = await queryService.GetCategoryKeywordsAsync(category, top ?? 30, MapFilters(request), cancellationToken);
+
+    return Results.Ok(result.Select(item => new CategoryKeywordDto
+    {
+        Keyword = item.Keyword,
+        ProjectCount = item.ProjectCount,
+        OccurrenceCount = item.OccurrenceCount,
+        AveragePercentFunded = item.AveragePercentFunded,
+    }));
+}).WithName("GetCategoryKeywords").WithOpenApi();
 
 app.MapGet("/analytics/monthly-trend", async (
     int? months,
@@ -325,4 +406,15 @@ app.MapGet("/analytics/creators", async (
 
 app.MapGet("/", () => Results.Redirect("/swagger")).ExcludeFromDescription();
 
-app.Run();
+    app.Run();
+}
+catch (Exception ex)
+{
+    Log.Fatal(ex, "API host terminated unexpectedly");
+}
+finally
+{
+    Log.CloseAndFlush();
+}
+
+public partial class Program;

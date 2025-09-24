@@ -6,4 +6,5 @@ public class AnalyticsFilterOptions
     public DateTime? LaunchedBefore { get; set; }
     public IReadOnlyCollection<string>? Countries { get; set; }
     public IReadOnlyCollection<string>? Categories { get; set; }
+    public decimal? MinPercentFunded { get; set; }
 }

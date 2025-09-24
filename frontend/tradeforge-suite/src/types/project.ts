@@ -1,14 +1,17 @@
 export interface Project {
   id: number;
   name: string;
-  blurb: string;
-  categoryId: number;
+  nameCn?: string | null;
+  blurb: string | null;
+  blurbCn?: string | null;
+  categoryId?: number | null;
   categoryName: string;
   country: string;
   state: string;
   goal: number;
   pledged: number;
   percentFunded: number;
+  fundingVelocity: number;
   backersCount: number;
   currency: string;
   launchedAt: string;
@@ -86,10 +89,12 @@ export interface CountryInsight {
 export interface ProjectHighlight {
   id: number;
   name: string;
+  nameCn?: string | null;
   categoryName: string;
   country: string;
   percentFunded: number;
   pledged: number;
+  fundingVelocity: number;
   backersCount: number;
   currency: string;
   launchedAt: string;
@@ -126,4 +131,12 @@ export interface AnalyticsFilterRequest {
   launchedBefore?: string;
   countries?: string[];
   categories?: string[];
+  minPercentFunded?: number;
+}
+
+export interface CategoryKeywordInsight {
+  keyword: string;
+  projectCount: number;
+  occurrenceCount: number;
+  averagePercentFunded: number;
 }

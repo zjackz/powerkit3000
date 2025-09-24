@@ -58,8 +58,19 @@ export const AnalyticsFilters = ({ options, value, onChange, loading }: Analytic
     onChange({});
   };
 
-  const countryOptions = options?.countries?.map((c) => ({ label: c, value: c }));
-  const categoryOptions = options?.categories?.map((c) => ({ label: c, value: c }));
+  const countryOptions = options?.countries?.map((option) => ({
+    label: option.label,
+    value: option.value,
+  }));
+  const categoryOptions = options?.categories?.map((option) => ({
+    label: option.label,
+    value: option.value,
+  }));
+  const overfundOptions = [
+    { label: '≥200%', value: 200 },
+    { label: '≥500%', value: 500 },
+    { label: '≥1000%', value: 1000 },
+  ];
 
   return (
     <Form form={form} layout="vertical" onValuesChange={handleValuesChange}>
@@ -83,6 +94,16 @@ export const AnalyticsFilters = ({ options, value, onChange, loading }: Analytic
               allowClear
               loading={loading}
               options={categoryOptions}
+            />
+          </Form.Item>
+        </Col>
+        <Col xs={24} md={12} lg={8}>
+          <Form.Item name="minPercentFunded" label="超额完成度">
+            <Select
+              placeholder="选择阈值"
+              allowClear
+              loading={loading}
+              options={overfundOptions}
             />
           </Form.Item>
         </Col>

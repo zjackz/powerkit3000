@@ -30,11 +30,15 @@ export const ProjectDetailDrawer = ({ project, open, onClose }: ProjectDetailDra
   const duration = Math.max(1, Math.round(deadline.diff(launchedAt, 'day', true)));
   const percent = Number(project.percentFunded);
 
+  const displayName = project.nameCn ?? project.name;
+  const secondaryName = project.nameCn ? project.name : null;
+  const displayBlurb = project.blurbCn ?? project.blurb;
+
   return (
     <Drawer
       open={open}
       onClose={onClose}
-      title={project.name}
+      title={displayName}
       width={420}
       destroyOnClose
     >
@@ -44,9 +48,12 @@ export const ProjectDetailDrawer = ({ project, open, onClose }: ProjectDetailDra
           <Tag>{project.categoryName}</Tag>
           <Tag>{project.country}</Tag>
         </Space>
-        {project.blurb && (
+        {secondaryName && (
+          <Typography.Text type="secondary">{secondaryName}</Typography.Text>
+        )}
+        {displayBlurb && (
           <Typography.Paragraph type="secondary" style={{ marginBottom: 0 }}>
-            {project.blurb}
+            {displayBlurb}
           </Typography.Paragraph>
         )}
         <div>
@@ -70,6 +77,9 @@ export const ProjectDetailDrawer = ({ project, open, onClose }: ProjectDetailDra
           </Descriptions.Item>
           <Descriptions.Item label="支持者">
             {project.backersCount.toLocaleString()}
+          </Descriptions.Item>
+          <Descriptions.Item label="筹资速度">
+            {`${project.currency} ${project.fundingVelocity.toFixed(2)}/天`}
           </Descriptions.Item>
           <Descriptions.Item label="上线时间">{launchedAt.format('YYYY-MM-DD')}</Descriptions.Item>
           <Descriptions.Item label="截止时间">{deadline.format('YYYY-MM-DD')}</Descriptions.Item>

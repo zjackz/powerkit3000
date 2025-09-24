@@ -34,3 +34,10 @@
 ## Configuration Tips
 - The CLI defaults to Postgres at `192.168.1.120`; update `Program.cs` or inject `UseNpgsql` options via environment configuration before committing.
 - Keep credentials in user secrets or environment variables and document new setup steps for teammates.
+
+## Collaboration Workflow
+- **需求阶段**：产品经理一次性交付背景、目标、验收标准与相关文档位置（例如 `docs/` 条目或页面），同时说明约束、优先级与期望时间窗。
+- **方案阶段**：开发代理在阅读现有代码与文档后给出实现思路，必要时更新 `docs/技术方案.md` 或新建设计草案；未获确认前不动代码。
+- **执行阶段**：获得确认后按方案实现代码与测试，保持 CLI/API/前端/文档同步更新，并在 README 或需求文档中补充配置与使用说明。
+- **验证阶段**：执行约定的命令（如 `dotnet test`、`scripts/run-console.sh -- translate`）并回传结果；若因环境受限未能运行，需在交付说明里标注。
+- **文档回填**：每次迭代结束更新 `docs/需求文档.md`、`docs/工程进度.md`、`AGENTS.md` 等，以记录决策、风险和后续动作，方便后续协作者快速对齐。

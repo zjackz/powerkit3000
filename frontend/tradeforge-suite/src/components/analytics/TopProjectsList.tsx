@@ -1,4 +1,4 @@
-import { Avatar, Card, List, Typography } from 'antd';
+import { Avatar, Card, List, Tag, Typography } from 'antd';
 import { FireTwoTone } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import type { ProjectHighlight } from '@/types/project';
@@ -20,7 +20,7 @@ export const TopProjectsList = ({ data = [], loading }: TopProjectsListProps) =>
               avatar={<Avatar icon={<FireTwoTone twoToneColor="#fa541c" />} />}
               title={
                 <Typography.Text strong>
-                  #{index + 1} {item.name}
+                  #{index + 1} {item.nameCn ?? item.name}
                 </Typography.Text>
               }
               description={
@@ -34,6 +34,9 @@ export const TopProjectsList = ({ data = [], loading }: TopProjectsListProps) =>
                 {item.currency} {item.pledged.toLocaleString()}
               </Typography.Text>
               <Typography.Text type="success">达成率 {item.percentFunded.toFixed(1)}%</Typography.Text>
+              <div>
+                <Tag color="blue">{`${item.currency} ${item.fundingVelocity.toFixed(2)}/天`}</Tag>
+              </div>
             </div>
           </List.Item>
         )}

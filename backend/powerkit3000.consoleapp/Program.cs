@@ -1,5 +1,3 @@
-using powerkit3000.core.services;
-using powerkit3000.data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Configuration;
@@ -7,6 +5,10 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using consoleapp.Commands;
 using Spectre.Console;
+using powerkit3000.core.services;
+using powerkit3000.core.translations;
+using powerkit3000.data;
+using powerkit3000.core.Logging;
 
 public class Program
 {
@@ -33,11 +35,12 @@ public class Program
 
         var host = Host.CreateDefaultBuilder(args)
             .UseContentRoot(AppContext.BaseDirectory)
-            .ConfigureLogging(logging =>
+            .ConfigureLogging((context, logging) =>
             {
                 logging.ClearProviders();
                 logging.AddConsole();
-                logging.SetMinimumLevel(LogLevel.Error);
+                logging.SetMinimumLevel(LogLevel.Information);
+                logging.AddSimpleFileLogging(context.Configuration);
             })
             .ConfigureServices((context, services) =>
             {
@@ -55,6 +58,13 @@ public class Program
                 {
                     testServiceConfig(services); // Apply test-specific service configuration
                 }
+                services.Configure<TranslationOptions>(context.Configuration.GetSection(TranslationOptions.SectionName));
+                services.AddSingleton<ITranslationProvider, NoOpTranslationProvider>();
+                services.AddSingleton<ITranslationProvider, OpenAiTranslationProvider>();
+                services.AddSingleton<ITranslationProvider, GeminiTranslationProvider>();
+                services.AddSingleton<ITranslationProvider, DeepSeekTranslationProvider>();
+                services.AddSingleton<ITranslationService, TranslationService>();
+
                 services.AddScoped<KickstarterDataImportService>(provider =>
                     new KickstarterDataImportService(
                         provider.GetRequiredService<AppDbContext>(),
@@ -67,6 +77,7 @@ public class Program
                 services.AddScoped<CountsCommand>();
                 services.AddScoped<ClearDbCommand>();
                 services.AddScoped<SplitCommand>();
+                services.AddScoped<TranslateMissingCommand>();
             })
             .Build();
 
@@ -124,6 +135,7 @@ public class Program
         table.AddRow("counts", "显示数据库中 Kickstarter 项目、创建者、类别和位置的数量。");
         table.AddRow("clear-db", "清空数据库中的所有 Kickstarter 相关数据。");
         table.AddRow("split <文件路径> <拆分数量>", "将一个 JSON 文件拆分为指定数量的小文件。");
+        table.AddRow("translate [options]", "翻译缺少中文名称/简介的项目字段。");
         table.AddRow("exit / quit", "退出 CLI。");
 
         AnsiConsole.Write(table);
@@ -132,6 +144,8 @@ public class Program
     private static async Task ExecuteCommand(string[] args, IServiceProvider services, ILogger<Program> logger)
     {
         var command = args[0];
+        var commandArgs = args.Skip(1).ToArray();
+        logger.LogInformation("执行命令 {Command}，参数：{Args}", command, commandArgs);
         AnsiConsole.MarkupLine($"正在执行命令：[bold blue]{command}[/]");
 
         try
@@ -141,6 +155,7 @@ public class Program
                 case "import":
                     if (args.Length < 2)
                     {
+                        logger.LogWarning("import 命令缺少文件路径参数。");
                         AnsiConsole.MarkupLine("[red]请为 import 命令指定文件路径。[/]");
                         return;
                     }
@@ -166,6 +181,7 @@ public class Program
                 case "split":
                     if (args.Length < 3 || !int.TryParse(args[2], out int numberOfFiles))
                     {
+                        logger.LogWarning("split 命令参数无效：{Args}", string.Join(' ', args.Skip(1)));
                         AnsiConsole.MarkupLine("[red]请为 split 命令指定文件路径和拆分数量。用法: split <文件路径> <拆分数量>[/]");
                         return;
                     }
@@ -173,18 +189,26 @@ public class Program
                     await splitCommand.ExecuteAsync(args[1], numberOfFiles);
                     break;
 
+                case "translate":
+                    var translateCommand = services.GetRequiredService<TranslateMissingCommand>();
+                    await translateCommand.ExecuteAsync(args.Skip(1).ToArray());
+                    break;
+
                 case "help":
                     ShowCommandTable(isHelpCommand: true);
                     break;
 
                 default:
+                    logger.LogWarning("收到未知命令 {Command}", command);
                     AnsiConsole.MarkupLine($"[red]未知命令：{command}[/]");
                     break;
             }
+
+            logger.LogInformation("命令 {Command} 执行完成。", command);
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, $"执行命令时发生错误：{command}");
+            logger.LogError(ex, "执行命令 {Command} 时发生错误。", command);
             AnsiConsole.WriteException(ex, ExceptionFormats.ShortenPaths);
         }
     }

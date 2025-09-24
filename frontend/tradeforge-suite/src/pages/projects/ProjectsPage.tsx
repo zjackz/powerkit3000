@@ -44,10 +44,15 @@ const columns: ColumnsType<Project> = [
     key: 'name',
     render: (value, record) => (
       <Space direction="vertical" size={0}>
-        <Typography.Link>{value}</Typography.Link>
-        <Typography.Text type="secondary" ellipsis style={{ maxWidth: 320 }}>
-          {record.blurb}
-        </Typography.Text>
+        <Typography.Link>{record.nameCn ?? value}</Typography.Link>
+        {record.nameCn && (
+          <Typography.Text type="secondary">{value}</Typography.Text>
+        )}
+        {(record.blurbCn || record.blurb) && (
+          <Typography.Text type="secondary" ellipsis style={{ maxWidth: 320 }}>
+            {record.blurbCn ?? record.blurb}
+          </Typography.Text>
+        )}
       </Space>
     ),
   },
@@ -120,6 +125,14 @@ const columns: ColumnsType<Project> = [
     render: (pledged, record) => (
       <Typography.Text strong>{formatCurrencyValue(pledged, record.currency)}</Typography.Text>
     ),
+  },
+  {
+    title: '筹资速度',
+    dataIndex: 'fundingVelocity',
+    key: 'fundingVelocity',
+    align: 'right',
+    render: (velocity, record) => `${record.currency} ${velocity.toFixed(2)}/天`,
+    sorter: (a, b) => a.fundingVelocity - b.fundingVelocity,
   },
   {
     title: '达成率',
@@ -334,7 +347,10 @@ export const ProjectsPage = () => {
                 bodyStyle={{ padding: 12 }}
               >
                 <Space direction="vertical" size={4}>
-                  <Typography.Link>{aggregated.topProject.name}</Typography.Link>
+                  <Typography.Link>{aggregated.topProject.nameCn ?? aggregated.topProject.name}</Typography.Link>
+                  {aggregated.topProject.nameCn && (
+                    <Typography.Text type="secondary">{aggregated.topProject.name}</Typography.Text>
+                  )}
                   <Typography.Text type="secondary">
                     {aggregated.topProject.categoryName} · {aggregated.topProject.country}
                   </Typography.Text>

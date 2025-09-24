@@ -6,4 +6,5 @@ public class AnalyticsFilterRequest
     public DateTime? LaunchedBefore { get; set; }
     public IEnumerable<string>? Countries { get; set; }
     public IEnumerable<string>? Categories { get; set; }
+    public decimal? MinPercentFunded { get; set; }
 }

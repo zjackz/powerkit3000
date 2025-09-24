@@ -4,6 +4,7 @@ import { DEFAULT_PAGE_SIZE, PROJECT_CATEGORIES, PROJECT_COUNTRIES, PROJECT_STATE
 import {
   AnalyticsFilterRequest,
   CategoryInsight,
+  CategoryKeywordInsight,
   CountryInsight,
   CreatorPerformance,
   FundingDistributionBin,
@@ -107,15 +108,15 @@ const filterProjects = (params: ProjectQueryParams): ProjectQueryResponse => {
 
     if (search) {
       const lowered = search.toLowerCase();
-      const hit = [
-        project.name,
-        project.blurb,
-        project.categoryName,
-        project.creatorName,
-        project.locationName ?? '',
-      ]
-        .filter(Boolean)
-        .some((value) => value.toLowerCase().includes(lowered));
+    const hit = [
+      project.name,
+      project.blurb,
+      project.categoryName,
+      project.creatorName,
+      project.locationName ?? '',
+    ]
+      .filter(Boolean)
+      .some((value) => value?.toLowerCase().includes(lowered) ?? false);
 
       if (!hit) {
         return false;
@@ -380,14 +381,140 @@ export const fetchTopProjects = async (
       .map((project) => ({
         id: project.id,
         name: project.name,
+        nameCn: project.nameCn ?? project.name,
         categoryName: project.categoryName,
         country: project.country,
         percentFunded: project.percentFunded,
         pledged: project.pledged,
+        fundingVelocity: project.fundingVelocity,
         backersCount: project.backersCount,
         currency: project.currency,
-      launchedAt: project.launchedAt,
-    }));
+        launchedAt: project.launchedAt,
+      }));
+  }
+};
+
+export const fetchHypeProjects = async (
+  params: AnalyticsFilterRequest & { limit?: number; minPercentFunded?: number },
+  useMockFallback = true,
+): Promise<ProjectHighlight[]> => {
+  const { limit, ...filters } = params;
+  try {
+    const response = await httpClient.get<ProjectHighlight[]>('/analytics/hype', {
+      params: { ...filters, limit, minPercentFunded: filters.minPercentFunded ?? params.minPercentFunded },
+    });
+    return response.data;
+  } catch (error) {
+    if (!useMockFallback) {
+      throw error;
+    }
+
+    const threshold = filters.minPercentFunded ?? params.minPercentFunded ?? 200;
+    return PROJECTS_MOCK.filter((project) => {
+      if (filters.launchedAfter && new Date(project.launchedAt) < new Date(filters.launchedAfter)) return false;
+      if (filters.launchedBefore && new Date(project.launchedAt) > new Date(filters.launchedBefore)) return false;
+      if (filters.countries?.length && !filters.countries.includes(project.country)) return false;
+      if (filters.categories?.length && !filters.categories.includes(project.categoryName)) return false;
+      if (threshold && project.percentFunded < threshold) return false;
+      return true;
+    })
+      .sort((a, b) => {
+        if (b.fundingVelocity === a.fundingVelocity) {
+          if (b.percentFunded === a.percentFunded) {
+            return b.pledged - a.pledged;
+          }
+          return b.percentFunded - a.percentFunded;
+        }
+        return b.fundingVelocity - a.fundingVelocity;
+      })
+      .slice(0, limit ?? 8)
+      .map((project) => ({
+        id: project.id,
+        name: project.name,
+        nameCn: project.nameCn ?? project.name,
+        categoryName: project.categoryName,
+        country: project.country,
+        percentFunded: project.percentFunded,
+        pledged: project.pledged,
+        fundingVelocity: project.fundingVelocity,
+        backersCount: project.backersCount,
+        currency: project.currency,
+        launchedAt: project.launchedAt,
+      }));
+  }
+};
+
+export const fetchCategoryKeywords = async (
+  category: string,
+  params: AnalyticsFilterRequest,
+  useMockFallback = true,
+): Promise<CategoryKeywordInsight[]> => {
+  try {
+    const response = await httpClient.get<CategoryKeywordInsight[]>('/analytics/category-keywords', {
+      params: { ...params, category },
+    });
+    return response.data;
+  } catch (error) {
+    if (!useMockFallback) {
+      throw error;
+    }
+
+    const projects = PROJECTS_MOCK.filter((project) => {
+      if (project.categoryName !== category) return false;
+      if (project.state !== 'successful') return false;
+      if (params.launchedAfter && new Date(project.launchedAt) < new Date(params.launchedAfter)) return false;
+      if (params.launchedBefore && new Date(project.launchedAt) > new Date(params.launchedBefore)) return false;
+      if (params.countries?.length && !params.countries.includes(project.country)) return false;
+      if (params.minPercentFunded && project.percentFunded < params.minPercentFunded) return false;
+      return true;
+    });
+
+    if (projects.length === 0) {
+      return [];
+    }
+
+    const stopWords = new Set(['the', 'and', 'for', 'with', 'from', 'this', 'that', 'project', 'your']);
+    const separators = /[\s,.;:!?"'()\[\]{}\\/\-]+/;
+
+    const aggregates = new Map<string, { projectCount: number; occurrenceCount: number; totalPercent: number }>();
+
+    projects.forEach((project) => {
+      const tokens = [project.name, project.nameCn, project.blurb, project.blurbCn]
+        .filter(Boolean)
+        .flatMap((field) => (field as string).split(separators))
+        .map((token) => token.trim().toLowerCase())
+        .filter((token) => token.length > 1 && !stopWords.has(token));
+
+      const uniqueTokens = Array.from(new Set(tokens));
+
+      tokens.forEach((token) => {
+        const aggregate = aggregates.get(token) ?? { projectCount: 0, occurrenceCount: 0, totalPercent: 0 };
+        aggregate.occurrenceCount += 1;
+        aggregates.set(token, aggregate);
+      });
+
+      uniqueTokens.forEach((token) => {
+        const aggregate = aggregates.get(token)!;
+        aggregate.projectCount += 1;
+        aggregate.totalPercent += project.percentFunded;
+      });
+    });
+
+    return Array.from(aggregates.entries())
+      .filter(([, value]) => value.projectCount > 1)
+      .map(([keyword, value]) => ({
+        keyword,
+        projectCount: value.projectCount,
+        occurrenceCount: value.occurrenceCount,
+        averagePercentFunded: Number((value.totalPercent / value.projectCount).toFixed(1)),
+      }))
+      .sort((a, b) => {
+        if (b.projectCount === a.projectCount) {
+          return b.occurrenceCount - a.occurrenceCount;
+        }
+        return b.projectCount - a.projectCount;
+      })
+      .slice(0, 30);
   }
 };
 

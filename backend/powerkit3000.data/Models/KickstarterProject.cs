@@ -11,8 +11,12 @@ namespace powerkit3000.data.Models
         public long Id { get; set; }
         // 项目名称
         public string? Name { get; set; }
+        // 项目中文名称
+        public string? NameCn { get; set; }
         // 项目简介
         public string? Blurb { get; set; }
+        // 项目中文简介
+        public string? BlurbCn { get; set; }
         // 目标金额
         public decimal Goal { get; set; }
         // 已认捐金额

@@ -7,22 +7,42 @@ import { useTopProjects } from '@/hooks/useTopProjects';
 import { useMonthlyTrend } from '@/hooks/useMonthlyTrend';
 import { useFundingDistribution } from '@/hooks/useFundingDistribution';
 import { useCreatorPerformance } from '@/hooks/useCreatorPerformance';
+import { useHypeProjects } from '@/hooks/useHypeProjects';
+import { useCategoryKeywords } from '@/hooks/useCategoryKeywords';
 import { CategorySuccessChart } from '@/components/analytics/CategorySuccessChart';
 import { CountrySuccessChart } from '@/components/analytics/CountrySuccessChart';
 import { TopProjectsList } from '@/components/analytics/TopProjectsList';
 import { MonthlyTrendChart } from '@/components/analytics/MonthlyTrendChart';
 import { FundingDistributionChart } from '@/components/analytics/FundingDistributionChart';
 import { TopCreatorsList } from '@/components/analytics/TopCreatorsList';
+import { HypeProjectsList } from '@/components/analytics/HypeProjectsList';
+import { CategoryKeywordCloud } from '@/components/analytics/CategoryKeywordCloud';
 import { AnalyticsFilters } from '@/components/analytics/AnalyticsFilters';
 import { useProjectFilters } from '@/hooks/useProjectFilters';
 import type { AnalyticsFilterRequest } from '@/types/project';
 import styles from './DashboardPage.module.css';
 
 export const DashboardPage = () => {
-  const [filters, setFilters] = useState<AnalyticsFilterRequest>({});
+  const [filters, setFilters] = useState<AnalyticsFilterRequest>({ minPercentFunded: 200 });
   const { data: filterOptions, isLoading: filterLoading } = useProjectFilters();
 
   const normalizedFilters = useMemo(() => filters, [filters]);
+  const hypeParams = useMemo(
+    () => ({
+      ...normalizedFilters,
+      minPercentFunded: normalizedFilters.minPercentFunded ?? 200,
+      limit: 6,
+    }),
+    [normalizedFilters],
+  );
+
+  const keywordCategory = useMemo(() => {
+    if (normalizedFilters.categories && normalizedFilters.categories.length > 0) {
+      return normalizedFilters.categories[0];
+    }
+
+    return filterOptions?.categories?.[0]?.value;
+  }, [normalizedFilters, filterOptions]);
 
   const { data, isLoading } = useProjectSummary(normalizedFilters);
   const { data: categoryInsights, isLoading: categoriesLoading } = useCategoryInsights(normalizedFilters);
@@ -31,6 +51,8 @@ export const DashboardPage = () => {
   const { data: monthlyTrend, isLoading: trendLoading } = useMonthlyTrend(normalizedFilters);
   const { data: fundingDistribution, isLoading: distributionLoading } = useFundingDistribution(normalizedFilters);
   const { data: creatorPerformance, isLoading: creatorsLoading } = useCreatorPerformance(normalizedFilters);
+  const { data: hypeProjects, isLoading: hypeLoading } = useHypeProjects(hypeParams);
+  const { data: categoryKeywords, isLoading: keywordsLoading } = useCategoryKeywords(keywordCategory, normalizedFilters);
 
   return (
     <div className={styles.wrapper}>
@@ -119,6 +141,18 @@ export const DashboardPage = () => {
         </Col>
         <Col xs={24} xl={10}>
           <TopCreatorsList data={creatorPerformance?.slice(0, 10)} loading={creatorsLoading} />
+        </Col>
+      </Row>
+      <Row gutter={[16, 16]}>
+        <Col xs={24} xl={14}>
+          <HypeProjectsList data={hypeProjects?.slice(0, 6)} loading={hypeLoading} />
+        </Col>
+        <Col xs={24} xl={10}>
+          <CategoryKeywordCloud
+            data={categoryKeywords}
+            loading={keywordsLoading}
+            category={keywordCategory}
+          />
         </Col>
       </Row>
     </div>

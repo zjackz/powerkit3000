@@ -1,10 +1,11 @@
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using powerkit3000.core.contracts;
 using powerkit3000.data;
 using powerkit3000.data.Models;
-using System.Linq.Expressions;
 
 namespace powerkit3000.core.services;
 
@@ -12,6 +13,17 @@ public class KickstarterProjectQueryService
 {
     private readonly AppDbContext _context;
     private readonly ILogger<KickstarterProjectQueryService> _logger;
+
+    private static readonly char[] KeywordSeparators =
+    {
+        ' ', '\n', '\r', '\t', ',', '.', ';', ':', '"', '\'', '!', '?', '(', ')', '[', ']', '{', '}', '/', '\\', '-', '_', '#', '&'
+    };
+
+    private static readonly HashSet<string> StopWords = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "the", "and", "for", "with", "from", "this", "that", "your", "project", "kickstarter",
+        "a", "an", "of", "to", "in", "on", "by", "is", "are", "at", "us"
+    };
 
     public KickstarterProjectQueryService(AppDbContext context, ILogger<KickstarterProjectQueryService> logger)
     {
@@ -96,39 +108,106 @@ public class KickstarterProjectQueryService
 
         var totalCount = aggregate?.Total ?? 0;
 
-        Expression<Func<KickstarterProject, ProjectListItem>> projectSelector = p => new ProjectListItem(
-            p.Id,
-            p.Name ?? string.Empty,
-            p.Blurb,
-            p.Category != null ? p.Category.Name ?? string.Empty : string.Empty,
-            p.Country ?? string.Empty,
-            p.State ?? string.Empty,
-            p.Goal,
-            p.Pledged,
-            p.PercentFunded,
-            p.BackersCount,
-            p.Currency ?? string.Empty,
-            p.LaunchedAt,
-            p.Deadline,
-            p.Creator != null ? p.Creator.Name ?? string.Empty : string.Empty,
-            p.Location != null ? p.Location.DisplayableName ?? p.Location.Name : null
-        );
-
-        var items = await filteredQuery
+        var projectedItems = await filteredQuery
             .OrderByDescending(p => p.LaunchedAt)
             .Skip((options.Page - 1) * options.PageSize)
             .Take(options.PageSize)
-            .Select(projectSelector)
+            .Select(p => new
+            {
+                p.Id,
+                p.Name,
+                p.NameCn,
+                p.Blurb,
+                p.BlurbCn,
+                CategoryName = p.Category != null ? p.Category.Name ?? string.Empty : string.Empty,
+                Country = p.Country ?? string.Empty,
+                State = p.State ?? string.Empty,
+                p.Goal,
+                p.Pledged,
+                p.PercentFunded,
+                p.BackersCount,
+                Currency = p.Currency ?? string.Empty,
+                p.LaunchedAt,
+                p.Deadline,
+                CreatorName = p.Creator != null ? p.Creator.Name ?? string.Empty : string.Empty,
+                LocationName = p.Location != null ? p.Location.DisplayableName ?? p.Location.Name : null
+            })
             .ToListAsync(cancellationToken);
+
+        var items = projectedItems
+            .Select(p => new ProjectListItem(
+                p.Id,
+                p.Name ?? string.Empty,
+                p.NameCn,
+                p.Blurb,
+                p.BlurbCn,
+                p.CategoryName,
+                p.Country,
+                p.State,
+                p.Goal,
+                p.Pledged,
+                p.PercentFunded,
+                CalculateFundingVelocity(p.LaunchedAt, p.Pledged),
+                p.BackersCount,
+                p.Currency,
+                p.LaunchedAt,
+                p.Deadline,
+                p.CreatorName,
+                p.LocationName
+            ))
+            .ToList();
 
         ProjectListItem? topProject = null;
         if (totalCount > 0)
         {
-            topProject = await filteredQuery
+            var topProjection = await filteredQuery
                 .OrderByDescending(p => p.PercentFunded)
                 .ThenByDescending(p => p.Pledged)
-                .Select(projectSelector)
+                .Select(p => new
+                {
+                    p.Id,
+                    p.Name,
+                    p.NameCn,
+                    p.Blurb,
+                    p.BlurbCn,
+                    CategoryName = p.Category != null ? p.Category.Name ?? string.Empty : string.Empty,
+                    Country = p.Country ?? string.Empty,
+                    State = p.State ?? string.Empty,
+                    p.Goal,
+                    p.Pledged,
+                    p.PercentFunded,
+                    p.BackersCount,
+                    Currency = p.Currency ?? string.Empty,
+                    p.LaunchedAt,
+                    p.Deadline,
+                    CreatorName = p.Creator != null ? p.Creator.Name ?? string.Empty : string.Empty,
+                    LocationName = p.Location != null ? p.Location.DisplayableName ?? p.Location.Name : null
+                })
                 .FirstOrDefaultAsync(cancellationToken);
+
+            if (topProjection is not null)
+            {
+                topProject = new ProjectListItem(
+                    topProjection.Id,
+                    topProjection.Name ?? string.Empty,
+                    topProjection.NameCn,
+                    topProjection.Blurb,
+                    topProjection.BlurbCn,
+                    topProjection.CategoryName,
+                    topProjection.Country,
+                    topProjection.State,
+                    topProjection.Goal,
+                    topProjection.Pledged,
+                    topProjection.PercentFunded,
+                    CalculateFundingVelocity(topProjection.LaunchedAt, topProjection.Pledged),
+                    topProjection.BackersCount,
+                    topProjection.Currency,
+                    topProjection.LaunchedAt,
+                    topProjection.Deadline,
+                    topProjection.CreatorName,
+                    topProjection.LocationName
+                );
+            }
         }
 
         var stats = new ProjectQueryStats
@@ -181,6 +260,11 @@ public class KickstarterProjectQueryService
             query = query.Where(p => p.LaunchedAt <= filters.LaunchedBefore.Value);
         }
 
+        if (filters?.MinPercentFunded is not null)
+        {
+            query = query.Where(p => p.PercentFunded >= filters.MinPercentFunded.Value);
+        }
+
         var totalProjects = await query.CountAsync(cancellationToken);
         var successfulProjects = await query.CountAsync(p => p.State == "successful", cancellationToken);
         var totalPledged = await query.Where(p => p.Pledged > 0)
@@ -220,6 +304,11 @@ public class KickstarterProjectQueryService
         if (filters?.LaunchedBefore is not null)
         {
             query = query.Where(p => p.LaunchedAt <= filters.LaunchedBefore.Value);
+        }
+
+        if (filters?.MinPercentFunded is not null)
+        {
+            query = query.Where(p => p.PercentFunded >= filters.MinPercentFunded.Value);
         }
 
         var categories = await query
@@ -268,6 +357,11 @@ public class KickstarterProjectQueryService
         if (filters?.LaunchedBefore is not null)
         {
             query = query.Where(p => p.LaunchedAt <= filters.LaunchedBefore.Value);
+        }
+
+        if (filters?.MinPercentFunded is not null)
+        {
+            query = query.Where(p => p.PercentFunded >= filters.MinPercentFunded.Value);
         }
 
         var countries = await query
@@ -327,23 +421,244 @@ public class KickstarterProjectQueryService
             query = query.Where(p => p.LaunchedAt <= filters.LaunchedBefore.Value);
         }
 
-        return await query
+        if (filters?.MinPercentFunded is not null)
+        {
+            query = query.Where(p => p.PercentFunded >= filters.MinPercentFunded.Value);
+        }
+
+        var projections = await query
             .OrderByDescending(p => p.PercentFunded)
             .ThenByDescending(p => p.Pledged)
             .Take(limit)
+            .Select(p => new
+            {
+                p.Id,
+                p.Name,
+                p.NameCn,
+                CategoryName = p.Category != null ? p.Category.Name ?? string.Empty : string.Empty,
+                Country = p.Country ?? string.Empty,
+                p.PercentFunded,
+                p.Pledged,
+                p.BackersCount,
+                Currency = p.Currency ?? string.Empty,
+                p.LaunchedAt,
+            })
+            .ToListAsync(cancellationToken);
+
+        return projections
             .Select(p => new ProjectHighlight
             {
                 Id = p.Id,
                 Name = p.Name ?? string.Empty,
-                CategoryName = p.Category != null ? p.Category.Name ?? string.Empty : string.Empty,
-                Country = p.Country ?? string.Empty,
+                NameCn = p.NameCn,
+                CategoryName = p.CategoryName,
+                Country = p.Country,
                 PercentFunded = p.PercentFunded,
                 Pledged = p.Pledged,
+                FundingVelocity = CalculateFundingVelocity(p.LaunchedAt, p.Pledged),
                 BackersCount = p.BackersCount,
-                Currency = p.Currency ?? string.Empty,
+                Currency = p.Currency,
                 LaunchedAt = p.LaunchedAt,
             })
+            .ToList();
+    }
+
+    public async Task<IReadOnlyList<ProjectHighlight>> GetHypeProjectsAsync(
+        int limit = 10,
+        decimal? minPercentFunded = null,
+        AnalyticsFilterOptions? filters = null,
+        CancellationToken cancellationToken = default)
+    {
+        limit = limit <= 0 ? 10 : limit;
+        var effectiveMinPercent = minPercentFunded ?? filters?.MinPercentFunded ?? 200m;
+
+        var query = _context.KickstarterProjects
+            .AsNoTracking()
+            .Include(p => p.Category)
+            .Where(p => p.Pledged > 0)
+            .AsQueryable();
+
+        if (filters is { Countries: { Count: > 0 } countries })
+        {
+            query = query.Where(p => p.Country != null && countries.Contains(p.Country));
+        }
+
+        if (filters is { Categories: { Count: > 0 } categories })
+        {
+            query = query.Where(p => p.Category != null && categories.Contains(p.Category.Name ?? string.Empty));
+        }
+
+        if (filters?.LaunchedAfter is not null)
+        {
+            query = query.Where(p => p.LaunchedAt >= filters.LaunchedAfter.Value);
+        }
+
+        if (filters?.LaunchedBefore is not null)
+        {
+            query = query.Where(p => p.LaunchedAt <= filters.LaunchedBefore.Value);
+        }
+
+        if (filters?.MinPercentFunded is not null)
+        {
+            query = query.Where(p => p.PercentFunded >= filters.MinPercentFunded.Value);
+        }
+
+        if (effectiveMinPercent > 0)
+        {
+            query = query.Where(p => p.PercentFunded >= effectiveMinPercent);
+        }
+
+        query = query.Where(p => p.LaunchedAt <= DateTime.UtcNow);
+
+        var sampleSize = Math.Max(limit * 6, 120);
+
+        var projections = await query
+            .OrderByDescending(p => p.LaunchedAt)
+            .Take(sampleSize)
+            .Select(p => new
+            {
+                p.Id,
+                p.Name,
+                p.NameCn,
+                CategoryName = p.Category != null ? p.Category.Name ?? string.Empty : string.Empty,
+                Country = p.Country ?? string.Empty,
+                p.PercentFunded,
+                p.Pledged,
+                p.BackersCount,
+                Currency = p.Currency ?? string.Empty,
+                p.LaunchedAt,
+            })
             .ToListAsync(cancellationToken);
+
+        return projections
+            .Select(p => new ProjectHighlight
+            {
+                Id = p.Id,
+                Name = p.Name ?? string.Empty,
+                NameCn = p.NameCn,
+                CategoryName = p.CategoryName,
+                Country = p.Country,
+                PercentFunded = p.PercentFunded,
+                Pledged = p.Pledged,
+                FundingVelocity = CalculateFundingVelocity(p.LaunchedAt, p.Pledged),
+                BackersCount = p.BackersCount,
+                Currency = p.Currency,
+                LaunchedAt = p.LaunchedAt,
+            })
+            .OrderByDescending(p => p.FundingVelocity)
+            .ThenByDescending(p => p.PercentFunded)
+            .ThenByDescending(p => p.Pledged)
+            .Take(limit)
+            .ToList();
+    }
+
+    public async Task<IReadOnlyList<CategoryKeywordInsight>> GetCategoryKeywordsAsync(
+        string categoryName,
+        int top = 30,
+        AnalyticsFilterOptions? filters = null,
+        CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrWhiteSpace(categoryName))
+        {
+            return Array.Empty<CategoryKeywordInsight>();
+        }
+
+        top = top <= 0 ? 30 : top;
+
+        var query = _context.KickstarterProjects
+            .AsNoTracking()
+            .Include(p => p.Category)
+            .Where(p => p.State == "successful")
+            .Where(p => p.Category != null && p.Category.Name != null && p.Category.Name == categoryName)
+            .AsQueryable();
+
+        if (filters is { Countries: { Count: > 0 } countries })
+        {
+            query = query.Where(p => p.Country != null && countries.Contains(p.Country));
+        }
+
+        if (filters?.LaunchedAfter is not null)
+        {
+            query = query.Where(p => p.LaunchedAt >= filters.LaunchedAfter.Value);
+        }
+
+        if (filters?.LaunchedBefore is not null)
+        {
+            query = query.Where(p => p.LaunchedAt <= filters.LaunchedBefore.Value);
+        }
+
+        if (filters?.MinPercentFunded is not null)
+        {
+            query = query.Where(p => p.PercentFunded >= filters.MinPercentFunded.Value);
+        }
+
+        var projects = await query
+            .Select(p => new
+            {
+                p.Name,
+                p.NameCn,
+                p.Blurb,
+                p.BlurbCn,
+                p.PercentFunded
+            })
+            .ToListAsync(cancellationToken);
+
+        if (projects.Count == 0)
+        {
+            return Array.Empty<CategoryKeywordInsight>();
+        }
+
+        var aggregates = new Dictionary<string, KeywordAggregate>(StringComparer.OrdinalIgnoreCase);
+
+        foreach (var project in projects)
+        {
+            var tokens = ExtractKeywords(project.Name)
+                .Concat(ExtractKeywords(project.NameCn))
+                .Concat(ExtractKeywords(project.Blurb))
+                .Concat(ExtractKeywords(project.BlurbCn))
+                .ToList();
+
+            if (tokens.Count == 0)
+            {
+                continue;
+            }
+
+            var uniqueTokens = tokens.Distinct(StringComparer.OrdinalIgnoreCase);
+
+            foreach (var token in tokens)
+            {
+                if (!aggregates.TryGetValue(token, out var aggregate))
+                {
+                    aggregate = new KeywordAggregate();
+                    aggregates[token] = aggregate;
+                }
+
+                aggregate.OccurrenceCount++;
+            }
+
+            foreach (var token in uniqueTokens)
+            {
+                var aggregate = aggregates[token];
+                aggregate.ProjectCount++;
+                aggregate.TotalPercentFunded += project.PercentFunded;
+            }
+        }
+
+        return aggregates
+            .Where(kvp => kvp.Value.ProjectCount > 1)
+            .Select(kvp => new CategoryKeywordInsight
+            {
+                Keyword = kvp.Key,
+                ProjectCount = kvp.Value.ProjectCount,
+                OccurrenceCount = kvp.Value.OccurrenceCount,
+                AveragePercentFunded = kvp.Value.ProjectCount == 0
+                    ? 0
+                    : Math.Round(kvp.Value.TotalPercentFunded / kvp.Value.ProjectCount, 1, MidpointRounding.AwayFromZero)
+            })
+            .OrderByDescending(k => k.ProjectCount)
+            .ThenByDescending(k => k.OccurrenceCount)
+            .Take(top)
+            .ToList();
     }
 
     public async Task<IReadOnlyList<MonthlyTrendPoint>> GetMonthlyTrendAsync(AnalyticsFilterOptions? filters = null, int months = 12, CancellationToken cancellationToken = default)
@@ -373,6 +688,11 @@ public class KickstarterProjectQueryService
         if (filters?.LaunchedBefore is not null)
         {
             query = query.Where(p => p.LaunchedAt <= filters.LaunchedBefore.Value);
+        }
+
+        if (filters?.MinPercentFunded is not null)
+        {
+            query = query.Where(p => p.PercentFunded >= filters.MinPercentFunded.Value);
         }
 
         var trend = await query
@@ -424,6 +744,11 @@ public class KickstarterProjectQueryService
         if (filters?.LaunchedBefore is not null)
         {
             query = query.Where(p => p.LaunchedAt <= filters.LaunchedBefore.Value);
+        }
+
+        if (filters?.MinPercentFunded is not null)
+        {
+            query = query.Where(p => p.PercentFunded >= filters.MinPercentFunded.Value);
         }
 
         var projects = await query
@@ -479,6 +804,11 @@ public class KickstarterProjectQueryService
             query = query.Where(p => p.LaunchedAt <= filters.LaunchedBefore.Value);
         }
 
+        if (filters?.MinPercentFunded is not null)
+        {
+            query = query.Where(p => p.PercentFunded >= filters.MinPercentFunded.Value);
+        }
+
         var creators = await query
             .GroupBy(p => new { p.Creator!.Id, p.Creator.Name })
             .Select(g => new
@@ -508,5 +838,52 @@ public class KickstarterProjectQueryService
             .ThenByDescending(c => c.TotalPledged)
             .Take(limit)
             .ToList();
+    }
+
+    private static decimal CalculateFundingVelocity(DateTime launchedAt, decimal pledged)
+    {
+        var elapsedDays = (DateTime.UtcNow - launchedAt).TotalDays;
+        if (elapsedDays <= 0)
+        {
+            elapsedDays = 1;
+        }
+
+        var velocity = pledged / (decimal)elapsedDays;
+        return decimal.Round(velocity, 2, MidpointRounding.AwayFromZero);
+    }
+
+    private static IEnumerable<string> ExtractKeywords(string? text)
+    {
+        if (string.IsNullOrWhiteSpace(text))
+        {
+            yield break;
+        }
+
+        foreach (var raw in text.Split(KeywordSeparators, StringSplitOptions.RemoveEmptyEntries))
+        {
+            var cleaned = raw.Trim();
+            if (cleaned.Length < 2)
+            {
+                continue;
+            }
+
+            var normalized = cleaned.ToLowerInvariant();
+            if (StopWords.Contains(normalized))
+            {
+                continue;
+            }
+
+            if (normalized.All(static ch => char.IsLetterOrDigit(ch)))
+            {
+                yield return normalized;
+            }
+        }
+    }
+
+    private sealed class KeywordAggregate
+    {
+        public int ProjectCount { get; set; }
+        public int OccurrenceCount { get; set; }
+        public decimal TotalPercentFunded { get; set; }
     }
 }

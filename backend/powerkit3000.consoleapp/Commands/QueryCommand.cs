@@ -43,7 +43,8 @@ namespace consoleapp.Commands
             Console.WriteLine($"找到 {projects.Count} 个项目。");
             foreach (var project in projects)
             {
-                Console.WriteLine($"- {project.Name}");
+                var displayName = string.IsNullOrWhiteSpace(project.NameCn) ? project.Name : project.NameCn;
+                Console.WriteLine($"- {displayName}");
             }
         }
 

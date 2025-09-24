@@ -68,6 +68,9 @@ namespace powerkit3000.data.Migrations
                     b.Property<string>("Blurb")
                         .HasColumnType("text");
 
+                    b.Property<string>("BlurbCn")
+                        .HasColumnType("text");
+
                     b.Property<long>("CategoryId")
                         .HasColumnType("bigint");
 
@@ -132,6 +135,9 @@ namespace powerkit3000.data.Migrations
                         .HasColumnType("bigint");
 
                     b.Property<string>("Name")
+                        .HasColumnType("text");
+
+                    b.Property<string>("NameCn")
                         .HasColumnType("text");
 
                     b.Property<decimal>("PercentFunded")
