@@ -4,52 +4,52 @@ PowerKit3000 聚焦于打造面向跨境团队的 Kickstarter 数据分析工具
 
 ## 核心能力
 - 数据导入：通过 `import`、`split` 等命令把 JSON/JSONL 数据批量写入 Postgres，并处理创作者、分类、地区等实体去重。
-- 数据查询：`backend/powerkit3000.core` 暴露查询服务，支持复用到 CLI 与 API，涵盖分页过滤、统计汇总等场景。
-- 分析 API：`backend/powerkit3000.api` 提供项目列表、筛选器、统计摘要及多维分析端点，兼容 Swagger 文档。
+- 数据查询：`backend/pk.core` 暴露查询服务，支持复用到 CLI 与 API，涵盖分页过滤、统计汇总等场景。
+- 分析 API：`backend/pk.api` 提供项目列表、筛选器、统计摘要及多维分析端点，兼容 Swagger 文档。
 - 前端体验：`frontend/tradeforge-suite` 构建 React + Ant Design 界面，内置筛选、数据面板与分析概览，支持 API 及本地 Mock 回退。
-- 测试保障：`backend/powerkit3000.consoleapp.Tests` 使用 NUnit 验证导入、查询关键流程，便于持续交付。
+- 测试保障：`backend/pk.consoleapp.Tests` 使用 NUnit 验证导入、查询关键流程，便于持续交付。
 - 多语言扩展：CLI 提供 `translate` 命令批量生成项目名称/简介的中文字段，API 与前端自动读取并展示。
 
 ## 快速上手
 1. **安装依赖**
    ```bash
-   dotnet restore powerkit3000.sln
+   dotnet restore pk.sln
    npm install --prefix frontend/tradeforge-suite
    ```
 2. **构建与测试**
    ```bash
-   dotnet build powerkit3000.sln
-   dotnet test backend/powerkit3000.consoleapp.Tests/powerkit3000.consoleapp.Tests.csproj
+   dotnet build pk.sln
+   dotnet test backend/pk.consoleapp.Tests/pk.consoleapp.Tests.csproj
    ```
 3. **运行 CLI**
    ```bash
-   scripts/run-console.sh -- import backend/powerkit3000.consoleapp/data/sample2.json
+   scripts/run-console.sh -- import backend/pk.consoleapp/data/sample2.json
    scripts/run-console.sh -- counts
    scripts/run-console.sh -- query --state successful --country US
    scripts/run-console.sh -- translate --max-projects 50
    ```
 4. **启动 API（默认端口 5200）**
    ```bash
-   dotnet run --project backend/powerkit3000.api/powerkit3000.api.csproj
+   dotnet run --project backend/pk.api/pk.api.csproj
    ```
 5. **启动前端（Vite Dev Server，默认 5173）**
    ```bash
    npm run dev --prefix frontend/tradeforge-suite
    ```
 
-> **数据库连接**：后端默认读取 `ConnectionStrings:AppDb`（参见 `backend/powerkit3000.consoleapp/appsettings.json`），可通过环境变量 `ConnectionStrings__AppDb` 覆盖；执行迁移需进入 `backend/powerkit3000.data` 目录运行 `dotnet ef database update`。
+> **数据库连接**：后端默认读取 `ConnectionStrings:AppDb`（参见 `backend/pk.consoleapp/appsettings.json`），可通过环境变量 `ConnectionStrings__AppDb` 覆盖；执行迁移需进入 `backend/pk.data` 目录运行 `dotnet ef database update`。
 
 ## 翻译配置
-- `backend/powerkit3000.consoleapp/appsettings.json` 提供 `Translation` 节点，可配置默认 Provider（`noop`/`openai`/`gemini`/`deepseek` 等）、目标语言、批量大小与重试次数。
+- `backend/pk.consoleapp/appsettings.json` 提供 `Translation` 节点，可配置默认 Provider（`noop`/`openai`/`gemini`/`deepseek` 等）、目标语言、批量大小与重试次数。
 - 针对具体 Provider 在 `Translation:Providers:<name>` 下填入 `ApiKey`、`ApiBase`、`Model` 等参数；也可通过环境变量覆盖，例如：`Translation__Providers__openai__ApiKey`。
 - CLI `translate` 命令支持 `--batch-size`、`--max-projects`、`--dry-run`，便于分批翻译与成本控制。
 - API/前端会优先展示 `NameCn`/`BlurbCn` 字段，缺失时自动回退英文内容。
 
 ## 项目结构
-- `backend/powerkit3000.consoleapp`：Spectre.Console 命令行入口，包含 `ImportCommand`, `QueryCommand`, `CountsCommand`, `SplitCommand`, `ClearDbCommand` 等。
-- `backend/powerkit3000.core`：共享领域逻辑（例如 `KickstarterDataImportService`, `KickstarterProjectQueryService`）。
-- `backend/powerkit3000.data`：EF Core 模型与迁移，`AppDbContext` 定义持久化实体。
-- `backend/powerkit3000.api`：.NET Minimal API，向前端输出查询与分析结果。
+- `backend/pk.consoleapp`：Spectre.Console 命令行入口，包含 `ImportCommand`, `QueryCommand`, `CountsCommand`, `SplitCommand`, `ClearDbCommand` 等。
+- `backend/pk.core`：共享领域逻辑（例如 `KickstarterDataImportService`, `KickstarterProjectQueryService`）。
+- `backend/pk.data`：EF Core 模型与迁移，`AppDbContext` 定义持久化实体。
+- `backend/pk.api`：.NET Minimal API，向前端输出查询与分析结果。
 - `frontend/tradeforge-suite`：React + Ant Design 前端应用，提供筛选、详情与分析面板。
 - `scripts/`：开发辅助脚本，如 `run-console.sh` 一键执行 CLI。
 - `docs/`：需求、规划、技术方案与进度记录。

@@ -16,7 +16,7 @@ logs/
 run.log
 
 
-
+.vs/
 
 # .NET build artifacts
 bin/
