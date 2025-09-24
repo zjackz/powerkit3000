@@ -5,6 +5,10 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using consoleapp.Commands;
 using Spectre.Console;
+using powerkit3000.core.Amazon;
+using powerkit3000.core.Amazon.Contracts;
+using powerkit3000.core.Amazon.Options;
+using powerkit3000.core.Amazon.Services;
 using powerkit3000.core.services;
 using powerkit3000.core.translations;
 using powerkit3000.data;
@@ -59,18 +63,26 @@ public class Program
                     testServiceConfig(services); // Apply test-specific service configuration
                 }
                 services.Configure<TranslationOptions>(context.Configuration.GetSection(TranslationOptions.SectionName));
+                services.Configure<AmazonModuleOptions>(context.Configuration.GetSection(AmazonModuleOptions.SectionName));
                 services.AddSingleton<ITranslationProvider, NoOpTranslationProvider>();
                 services.AddSingleton<ITranslationProvider, OpenAiTranslationProvider>();
                 services.AddSingleton<ITranslationProvider, GeminiTranslationProvider>();
                 services.AddSingleton<ITranslationProvider, DeepSeekTranslationProvider>();
                 services.AddSingleton<ITranslationService, TranslationService>();
 
+                services.AddHttpClient<IAmazonBestsellerSource, HtmlAgilityPackAmazonBestsellerSource>();
+
+                services.AddScoped<AmazonIngestionService>();
+                services.AddScoped<AmazonTrendAnalysisService>();
+                services.AddScoped<AmazonReportingService>();
+                services.AddScoped<AmazonDashboardService>();
+
                 services.AddScoped<KickstarterDataImportService>(provider =>
                     new KickstarterDataImportService(
                         provider.GetRequiredService<AppDbContext>(),
                         provider.GetRequiredService<ILogger<KickstarterDataImportService>>()
                     ));
-                
+
                 // Register command handlers
                 services.AddScoped<ImportCommand>();
                 services.AddScoped<QueryCommand>();
@@ -78,6 +90,10 @@ public class Program
                 services.AddScoped<ClearDbCommand>();
                 services.AddScoped<SplitCommand>();
                 services.AddScoped<TranslateMissingCommand>();
+                services.AddScoped<AmazonSeedCategoriesCommand>();
+                services.AddScoped<AmazonFetchCommand>();
+                services.AddScoped<AmazonAnalyzeCommand>();
+                services.AddScoped<AmazonReportCommand>();
             })
             .Build();
 
@@ -136,6 +152,10 @@ public class Program
         table.AddRow("clear-db", "清空数据库中的所有 Kickstarter 相关数据。");
         table.AddRow("split <文件路径> <拆分数量>", "将一个 JSON 文件拆分为指定数量的小文件。");
         table.AddRow("translate [options]", "翻译缺少中文名称/简介的项目字段。");
+        table.AddRow("amazon-seed", "同步配置文件中的 Amazon 类目。");
+        table.AddRow("amazon-fetch <类目Id> [best|new|movers]", "采集 Amazon 榜单快照。");
+        table.AddRow("amazon-analyze <snapshotId|latest>", "分析指定 Snapshot 的榜单趋势。");
+        table.AddRow("amazon-report <snapshotId|latest>", "输出 Snapshot 的分析报告。");
         table.AddRow("exit / quit", "退出 CLI。");
 
         AnsiConsole.Write(table);
@@ -192,6 +212,52 @@ public class Program
                 case "translate":
                     var translateCommand = services.GetRequiredService<TranslateMissingCommand>();
                     await translateCommand.ExecuteAsync(args.Skip(1).ToArray());
+                    break;
+
+                case "amazon-seed":
+                    var seedCommand = services.GetRequiredService<AmazonSeedCategoriesCommand>();
+                    await seedCommand.ExecuteAsync(CancellationToken.None);
+                    break;
+
+                case "amazon-fetch":
+                    if (args.Length < 2 || !int.TryParse(args[1], out var categoryId))
+                    {
+                        AnsiConsole.MarkupLine("[red]请提供 Amazon 类目 Id。[/]");
+                        return;
+                    }
+                    var type = AmazonBestsellerType.BestSellers;
+                    if (args.Length >= 3)
+                    {
+                        type = args[2].ToLowerInvariant() switch
+                        {
+                            "best" or "bestsellers" or "best-sellers" => AmazonBestsellerType.BestSellers,
+                            "new" or "newreleases" or "new-releases" => AmazonBestsellerType.NewReleases,
+                            "movers" or "shakers" or "movers-and-shakers" => AmazonBestsellerType.MoversAndShakers,
+                            _ => type
+                        };
+                    }
+                    var fetchCommand = services.GetRequiredService<AmazonFetchCommand>();
+                    await fetchCommand.ExecuteAsync(categoryId, type, CancellationToken.None);
+                    break;
+
+                case "amazon-analyze":
+                    if (args.Length < 2)
+                    {
+                        AnsiConsole.MarkupLine("[red]请提供 SnapshotId 或 latest。[/]");
+                        return;
+                    }
+                    var analyzeCommand = services.GetRequiredService<AmazonAnalyzeCommand>();
+                    await analyzeCommand.ExecuteAsync(args[1], CancellationToken.None);
+                    break;
+
+                case "amazon-report":
+                    if (args.Length < 2)
+                    {
+                        AnsiConsole.MarkupLine("[red]请提供 SnapshotId 或 latest。[/]");
+                        return;
+                    }
+                    var reportCommand = services.GetRequiredService<AmazonReportCommand>();
+                    await reportCommand.ExecuteAsync(args[1], CancellationToken.None);
                     break;
 
                 case "help":

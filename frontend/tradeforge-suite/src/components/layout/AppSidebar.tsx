@@ -1,5 +1,5 @@
 import { Menu } from 'antd';
-import { AppstoreOutlined, DashboardOutlined, ExperimentOutlined, StarFilled } from '@ant-design/icons';
+import { AppstoreOutlined, DashboardOutlined, ExperimentOutlined, ShopOutlined, StarFilled } from '@ant-design/icons';
 import { useLocation, useNavigate } from 'react-router-dom';
 
 const menuItems = [
@@ -17,6 +17,11 @@ const menuItems = [
     key: '/favorites',
     icon: <StarFilled />,
     label: '我的收藏',
+  },
+  {
+    key: '/amazon',
+    icon: <ShopOutlined />,
+    label: 'Amazon 榜单',
   },
   {
     key: 'experiments',

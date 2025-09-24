@@ -5,6 +5,7 @@ import { AppSidebar } from './components/layout/AppSidebar';
 import { DashboardPage } from './pages/dashboard/DashboardPage';
 import { FavoritesPage } from './pages/favorites/FavoritesPage';
 import { ProjectsPage } from './pages/projects/ProjectsPage';
+import { AmazonPage } from './pages/amazon/AmazonPage';
 import styles from './App.module.css';
 
 const { Sider, Content } = Layout;
@@ -23,6 +24,7 @@ const App = () => {
               <Route path="/" element={<DashboardPage />} />
               <Route path="/projects" element={<ProjectsPage />} />
               <Route path="/favorites" element={<FavoritesPage />} />
+              <Route path="/amazon" element={<AmazonPage />} />
             </Routes>
           </Content>
         </Layout>

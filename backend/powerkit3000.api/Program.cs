@@ -1,7 +1,15 @@
+using System.Linq;
+using Hangfire;
+using Hangfire.PostgreSql;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using powerkit3000.api.Contracts;
+using powerkit3000.api.Jobs;
+using powerkit3000.core.Amazon.Options;
+using powerkit3000.core.Amazon.Services;
+using powerkit3000.core.Amazon.Contracts;
+using powerkit3000.core.Amazon;
 using powerkit3000.core.contracts;
 using powerkit3000.core.services;
 using powerkit3000.data;
@@ -39,6 +47,15 @@ try
     builder.Services.AddScoped<KickstarterProjectQueryService>();
     builder.Services.AddScoped<ProjectFavoriteService>();
 
+    builder.Services.Configure<AmazonModuleOptions>(builder.Configuration.GetSection(AmazonModuleOptions.SectionName));
+    builder.Services.AddHttpClient<IAmazonBestsellerSource, HtmlAgilityPackAmazonBestsellerSource>();
+    builder.Services.AddScoped<AmazonIngestionService>();
+    builder.Services.AddScoped<AmazonTrendAnalysisService>();
+    builder.Services.AddScoped<AmazonReportingService>();
+    builder.Services.AddScoped<AmazonDashboardService>();
+    builder.Services.AddScoped<AmazonRecurringJobService>();
+    builder.Services.AddScoped<AmazonJobScheduler>();
+
     builder.Services.AddCors(options =>
     {
         options.AddPolicy("tradeforge", policy =>
@@ -52,6 +69,14 @@ try
 
     builder.Services.AddHealthChecks()
         .AddDbContextCheck<AppDbContext>("database");
+
+    builder.Services.AddHangfire(config =>
+        config.SetDataCompatibilityLevel(CompatibilityLevel.Version_180)
+            .UseSimpleAssemblyNameTypeSerializer()
+            .UseRecommendedSerializerSettings()
+            .UsePostgreSqlStorage(connectionString));
+
+    builder.Services.AddHangfireServer();
 
     var app = builder.Build();
 
@@ -67,6 +92,9 @@ try
             Log.Fatal(migrateEx, "数据库迁移失败");
             throw;
         }
+
+        var scheduler = scope.ServiceProvider.GetRequiredService<AmazonJobScheduler>();
+        await scheduler.InitializeAsync(CancellationToken.None);
     }
 
     app.UseCors("tradeforge");
@@ -78,6 +106,9 @@ try
     }
 
     app.MapHealthChecks("/health").WithName("Health");
+
+    // 暂未加权限控制，生产环境需加认证后再开放仪表盘。
+    app.UseHangfireDashboard("/hangfire");
 
 app.MapGet("/projects", async (
     [AsParameters] ProjectQueryRequest request,
@@ -423,6 +454,68 @@ app.MapGet("/analytics/creators", async (
         TotalPledged = item.TotalPledged,
     }));
 }).WithName("GetCreatorPerformance").WithOpenApi();
+
+// -------- Amazon 模块 API：覆盖类目同步、快照采集、趋势与报告查询 --------
+
+app.MapPost("/amazon/categories/ensure", async (AmazonIngestionService ingestionService, CancellationToken cancellationToken) =>
+{
+    var affected = await ingestionService.EnsureCategoriesAsync(cancellationToken);
+    return Results.Ok(new { affected });
+}).WithName("EnsureAmazonCategories").WithOpenApi();
+
+app.MapPost("/amazon/snapshots", async (AmazonFetchSnapshotRequest request, AmazonIngestionService ingestionService, CancellationToken cancellationToken) =>
+{
+    var snapshotId = await ingestionService.CaptureSnapshotAsync(request.CategoryId, request.BestsellerType, cancellationToken);
+    return Results.Ok(new { snapshotId });
+}).WithName("CreateAmazonSnapshot").WithOpenApi();
+
+app.MapPost("/amazon/snapshots/{snapshotId:long}/analyze", async (long snapshotId, AmazonTrendAnalysisService analysisService, CancellationToken cancellationToken) =>
+{
+    var trendCount = await analysisService.AnalyzeSnapshotAsync(snapshotId, cancellationToken);
+    return Results.Ok(new { snapshotId, trendCount });
+}).WithName("AnalyzeAmazonSnapshot").WithOpenApi();
+
+app.MapGet("/amazon/core-metrics", async (AmazonDashboardService dashboardService, CancellationToken cancellationToken) =>
+{
+    var metrics = await dashboardService.GetLatestCoreMetricsAsync(cancellationToken);
+    return metrics is null
+        ? Results.NoContent()
+        : Results.Ok(new AmazonCoreMetricsResponseDto(metrics.SnapshotId, metrics.CapturedAt, metrics.TotalProducts, metrics.TotalNewEntries, metrics.TotalRankSurges, metrics.TotalConsistentPerformers));
+}).WithName("GetAmazonCoreMetrics").WithOpenApi();
+
+app.MapGet("/amazon/products", async ([AsParameters] AmazonProductsQueryRequest request, AmazonDashboardService dashboardService, CancellationToken cancellationToken) =>
+{
+    var products = await dashboardService.GetProductsAsync(request.CategoryId, request.Search, cancellationToken);
+    var response = products.Select(p => new AmazonProductListItemDto(p.Asin, p.Title, p.CategoryName, p.ListingDate, p.LatestRank, p.LatestPrice, p.LatestRating, p.LatestReviewsCount, p.LastUpdated)).ToList();
+    return Results.Ok(response);
+}).WithName("GetAmazonProducts").WithOpenApi();
+
+app.MapGet("/amazon/trends", async ([AsParameters] AmazonTrendsQueryRequest request, AmazonDashboardService dashboardService, CancellationToken cancellationToken) =>
+{
+    var trends = await dashboardService.GetLatestTrendsAsync(request.TrendType, cancellationToken);
+    var response = trends.Select(t => new AmazonTrendListItemDto(t.Asin, t.Title, t.TrendType, t.Description, t.RecordedAt)).ToList();
+    return Results.Ok(response);
+}).WithName("GetAmazonTrends").WithOpenApi();
+
+app.MapGet("/amazon/products/{asin}/history", async (string asin, AmazonDashboardService dashboardService, CancellationToken cancellationToken) =>
+{
+    var history = await dashboardService.GetProductHistoryAsync(asin, cancellationToken);
+    var response = history.Select(h => new AmazonProductHistoryPointDto(h.Timestamp, h.Rank, h.Price, h.Rating, h.ReviewsCount)).ToList();
+    return response.Count == 0 ? Results.NotFound() : Results.Ok(response);
+}).WithName("GetAmazonProductHistory").WithOpenApi();
+
+app.MapGet("/amazon/report/latest", async (AmazonDashboardService dashboardService, CancellationToken cancellationToken) =>
+{
+    var report = await dashboardService.GetLatestReportAsync(cancellationToken);
+    return report is null
+        ? Results.NoContent()
+        : Results.Ok(new
+        {
+            metrics = new AmazonCoreMetricsResponseDto(report.CoreMetrics.SnapshotId, report.CoreMetrics.CapturedAt, report.CoreMetrics.TotalProducts, report.CoreMetrics.TotalNewEntries, report.CoreMetrics.TotalRankSurges, report.CoreMetrics.TotalConsistentPerformers),
+            trends = report.Trends.Select(t => new AmazonTrendListItemDto(t.Asin, t.Title, t.TrendType, t.Description, t.RecordedAt)).ToList(),
+            report.ReportText
+        });
+}).WithName("GetLatestAmazonReport").WithOpenApi();
 
 app.MapGet("/", () => Results.Redirect("/swagger")).ExcludeFromDescription();
 
