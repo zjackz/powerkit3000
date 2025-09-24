@@ -16,6 +16,7 @@ public class AppDbContext : DbContext
     public DbSet<Creator> Creators { get; set; }
     public DbSet<Category> Categories { get; set; }
     public DbSet<Location> Locations { get; set; }
+    public DbSet<ProjectFavorite> ProjectFavorites { get; set; }
 
 
     /// <summary>
@@ -25,6 +26,22 @@ public class AppDbContext : DbContext
     {
         base.OnModelCreating(modelBuilder);
 
-        // 在这里配置你的模型关系
+        modelBuilder.Entity<ProjectFavorite>(entity =>
+        {
+            entity.HasIndex(f => f.ProjectId);
+            entity.HasIndex(f => new { f.ClientId, f.ProjectId }).IsUnique();
+
+            entity.Property(f => f.ClientId)
+                .IsRequired()
+                .HasMaxLength(100);
+
+            entity.Property(f => f.SavedAt)
+                .HasColumnType("timestamp with time zone");
+
+            entity.HasOne(f => f.Project)
+                .WithMany(p => p.Favorites)
+                .HasForeignKey(f => f.ProjectId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
     }
 }

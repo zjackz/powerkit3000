@@ -140,3 +140,11 @@ export interface CategoryKeywordInsight {
   occurrenceCount: number;
   averagePercentFunded: number;
 }
+
+export interface ProjectFavoriteRecord {
+  id: number;
+  clientId: string;
+  project: Project;
+  note?: string | null;
+  savedAt: string;
+}

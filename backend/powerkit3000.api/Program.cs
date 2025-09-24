@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 using powerkit3000.api.Contracts;
 using powerkit3000.core.contracts;
 using powerkit3000.core.services;
@@ -36,6 +37,7 @@ try
         options.UseNpgsql(connectionString));
 
     builder.Services.AddScoped<KickstarterProjectQueryService>();
+    builder.Services.AddScoped<ProjectFavoriteService>();
 
     builder.Services.AddCors(options =>
     {
@@ -52,6 +54,20 @@ try
         .AddDbContextCheck<AppDbContext>("database");
 
     var app = builder.Build();
+
+    using (var scope = app.Services.CreateScope())
+    {
+        var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        try
+        {
+            db.Database.Migrate();
+        }
+        catch (Exception migrateEx)
+        {
+            Log.Fatal(migrateEx, "数据库迁移失败");
+            throw;
+        }
+    }
 
     app.UseCors("tradeforge");
 
@@ -94,49 +110,11 @@ app.MapGet("/projects", async (
     var result = await queryService.QueryAsync(options, cancellationToken);
 
     var items = result.Items
-        .Select(item => new ProjectListItemDto(
-            item.Id,
-            item.Name,
-            item.NameCn,
-            item.Blurb,
-            item.BlurbCn,
-            item.CategoryName,
-            item.Country,
-            item.State,
-            item.Goal,
-            item.Pledged,
-            item.PercentFunded,
-            item.FundingVelocity,
-            item.BackersCount,
-            item.Currency,
-            item.LaunchedAt,
-            item.Deadline,
-            item.CreatorName,
-            item.LocationName
-        ))
+            .Select(MapProjectToDto)
         .ToList();
 
     var topProjectDto = result.Stats.TopProject is not null
-        ? new ProjectListItemDto(
-            result.Stats.TopProject.Id,
-            result.Stats.TopProject.Name,
-            result.Stats.TopProject.NameCn,
-            result.Stats.TopProject.Blurb,
-            result.Stats.TopProject.BlurbCn,
-            result.Stats.TopProject.CategoryName,
-            result.Stats.TopProject.Country,
-            result.Stats.TopProject.State,
-            result.Stats.TopProject.Goal,
-            result.Stats.TopProject.Pledged,
-            result.Stats.TopProject.PercentFunded,
-            result.Stats.TopProject.FundingVelocity,
-            result.Stats.TopProject.BackersCount,
-            result.Stats.TopProject.Currency,
-            result.Stats.TopProject.LaunchedAt,
-            result.Stats.TopProject.Deadline,
-            result.Stats.TopProject.CreatorName,
-            result.Stats.TopProject.LocationName
-        )
+        ? MapProjectToDto(result.Stats.TopProject)
         : null;
 
     var response = new ProjectQueryResponseDto
@@ -284,20 +262,7 @@ app.MapGet("/analytics/top-projects", async (
 {
     var result = await queryService.GetTopProjectsAsync(limit ?? 10, MapFilters(request), cancellationToken);
 
-    return Results.Ok(result.Select(item => new ProjectHighlightDto
-    {
-        Id = item.Id,
-        Name = item.Name,
-        NameCn = item.NameCn,
-        CategoryName = item.CategoryName,
-        Country = item.Country,
-        PercentFunded = item.PercentFunded,
-        Pledged = item.Pledged,
-        FundingVelocity = item.FundingVelocity,
-        BackersCount = item.BackersCount,
-        Currency = item.Currency,
-        LaunchedAt = item.LaunchedAt,
-    }));
+    return Results.Ok(result.Select(MapHighlightToDto));
 }).WithName("GetTopProjects").WithOpenApi();
 
 app.MapGet("/analytics/hype", async (
@@ -309,20 +274,7 @@ app.MapGet("/analytics/hype", async (
 {
     var result = await queryService.GetHypeProjectsAsync(limit ?? 10, minPercentFunded, MapFilters(request), cancellationToken);
 
-    return Results.Ok(result.Select(item => new ProjectHighlightDto
-    {
-        Id = item.Id,
-        Name = item.Name,
-        NameCn = item.NameCn,
-        CategoryName = item.CategoryName,
-        Country = item.Country,
-        PercentFunded = item.PercentFunded,
-        Pledged = item.Pledged,
-        FundingVelocity = item.FundingVelocity,
-        BackersCount = item.BackersCount,
-        Currency = item.Currency,
-        LaunchedAt = item.LaunchedAt,
-    }));
+    return Results.Ok(result.Select(MapHighlightToDto));
 }).WithName("GetHypeProjects").WithOpenApi();
 
 app.MapGet("/analytics/category-keywords", async (
@@ -347,6 +299,74 @@ app.MapGet("/analytics/category-keywords", async (
         AveragePercentFunded = item.AveragePercentFunded,
     }));
 }).WithName("GetCategoryKeywords").WithOpenApi();
+
+app.MapGet("/favorites", async (
+    string clientId,
+    ProjectFavoriteService favoriteService,
+    CancellationToken cancellationToken) =>
+{
+    if (string.IsNullOrWhiteSpace(clientId))
+    {
+        return Results.BadRequest("clientId is required");
+    }
+
+    var favorites = await favoriteService.GetFavoritesAsync(clientId, cancellationToken);
+
+    return Results.Ok(favorites.Select(MapFavoriteToDto));
+}).WithName("GetFavorites").WithOpenApi();
+
+app.MapPost("/favorites", async (
+    UpsertFavoriteRequest request,
+    ProjectFavoriteService favoriteService,
+    CancellationToken cancellationToken) =>
+{
+    if (string.IsNullOrWhiteSpace(request.ClientId))
+    {
+        return Results.BadRequest("clientId is required");
+    }
+
+    if (request.ProjectId <= 0)
+    {
+        return Results.BadRequest("projectId must be greater than zero");
+    }
+
+    var favorite = await favoriteService.UpsertAsync(request.ClientId, request.ProjectId, request.Note, cancellationToken);
+    if (favorite is null)
+    {
+        return Results.NotFound();
+    }
+
+    return Results.Ok(MapFavoriteToDto(favorite));
+}).WithName("SaveFavorite").WithOpenApi();
+
+app.MapDelete("/favorites/{projectId:long}", async (
+    string clientId,
+    long projectId,
+    ProjectFavoriteService favoriteService,
+    CancellationToken cancellationToken) =>
+{
+    if (string.IsNullOrWhiteSpace(clientId))
+    {
+        return Results.BadRequest("clientId is required");
+    }
+
+    var removed = await favoriteService.RemoveAsync(clientId, projectId, cancellationToken);
+    return removed ? Results.NoContent() : Results.NotFound();
+}).WithName("DeleteFavorite").WithOpenApi();
+
+app.MapDelete("/favorites", async (
+    string clientId,
+    ProjectFavoriteService favoriteService,
+    CancellationToken cancellationToken) =>
+{
+    if (string.IsNullOrWhiteSpace(clientId))
+    {
+        return Results.BadRequest("clientId is required");
+    }
+
+    var removed = await favoriteService.ClearAsync(clientId, cancellationToken);
+    return Results.Ok(new { removed });
+}).WithName("ClearFavorites").WithOpenApi();
 
 app.MapGet("/analytics/monthly-trend", async (
     int? months,
@@ -406,7 +426,7 @@ app.MapGet("/analytics/creators", async (
 
 app.MapGet("/", () => Results.Redirect("/swagger")).ExcludeFromDescription();
 
-    app.Run();
+app.Run();
 }
 catch (Exception ex)
 {
@@ -416,5 +436,50 @@ finally
 {
     Log.CloseAndFlush();
 }
+
+static ProjectListItemDto MapProjectToDto(ProjectListItem item) => new(
+    item.Id,
+    item.Name,
+    item.NameCn,
+    item.Blurb,
+    item.BlurbCn,
+    item.CategoryName,
+    item.Country,
+    item.State,
+    item.Goal,
+    item.Pledged,
+    item.PercentFunded,
+    item.FundingVelocity,
+    item.BackersCount,
+    item.Currency,
+    item.LaunchedAt,
+    item.Deadline,
+    item.CreatorName,
+    item.LocationName
+);
+
+static ProjectHighlightDto MapHighlightToDto(ProjectHighlight item) => new()
+{
+    Id = item.Id,
+    Name = item.Name,
+    NameCn = item.NameCn,
+    CategoryName = item.CategoryName,
+    Country = item.Country,
+    PercentFunded = item.PercentFunded,
+    Pledged = item.Pledged,
+    FundingVelocity = item.FundingVelocity,
+    BackersCount = item.BackersCount,
+    Currency = item.Currency,
+    LaunchedAt = item.LaunchedAt,
+};
+
+static ProjectFavoriteDto MapFavoriteToDto(ProjectFavoriteRecord record) => new()
+{
+    Id = record.Id,
+    ClientId = record.ClientId,
+    Project = MapProjectToDto(record.Project),
+    Note = record.Note,
+    SavedAt = record.SavedAt,
+};
 
 public partial class Program;

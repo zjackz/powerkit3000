@@ -16,8 +16,10 @@
     "paths": {
       "@/*": ["src/*"]
     },
+    "types": ["vite/client", "vitest/globals", "@testing-library/jest-dom"],
     "skipLibCheck": true
   },
   "include": ["src"],
+  "exclude": ["src/**/*.test.ts", "src/**/*.test.tsx"],
   "references": [{ "path": "./tsconfig.node.json" }]
 }

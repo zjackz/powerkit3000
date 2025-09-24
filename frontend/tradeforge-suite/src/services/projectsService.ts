@@ -16,6 +16,7 @@ import {
   ProjectQueryResponse,
   ProjectQueryStats,
   ProjectSummary,
+  ProjectFavoriteRecord,
 } from '@/types/project';
 import { httpClient } from './httpClient';
 
@@ -516,6 +517,49 @@ export const fetchCategoryKeywords = async (
       })
       .slice(0, 30);
   }
+};
+
+const mapFavoriteResponse = (favorite: ProjectFavoriteRecord): ProjectFavoriteRecord => ({
+  ...favorite,
+  note: favorite.note ?? undefined,
+});
+
+export const fetchFavorites = async (clientId: string): Promise<ProjectFavoriteRecord[]> => {
+  const response = await httpClient.get<ProjectFavoriteRecord[]>('/favorites', {
+    params: { clientId },
+  });
+
+  return response.data.map(mapFavoriteResponse);
+};
+
+export const saveFavorite = async ({
+  clientId,
+  projectId,
+  note,
+}: {
+  clientId: string;
+  projectId: number;
+  note?: string;
+}): Promise<ProjectFavoriteRecord> => {
+  const response = await httpClient.post<ProjectFavoriteRecord>('/favorites', {
+    clientId,
+    projectId,
+    note,
+  });
+
+  return mapFavoriteResponse(response.data);
+};
+
+export const deleteFavorite = async (clientId: string, projectId: number): Promise<void> => {
+  await httpClient.delete(`/favorites/${projectId}`, {
+    params: { clientId },
+  });
+};
+
+export const clearFavorites = async (clientId: string): Promise<void> => {
+  await httpClient.delete('/favorites', {
+    params: { clientId },
+  });
 };
 
 export const fetchMonthlyTrend = async (

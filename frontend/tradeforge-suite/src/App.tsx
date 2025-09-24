@@ -3,6 +3,7 @@ import { Route, Routes } from 'react-router-dom';
 import { AppHeader } from './components/layout/AppHeader';
 import { AppSidebar } from './components/layout/AppSidebar';
 import { DashboardPage } from './pages/dashboard/DashboardPage';
+import { FavoritesPage } from './pages/favorites/FavoritesPage';
 import { ProjectsPage } from './pages/projects/ProjectsPage';
 import styles from './App.module.css';
 
@@ -21,6 +22,7 @@ const App = () => {
             <Routes>
               <Route path="/" element={<DashboardPage />} />
               <Route path="/projects" element={<ProjectsPage />} />
+              <Route path="/favorites" element={<FavoritesPage />} />
             </Routes>
           </Content>
         </Layout>

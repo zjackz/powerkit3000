@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
@@ -104,6 +105,8 @@ namespace powerkit3000.data.Models
         // URL信息 (存储为 JSON 字符串)
         [Column(TypeName = "jsonb")]
         public string? Urls { get; set; }
+
+        public virtual ICollection<ProjectFavorite> Favorites { get; set; } = new List<ProjectFavorite>();
     }
 
     public class Creator
