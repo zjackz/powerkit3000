@@ -6,6 +6,7 @@ import { DashboardPage } from './pages/dashboard/DashboardPage';
 import { FavoritesPage } from './pages/favorites/FavoritesPage';
 import { ProjectsPage } from './pages/projects/ProjectsPage';
 import { AmazonPage } from './pages/amazon/AmazonPage';
+import AmazonTasksPage from './pages/amazon/AmazonTasksPage';
 import styles from './App.module.css';
 
 const { Sider, Content } = Layout;
@@ -25,6 +26,7 @@ const App = () => {
               <Route path="/projects" element={<ProjectsPage />} />
               <Route path="/favorites" element={<FavoritesPage />} />
               <Route path="/amazon" element={<AmazonPage />} />
+              <Route path="/amazon/tasks" element={<AmazonTasksPage />} />
             </Routes>
           </Content>
         </Layout>

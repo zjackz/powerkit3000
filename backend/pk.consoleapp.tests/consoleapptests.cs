@@ -68,7 +68,7 @@ namespace pk.consoleapp.Tests
                 Assert.Fail("Failed to load template Kickstarter record for generating test data.");
             }
 
-            var tempFile = Path.Combine(Path.GetTempPath(), $"powerkit3000_large_{Guid.NewGuid():N}.json");
+            var tempFile = Path.Combine(Path.GetTempPath(), $"pk3000_large_{Guid.NewGuid():N}.json");
 
             using (var writer = new StreamWriter(tempFile))
             using (var jsonWriter = new JsonTextWriter(writer) { Formatting = Formatting.None })
@@ -127,7 +127,7 @@ namespace pk.consoleapp.Tests
             _stringWriter = new StringWriter();
             Console.SetOut(_stringWriter);
 
-            _inMemoryDatabaseName = $"powerkit3000Tests_{Guid.NewGuid()}";
+            _inMemoryDatabaseName = $"pk3000Tests_{Guid.NewGuid()}";
             _databaseRoot = new InMemoryDatabaseRoot();
             _testServiceConfig = services =>
             {

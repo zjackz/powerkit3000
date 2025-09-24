@@ -155,7 +155,7 @@ public class HtmlAgilityPackAmazonBestsellerSource : IAmazonBestsellerSource
         var linkNode = node.SelectSingleNode(".//a[contains(@class, 'a-link-normal')]")
             ?? node.SelectSingleNode(".//a[contains(@href, '/dp/')]");
 
-        var href = linkNode?.GetAttributeValue("href", null);
+        var href = linkNode?.GetAttributeValue("href", string.Empty);
         if (string.IsNullOrWhiteSpace(href))
         {
             return null;
@@ -179,7 +179,13 @@ public class HtmlAgilityPackAmazonBestsellerSource : IAmazonBestsellerSource
             return null;
         }
 
-        return HtmlEntity.DeEntitize(titleNode.InnerText?.Trim());
+        var text = titleNode.InnerText;
+        if (string.IsNullOrWhiteSpace(text))
+        {
+            text = titleNode.GetAttributeValue("alt", string.Empty);
+        }
+
+        return string.IsNullOrWhiteSpace(text) ? null : HtmlEntity.DeEntitize(text.Trim());
     }
 
     /// <summary>
@@ -256,7 +262,13 @@ public class HtmlAgilityPackAmazonBestsellerSource : IAmazonBestsellerSource
     private static string? ExtractBrand(HtmlNode node)
     {
         var brandNode = node.SelectSingleNode(".//span[contains(@class, 'zg-brand-name')]");
-        return HtmlEntity.DeEntitize(brandNode?.InnerText?.Trim());
+        if (brandNode == null)
+        {
+            return null;
+        }
+
+        var raw = brandNode.InnerText;
+        return string.IsNullOrWhiteSpace(raw) ? null : HtmlEntity.DeEntitize(raw.Trim());
     }
 
     /// <summary>
@@ -265,6 +277,7 @@ public class HtmlAgilityPackAmazonBestsellerSource : IAmazonBestsellerSource
     private static string? ExtractImageUrl(HtmlNode node)
     {
         var imgNode = node.SelectSingleNode(".//img");
-        return imgNode?.GetAttributeValue("src", null);
+        var src = imgNode?.GetAttributeValue("src", string.Empty);
+        return string.IsNullOrWhiteSpace(src) ? null : src;
     }
 }

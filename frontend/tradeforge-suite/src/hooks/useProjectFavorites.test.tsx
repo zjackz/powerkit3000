@@ -74,7 +74,7 @@ describe('useProjectFavorites', () => {
   beforeEach(() => {
     vi.resetAllMocks();
     window.localStorage.clear();
-    window.localStorage.setItem('powerkit3000:client-id', CLIENT_ID);
+    window.localStorage.setItem('pk3000:client-id', CLIENT_ID);
   });
 
   afterEach(() => {

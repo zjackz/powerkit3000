@@ -69,6 +69,10 @@ public class AmazonDashboardService
         var products = await query.ToListAsync(cancellationToken).ConfigureAwait(false);
 
         var productIds = products.Select(p => p.Id).ToArray();
+        if (productIds.Length == 0)
+        {
+            return Array.Empty<AmazonProductDto>();
+        }
 
         var latestSnapshotTimes = await _dbContext.AmazonProductDataPoints
             .AsNoTracking()
@@ -78,13 +82,15 @@ public class AmazonDashboardService
             .ToDictionaryAsync(x => x.ProductId, x => x.LatestCapturedAt, cancellationToken)
             .ConfigureAwait(false);
 
-        var latestDataPoints = await _dbContext.AmazonProductDataPoints
+        var relevantDataPoints = await _dbContext.AmazonProductDataPoints
             .AsNoTracking()
-            .Where(dp => productIds.Contains(dp.ProductId) && latestSnapshotTimes.ContainsKey(dp.ProductId) && dp.CapturedAt == latestSnapshotTimes[dp.ProductId])
+            .Where(dp => productIds.Contains(dp.ProductId))
             .ToListAsync(cancellationToken)
             .ConfigureAwait(false);
 
-        var dataPointLookup = latestDataPoints.ToDictionary(dp => dp.ProductId, dp => dp);
+        var dataPointLookup = relevantDataPoints
+            .Where(dp => latestSnapshotTimes.TryGetValue(dp.ProductId, out var capturedAt) && dp.CapturedAt == capturedAt)
+            .ToDictionary(dp => dp.ProductId, dp => dp);
 
         return products.Select(p =>
         {

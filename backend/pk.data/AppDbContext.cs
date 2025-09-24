@@ -23,6 +23,7 @@ public class AppDbContext : DbContext
     public DbSet<AmazonSnapshot> AmazonSnapshots { get; set; }
     public DbSet<AmazonProductDataPoint> AmazonProductDataPoints { get; set; }
     public DbSet<AmazonTrend> AmazonTrends { get; set; }
+    public DbSet<AmazonTask> AmazonTasks { get; set; }
 
 
     /// <summary>
@@ -126,6 +127,28 @@ public class AppDbContext : DbContext
                 .WithMany(s => s.Trends)
                 .HasForeignKey(t => t.SnapshotId)
                 .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<AmazonTask>(entity =>
+        {
+            entity.HasKey(t => t.Id);
+            entity.HasIndex(t => t.Name).IsUnique();
+
+            entity.Property(t => t.Name).HasMaxLength(120);
+            entity.Property(t => t.Site).HasMaxLength(100);
+            entity.Property(t => t.ProxyPolicy).HasMaxLength(100);
+            entity.Property(t => t.Status).HasMaxLength(50);
+
+            entity.Property(t => t.CategoriesJson).HasColumnType("jsonb");
+            entity.Property(t => t.LeaderboardsJson).HasColumnType("jsonb");
+            entity.Property(t => t.PriceRangeJson).HasColumnType("jsonb");
+            entity.Property(t => t.KeywordsJson).HasColumnType("jsonb");
+            entity.Property(t => t.FiltersJson).HasColumnType("jsonb");
+            entity.Property(t => t.ScheduleJson).HasColumnType("jsonb");
+            entity.Property(t => t.LimitsJson).HasColumnType("jsonb");
+
+            entity.Property(t => t.CreatedAt).HasColumnType("timestamp with time zone");
+            entity.Property(t => t.UpdatedAt).HasColumnType("timestamp with time zone");
         });
     }
 }

@@ -1,18 +1,18 @@
 # Repository Guidelines
 
 ## Project Structure & Module Organization
-- `backend/powerkit3000.consoleapp` is the Spectre.Console CLI; commands live in `consoleapp/Commands`.
-- `backend/powerkit3000.Core` hosts domain services (e.g., `KickstarterDataImportService`) shared by commands and tests.
-- `backend/powerkit3000.data` defines EF Core models/migrations; always run schema tooling here.
-- `backend/powerkit3000.consoleapp.Tests` contains NUnit suites; treat as reference for DI-friendly patterns.
+- `backend/pk.consoleapp` is the Spectre.Console CLI; commands live in `Commands`.
+- `backend/pk.core` hosts domain services (e.g., `KickstarterDataImportService`) shared by commands and tests.
+- `backend/pk.data` defines EF Core models/migrations; always run schema tooling here.
+- `backend/pk.consoleapp.tests` contains NUnit suites; treat as reference for DI-friendly patterns.
 - `scripts/` bundles launch helpers, and `docs/` records product requirements that must be updated alongside code.
 
 ## Build, Test, and Development Commands
-- `dotnet restore powerkit3000.sln && dotnet build powerkit3000.sln` prepares the backend with nullable warnings on.
+- `dotnet restore pk3000.sln && dotnet build pk3000.sln` prepares the backend with nullable warnings on.
 - `scripts/run-console.sh -- counts` cleans, builds, and executes a command; tack on arguments after `--`.
-- `dotnet run --project backend/powerkit3000.consoleapp/powerkit3000.consoleapp.csproj query --state successful` is ideal for quick smoke checks.
-- `dotnet test backend/powerkit3000.consoleapp.Tests/powerkit3000.consoleapp.Tests.csproj` runs NUnit suites; append `--collect:"XPlat Code Coverage"` when measuring coverage.
-- `dotnet ef migrations add <Name>` (from `.config/dotnet-tools.json`) must be run inside `backend/powerkit3000.data`.
+- `dotnet run --project backend/pk.consoleapp/pk.consoleapp.csproj query --state successful` is ideal for quick smoke checks.
+- `dotnet test backend/pk.consoleapp.tests/pk.consoleapp.tests.csproj` runs NUnit suites; append `--collect:"XPlat Code Coverage"` when measuring coverage.
+- `dotnet ef migrations add <Name>` (from `.config/dotnet-tools.json`) must be run inside `backend/pk.data`.
 
 ## Coding Style & Naming Conventions
 - Use four-space indentation, file-scoped namespaces when practical, and `async` members returning `Task`/`ValueTask`.
@@ -22,7 +22,7 @@
 
 ## Testing Guidelines
 - Structure test files as `<Feature>Tests.cs` with `[Test]` methods reading `Should_*` or `When_*`.
-- Follow the in-memory database setup in `backend/powerkit3000.consoleapp.Tests/consoleappTests.cs`, loading fixtures from `backend/powerkit3000.consoleapp/data`.
+- Follow the in-memory database setup in `backend/pk.consoleapp.tests/consoleapptests.cs`, loading fixtures from `backend/pk.consoleapp/data`.
 - Reset `StringWriter` captures between assertions and assert on both UX text and data effects.
 - Target meaningful coverage for new branches and failure handling before requesting review.
 

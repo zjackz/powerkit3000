@@ -33,7 +33,7 @@ try
             .Enrich.WithMachineName()
             .Enrich.WithProcessId()
             .Enrich.WithThreadId();
-    });
+    }, preserveStaticLogger: true);
 
     builder.Services.AddEndpointsApiExplorer();
     builder.Services.AddSwaggerGen();
@@ -54,7 +54,6 @@ try
     builder.Services.AddScoped<AmazonReportingService>();
     builder.Services.AddScoped<AmazonDashboardService>();
     builder.Services.AddScoped<AmazonRecurringJobService>();
-    builder.Services.AddScoped<AmazonJobScheduler>();
 
     builder.Services.AddCors(options =>
     {
@@ -70,13 +69,23 @@ try
     builder.Services.AddHealthChecks()
         .AddDbContextCheck<AppDbContext>("database");
 
-    builder.Services.AddHangfire(config =>
-        config.SetDataCompatibilityLevel(CompatibilityLevel.Version_180)
-            .UseSimpleAssemblyNameTypeSerializer()
-            .UseRecommendedSerializerSettings()
-            .UsePostgreSqlStorage(connectionString));
+    var hangfireDisabled = builder.Configuration.GetValue("Hangfire:Disabled", false);
+    if (hangfireDisabled)
+    {
+        Log.Information("Hangfire services are disabled via configuration.");
+    }
 
-    builder.Services.AddHangfireServer();
+    if (!hangfireDisabled)
+    {
+        builder.Services.AddHangfire(config =>
+            config.SetDataCompatibilityLevel(CompatibilityLevel.Version_180)
+                .UseSimpleAssemblyNameTypeSerializer()
+                .UseRecommendedSerializerSettings()
+                .UsePostgreSqlStorage(connectionString));
+
+        builder.Services.AddHangfireServer();
+        builder.Services.AddScoped<AmazonJobScheduler>();
+    }
 
     var app = builder.Build();
 
@@ -85,7 +94,10 @@ try
         var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
         try
         {
-            db.Database.Migrate();
+            if (db.Database.IsRelational())
+            {
+                db.Database.Migrate();
+            }
         }
         catch (Exception migrateEx)
         {
@@ -93,8 +105,11 @@ try
             throw;
         }
 
-        var scheduler = scope.ServiceProvider.GetRequiredService<AmazonJobScheduler>();
-        await scheduler.InitializeAsync(CancellationToken.None);
+        if (!hangfireDisabled)
+        {
+            var scheduler = scope.ServiceProvider.GetRequiredService<AmazonJobScheduler>();
+            await scheduler.InitializeAsync(CancellationToken.None);
+        }
     }
 
     app.UseCors("tradeforge");
@@ -108,7 +123,10 @@ try
     app.MapHealthChecks("/health").WithName("Health");
 
     // 暂未加权限控制，生产环境需加认证后再开放仪表盘。
-    app.UseHangfireDashboard("/hangfire");
+    if (!hangfireDisabled)
+    {
+        app.UseHangfireDashboard("/hangfire");
+    }
 
 app.MapGet("/projects", async (
     [AsParameters] ProjectQueryRequest request,

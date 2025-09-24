@@ -42,9 +42,15 @@ public class AnalyticsEndpointsTests
         var insights = await response.Content.ReadFromJsonAsync<List<CategoryInsightDto>>();
 
         Assert.That(response.IsSuccessStatusCode, Is.True, "Request should succeed");
-        Assert.That(insights, Is.Not.Null.And.Count.EqualTo(2));
+        if (insights is null)
+        {
+            Assert.Fail("Analytics endpoint returned no category insights");
+            return;
+        }
 
-        var design = insights!.Single(i => i.CategoryName == "Design");
+        Assert.That(insights.Count, Is.EqualTo(2));
+
+        var design = insights.Single(i => i.CategoryName == "Design");
         var games = insights.Single(i => i.CategoryName == "Games");
 
         Assert.That(design.TotalProjects, Is.EqualTo(3));
@@ -62,8 +68,13 @@ public class AnalyticsEndpointsTests
         var summary = await response.Content.ReadFromJsonAsync<ProjectSummaryDto>();
 
         Assert.That(response.IsSuccessStatusCode, Is.True);
-        Assert.That(summary, Is.Not.Null);
-        Assert.That(summary!.TotalProjects, Is.EqualTo(5));
+        if (summary is null)
+        {
+            Assert.Fail("Summary endpoint returned null payload");
+            return;
+        }
+
+        Assert.That(summary.TotalProjects, Is.EqualTo(5));
         Assert.That(summary.SuccessfulProjects, Is.EqualTo(4));
         Assert.That(summary.DistinctCountries, Is.EqualTo(3));
         Assert.That(summary.TotalPledged, Is.EqualTo(12400m));
@@ -76,12 +87,22 @@ public class AnalyticsEndpointsTests
         var projects = await response.Content.ReadFromJsonAsync<List<ProjectHighlightDto>>();
 
         Assert.That(response.IsSuccessStatusCode, Is.True);
-        Assert.That(projects, Is.Not.Null.And.Not.Empty);
-        Assert.That(projects!.All(p => p.PercentFunded >= 150m), Is.True);
+        if (projects is null)
+        {
+            Assert.Fail("Hype endpoint returned null payload");
+            return;
+        }
 
-        var ordered = projects
-            .Zip(projects.Skip(1), (current, next) => current.FundingVelocity >= next.FundingVelocity)
-            .All(result => result);
+        Assert.That(projects, Is.Not.Empty);
+        Assert.That(projects.All(p => p.PercentFunded >= 150m), Is.True);
+
+        var ordered = true;
+        if (projects.Count > 1)
+        {
+            ordered = projects
+                .Zip(projects.Skip(1), (current, next) => current.FundingVelocity >= next.FundingVelocity)
+                .All(result => result);
+        }
 
         Assert.That(ordered, Is.True, "Projects should be ordered by funding velocity desc");
         Assert.That(projects.First().FundingVelocity, Is.GreaterThan(0m));
@@ -94,9 +115,15 @@ public class AnalyticsEndpointsTests
         var keywords = await response.Content.ReadFromJsonAsync<List<CategoryKeywordDto>>();
 
         Assert.That(response.IsSuccessStatusCode, Is.True);
-        Assert.That(keywords, Is.Not.Null.And.Not.Empty);
+        if (keywords is null)
+        {
+            Assert.Fail("Category keywords endpoint returned null payload");
+            return;
+        }
 
-        var designKeyword = keywords!.SingleOrDefault(k => k.Keyword == "design");
+        Assert.That(keywords, Is.Not.Empty);
+
+        var designKeyword = keywords.SingleOrDefault(k => k.Keyword == "design");
         Assert.That(designKeyword, Is.Not.Null, "Design keyword should surface");
         Assert.That(designKeyword!.ProjectCount, Is.GreaterThanOrEqualTo(2));
     }

@@ -1,8 +1,11 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Logging;
@@ -13,9 +16,19 @@ namespace pk.api.tests;
 
 public class ApiApplicationFactory : WebApplicationFactory<Program>
 {
+    private readonly InMemoryDatabaseRoot _databaseRoot = new();
+
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
         builder.UseEnvironment("Development");
+        builder.UseSetting("Hangfire:Disabled", bool.TrueString);
+        builder.ConfigureAppConfiguration((context, configurationBuilder) =>
+        {
+            configurationBuilder.AddInMemoryCollection(new[]
+            {
+                new KeyValuePair<string, string?>("Hangfire:Disabled", bool.TrueString),
+            });
+        });
         builder.ConfigureLogging(logging => logging.ClearProviders());
 
         builder.ConfigureServices(services =>
@@ -23,9 +36,10 @@ public class ApiApplicationFactory : WebApplicationFactory<Program>
             services.RemoveAll(typeof(DbContextOptions<AppDbContext>));
             services.RemoveAll<AppDbContext>();
 
+            var databaseName = $"ApiIntegrationTests_{Guid.NewGuid():N}";
             services.AddDbContext<AppDbContext>(options =>
             {
-                options.UseInMemoryDatabase($"ApiIntegrationTests_{Guid.NewGuid():N}");
+                options.UseInMemoryDatabase(databaseName, _databaseRoot);
             });
 
             var sp = services.BuildServiceProvider();

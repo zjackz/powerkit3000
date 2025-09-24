@@ -1,7 +1,8 @@
-import { Card, Empty, Input, List, Skeleton, Statistic, Table, Tag, Typography } from 'antd';
+import { Button, Card, Empty, Input, List, Skeleton, Statistic, Table, Tag, Typography } from 'antd';
 import { useMemo, useState } from 'react';
 import dayjs from 'dayjs';
 import { useAmazonCoreMetrics, useAmazonProducts, useAmazonProductHistory, useAmazonTrends } from '@/hooks/useAmazonDashboard';
+import { useNavigate } from 'react-router-dom';
 import type { AmazonProductListItem, AmazonTrendListItem, AmazonTrendType } from '@/types/amazon';
 import styles from './AmazonPage.module.css';
 
@@ -35,6 +36,7 @@ const formatNumber = (value?: number | null) => {
 };
 
 export const AmazonPage = () => {
+    const navigate = useNavigate();
     const [search, setSearch] = useState('');
     const [query, setQuery] = useState('');
     const [selectedAsin, setSelectedAsin] = useState<string>();
@@ -114,7 +116,14 @@ export const AmazonPage = () => {
 
   return (
     <div className={styles.wrapper}>
-      <Typography.Title level={3}>Amazon 榜单洞察</Typography.Title>
+      <div className={styles.headerRow}>
+        <Typography.Title level={3} style={{ margin: 0 }}>
+          Amazon 榜单洞察
+        </Typography.Title>
+        <Button type="primary" onClick={() => navigate('/amazon/tasks')}>
+          管理采集任务
+        </Button>
+      </div>
       <div className={styles.metricRow}>
         <Card bordered={false}>
           {metricsLoading ? (

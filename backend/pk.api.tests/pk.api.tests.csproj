@@ -19,6 +19,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\pk.api\pk.api.csproj" />
     <ProjectReference Include="..\pk.data\pk.data.csproj" />
   </ItemGroup>
 </Project>

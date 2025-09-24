@@ -26,8 +26,6 @@
   <ItemGroup>
     <ProjectReference Include="..\pk.core\pk.core.csproj" />
     <ProjectReference Include="..\pk.data\pk.data.csproj" />
-    <ProjectReference Include="..\powerkit3000.core\pk.core.csproj" />
-    <ProjectReference Include="..\powerkit3000.data\pk.data.csproj" />
   </ItemGroup>
 
   <ItemGroup>

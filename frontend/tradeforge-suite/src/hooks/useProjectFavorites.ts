@@ -8,7 +8,7 @@ import {
   saveFavorite,
 } from '@/services/projectsService';
 
-const CLIENT_ID_STORAGE_KEY = 'powerkit3000:client-id';
+const CLIENT_ID_STORAGE_KEY = 'pk3000:client-id';
 const FAVORITES_QUERY_KEY = 'favorites';
 
 const ensureClientId = (): string => {

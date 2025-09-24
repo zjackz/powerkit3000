@@ -35,7 +35,7 @@ public class Program
 [cyan]║[/]                   [grey]🔧[/] [white]Universal Toolkit Suite[/] [red]🚀[/]                    [cyan]║[/]
 [cyan]╚════════════════════════════════════════════════════════════════════╝[/]
 """);
-        AnsiConsole.MarkupLine("欢迎使用 [yellow]powerkit3000[/] CLI！");
+        AnsiConsole.MarkupLine("欢迎使用 [yellow]pk3000[/] CLI！");
 
         var host = Host.CreateDefaultBuilder(args)
             .UseContentRoot(AppContext.BaseDirectory)
@@ -76,6 +76,7 @@ public class Program
                 services.AddScoped<AmazonTrendAnalysisService>();
                 services.AddScoped<AmazonReportingService>();
                 services.AddScoped<AmazonDashboardService>();
+                services.AddScoped<AmazonTaskService>();
 
                 services.AddScoped<KickstarterDataImportService>(provider =>
                     new KickstarterDataImportService(
@@ -91,6 +92,7 @@ public class Program
                 services.AddScoped<SplitCommand>();
                 services.AddScoped<TranslateMissingCommand>();
                 services.AddScoped<AmazonSeedCategoriesCommand>();
+                services.AddScoped<AmazonSeedTasksCommand>();
                 services.AddScoped<AmazonFetchCommand>();
                 services.AddScoped<AmazonAnalyzeCommand>();
                 services.AddScoped<AmazonReportCommand>();
@@ -125,7 +127,7 @@ public class Program
 
                     if (commandName == "exit" || commandName == "quit")
                     {
-                        AnsiConsole.MarkupLine("[red]退出 powerkit3000 CLI。[/]");
+                        AnsiConsole.MarkupLine("[red]退出 pk3000 CLI。[/]");
                         break;
                     }
 
@@ -153,6 +155,7 @@ public class Program
         table.AddRow("split <文件路径> <拆分数量>", "将一个 JSON 文件拆分为指定数量的小文件。");
         table.AddRow("translate [options]", "翻译缺少中文名称/简介的项目字段。");
         table.AddRow("amazon-seed", "同步配置文件中的 Amazon 类目。");
+        table.AddRow("amazon-tasks seed", "初始化或更新 Amazon 采集任务配置。");
         table.AddRow("amazon-fetch <类目Id> [best|new|movers]", "采集 Amazon 榜单快照。");
         table.AddRow("amazon-analyze <snapshotId|latest>", "分析指定 Snapshot 的榜单趋势。");
         table.AddRow("amazon-report <snapshotId|latest>", "输出 Snapshot 的分析报告。");
@@ -217,6 +220,17 @@ public class Program
                 case "amazon-seed":
                     var seedCommand = services.GetRequiredService<AmazonSeedCategoriesCommand>();
                     await seedCommand.ExecuteAsync(CancellationToken.None);
+                    break;
+
+                case "amazon-tasks":
+                    if (args.Length >= 2 && args[1].Equals("seed", StringComparison.OrdinalIgnoreCase))
+                    {
+                        var seedTasksCommand = services.GetRequiredService<AmazonSeedTasksCommand>();
+                        await seedTasksCommand.ExecuteAsync(CancellationToken.None);
+                        break;
+                    }
+
+                    AnsiConsole.MarkupLine("[red]用法: amazon-tasks seed[/]");
                     break;
 
                 case "amazon-fetch":

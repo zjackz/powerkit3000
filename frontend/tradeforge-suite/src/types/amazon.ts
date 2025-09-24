@@ -82,3 +82,63 @@ export interface AmazonFetchSnapshotPayload {
   categoryId: number;
   bestsellerType?: AmazonBestsellerType;
 }
+
+/**
+ * 采集任务中的类目选择器。
+ */
+export type AmazonTaskCategorySelectorType = 'url' | 'node';
+
+export interface AmazonTaskCategorySelector {
+  type: AmazonTaskCategorySelectorType;
+  value: string;
+}
+
+export interface AmazonTaskPriceRange {
+  min?: number | null;
+  max?: number | null;
+}
+
+export interface AmazonTaskKeywordRules {
+  include: string[];
+  exclude: string[];
+}
+
+export interface AmazonTaskFilterRules {
+  minRating?: number | null;
+  minReviews?: number | null;
+}
+
+export type AmazonTaskScheduleType = 'once' | 'recurring';
+
+export interface AmazonTaskSchedule {
+  type: AmazonTaskScheduleType;
+  cron?: string;
+  timezone: string;
+  runAt?: string; // only for once
+}
+
+export interface AmazonTaskLimits {
+  maxProducts?: number | null;
+  maxRequestsPerHour?: number | null;
+}
+
+export type AmazonTaskStatus = 'draft' | 'active' | 'paused';
+
+export interface AmazonTask {
+  id: string;
+  name: string;
+  site: string;
+  categories: AmazonTaskCategorySelector[];
+  leaderboards: AmazonBestsellerType[] | string[];
+  priceRange: AmazonTaskPriceRange;
+  keywords: AmazonTaskKeywordRules;
+  filters: AmazonTaskFilterRules;
+  schedule: AmazonTaskSchedule;
+  limits: AmazonTaskLimits;
+  proxyPolicy: string;
+  status: AmazonTaskStatus;
+  notes?: string;
+  llmSummary?: string;
+  createdAt: string;
+  updatedAt: string;
+}

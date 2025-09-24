@@ -1,5 +1,5 @@
 import { Menu } from 'antd';
-import { AppstoreOutlined, DashboardOutlined, ExperimentOutlined, ShopOutlined, StarFilled } from '@ant-design/icons';
+import { AppstoreOutlined, DashboardOutlined, ExperimentOutlined, ProfileOutlined, ShopOutlined, StarFilled } from '@ant-design/icons';
 import { useLocation, useNavigate } from 'react-router-dom';
 
 const menuItems = [
@@ -24,6 +24,11 @@ const menuItems = [
     label: 'Amazon 榜单',
   },
   {
+    key: '/amazon/tasks',
+    icon: <ProfileOutlined />,
+    label: 'Amazon 任务配置',
+  },
+  {
     key: 'experiments',
     icon: <ExperimentOutlined />,
     label: '实验室 (规划中)',
@@ -35,11 +40,18 @@ export const AppSidebar = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
+  const activeKey = menuItems.reduce((matched, item) => {
+    if (location.pathname.startsWith(item.key) && item.key.length > matched.length) {
+      return item.key;
+    }
+    return matched;
+  }, '/');
+
   return (
     <Menu
       theme="dark"
       mode="inline"
-      selectedKeys={[menuItems.find((item) => location.pathname.startsWith(item.key))?.key ?? '/']}
+      selectedKeys={[activeKey]}
       onClick={({ key }) => navigate(key)}
       items={menuItems}
     />
