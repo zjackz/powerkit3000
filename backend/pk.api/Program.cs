@@ -6,6 +6,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using pk.api.Contracts;
 using pk.api.Jobs;
+using pk.api.Monitoring;
 using pk.core.Amazon.Options;
 using pk.core.Amazon.Services;
 using pk.core.Amazon.Contracts;
@@ -69,6 +70,9 @@ try
     builder.Services.AddHealthChecks()
         .AddDbContextCheck<AppDbContext>("database");
 
+    builder.Services.AddSingleton<MetricsSnapshotService>();
+    builder.Services.AddHostedService(provider => provider.GetRequiredService<MetricsSnapshotService>());
+
     var hangfireDisabled = builder.Configuration.GetValue("Hangfire:Disabled", false);
     if (hangfireDisabled)
     {
@@ -121,6 +125,9 @@ try
     }
 
     app.MapHealthChecks("/health").WithName("Health");
+    app.MapGet("/monitoring/metrics", (MetricsSnapshotService metrics) => Results.Ok(metrics.CreateSnapshot()))
+        .WithName("GetMetrics")
+        .WithOpenApi();
 
     // 暂未加权限控制，生产环境需加认证后再开放仪表盘。
     if (!hangfireDisabled)

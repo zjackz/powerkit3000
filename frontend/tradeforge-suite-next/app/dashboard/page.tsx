@@ -6,6 +6,7 @@ import { InsightMetricCard } from '@/components/metrics/InsightMetricCard';
 import { TrendAreaChart } from '@/components/metrics/TrendAreaChart';
 import { CategoryDonut } from '@/components/metrics/CategoryDonut';
 import { TopListCard } from '@/components/metrics/TopListCard';
+import { SystemHealthPanel } from '@/components/monitoring/SystemHealthPanel';
 
 const mockTrend = [
   { month: '02-01', value: 12 },
@@ -58,6 +59,9 @@ export default function DashboardPage() {
       title="全局驾驶舱"
       description="整合 Kickstarter & Amazon 双域数据，实时洞察跨境热点动向。"
     >
+      <ProCard colSpan={{ xs: 24 }} ghost>
+        <SystemHealthPanel />
+      </ProCard>
       <ProCard colSpan={{ xs: 24, md: 12, xxl: 8 }} ghost>
         <InsightMetricCard
           title="导入任务成功率"

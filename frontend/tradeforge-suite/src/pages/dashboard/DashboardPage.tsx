@@ -9,6 +9,7 @@ import { useFundingDistribution } from '@/hooks/useFundingDistribution';
 import { useCreatorPerformance } from '@/hooks/useCreatorPerformance';
 import { useHypeProjects } from '@/hooks/useHypeProjects';
 import { useCategoryKeywords } from '@/hooks/useCategoryKeywords';
+import { useSystemHealth } from '@/hooks/useSystemHealth';
 import { CategorySuccessChart } from '@/components/analytics/CategorySuccessChart';
 import { CountrySuccessChart } from '@/components/analytics/CountrySuccessChart';
 import { TopProjectsList } from '@/components/analytics/TopProjectsList';
@@ -19,6 +20,7 @@ import { HypeProjectsList } from '@/components/analytics/HypeProjectsList';
 import { CategoryKeywordCloud } from '@/components/analytics/CategoryKeywordCloud';
 import { AnalyticsFilters } from '@/components/analytics/AnalyticsFilters';
 import { useProjectFilters } from '@/hooks/useProjectFilters';
+import { SystemHealthCard } from '@/components/system/SystemHealthCard';
 import type { AnalyticsFilterRequest } from '@/types/project';
 import styles from './DashboardPage.module.css';
 
@@ -53,6 +55,17 @@ export const DashboardPage = () => {
   const { data: creatorPerformance, isLoading: creatorsLoading } = useCreatorPerformance(normalizedFilters);
   const { data: hypeProjects, isLoading: hypeLoading } = useHypeProjects(hypeParams);
   const { data: categoryKeywords, isLoading: keywordsLoading } = useCategoryKeywords(keywordCategory, normalizedFilters);
+  const {
+    data: systemHealth,
+    isLoading: systemHealthLoading,
+    error: systemHealthError,
+  } = useSystemHealth();
+  const systemHealthDisplayError =
+    systemHealthError instanceof Error
+      ? systemHealthError
+      : systemHealthError
+        ? new Error(String(systemHealthError))
+        : null;
 
   return (
     <div className={styles.wrapper}>
@@ -65,6 +78,15 @@ export const DashboardPage = () => {
           loading={filterLoading}
         />
       </Card>
+      <Row gutter={[16, 16]}>
+        <Col span={24}>
+          <SystemHealthCard
+            summary={systemHealth}
+            loading={systemHealthLoading}
+            error={systemHealthDisplayError}
+          />
+        </Col>
+      </Row>
       <Row gutter={[16, 16]}>
         <Col xs={24} sm={12} lg={6}>
           <Card bordered={false} className={styles.metricCard}>

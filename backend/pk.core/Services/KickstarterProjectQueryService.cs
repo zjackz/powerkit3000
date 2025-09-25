@@ -1,11 +1,14 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
+using System.Diagnostics.Metrics;
 using System.Linq;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using pk.core.contracts;
 using pk.data;
 using pk.data.Models;
+using pk.core.Diagnostics;
 
 namespace pk.core.services;
 
@@ -33,6 +36,15 @@ public class KickstarterProjectQueryService
 
     public async Task<ProjectQueryResult> QueryAsync(ProjectQueryOptions options, CancellationToken cancellationToken = default)
     {
+        var stopwatch = Stopwatch.StartNew();
+        var tagList = new TagList
+        {
+            { "has_search", string.IsNullOrWhiteSpace(options.Search) ? "false" : "true" },
+            { "has_states", options.States?.Count > 0 ? "true" : "false" },
+            { "has_countries", options.Countries?.Count > 0 ? "true" : "false" },
+            { "has_categories", options.Categories?.Count > 0 ? "true" : "false" }
+        };
+
         var query = _context.KickstarterProjects
             .AsNoTracking()
             .Include(p => p.Category)
@@ -226,7 +238,30 @@ public class KickstarterProjectQueryService
             TopProject = topProject
         };
 
-        _logger.LogInformation("查询 Kickstarter 项目，共匹配 {Total} 条记录。", totalCount);
+        stopwatch.Stop();
+
+        PowerKitMetrics.KickstarterQueries.Add(1, tagList);
+        PowerKitMetrics.KickstarterQueryDuration.Record(stopwatch.Elapsed.TotalMilliseconds, tagList);
+
+        _logger.LogInformation(
+            "查询 Kickstarter 项目完成。耗时 {ElapsedMs} ms，匹配总数 {Total}，当前页返回 {PageCount} 条，过滤条件：{@Filters}",
+            stopwatch.Elapsed.TotalMilliseconds,
+            totalCount,
+            items.Count,
+            new
+            {
+                options.Page,
+                options.PageSize,
+                HasSearch = !string.IsNullOrWhiteSpace(options.Search),
+                States = options.States?.Count ?? 0,
+                Countries = options.Countries?.Count ?? 0,
+                Categories = options.Categories?.Count ?? 0,
+                MinGoal = options.MinGoal,
+                MaxGoal = options.MaxGoal,
+                MinPercentFunded = options.MinPercentFunded,
+                LaunchedAfter = options.LaunchedAfter,
+                LaunchedBefore = options.LaunchedBefore
+            });
 
         return new ProjectQueryResult
         {

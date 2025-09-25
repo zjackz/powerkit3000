@@ -1,9 +1,13 @@
+using System.Diagnostics;
+using System.Diagnostics.Metrics;
 using System.Globalization;
+using System.IO;
 using System.Linq;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using pk.core.Diagnostics;
 using pk.data;
 using pk.data.Models;
 
@@ -23,13 +27,37 @@ namespace pk.core.services
 
         public async Task ImportDataAsync(string filePath, IProgress<int>? progress = null)
         {
-            var projectsToImport = ParseKickstarterProjectsFromFile(filePath).ToList(); // Convert to list to enable multiple iterations
-            await ImportProjectsToDatabaseAsync(projectsToImport, progress);
+            var stopwatch = Stopwatch.StartNew();
+            var sourceTag = Path.GetFileName(filePath);
+            var projectsToImport = ParseKickstarterProjectsFromFile(filePath, sourceTag).ToList();
+            PowerKitMetrics.KickstarterImportFiles.Add(1, new TagList
+            {
+                { "source", sourceTag }
+            });
+
+            await ImportProjectsToDatabaseAsync(projectsToImport, progress, sourceTag);
+            stopwatch.Stop();
+            _logger.LogInformation(
+                "导入任务完成。来源文件: {File}, 数据量: {Count}, 耗时: {ElapsedMs} ms",
+                filePath,
+                projectsToImport.Count,
+                stopwatch.Elapsed.TotalMilliseconds);
         }
 
-        public async Task ImportProjectsToDatabaseAsync(List<KickstarterProject> projectsToImport, IProgress<int>? progress = null)
+        public async Task ImportProjectsToDatabaseAsync(
+            List<KickstarterProject> projectsToImport,
+            IProgress<int>? progress = null,
+            string? source = null)
         {
-            _logger.LogInformation($"开始导入 {projectsToImport.Count} 条项目数据。");
+            var sourceTag = string.IsNullOrWhiteSpace(source) ? "unknown" : source;
+            _logger.LogInformation(
+                "开始导入 {Count} 条项目数据，来源 {Source}",
+                projectsToImport.Count,
+                sourceTag);
+
+            var overallStopwatch = Stopwatch.StartNew();
+            var skippedExisting = 0;
+            var skippedDuplicates = 0;
 
             var originalAutoDetect = _context.ChangeTracker.AutoDetectChangesEnabled;
             _context.ChangeTracker.AutoDetectChangesEnabled = false;
@@ -48,6 +76,7 @@ namespace pk.core.services
 
                 for (int i = 0; i < totalProjects; i += BatchSize)
                 {
+                    var batchStopwatch = Stopwatch.StartNew();
                     var batch = projectsToImport.Skip(i).Take(BatchSize).ToList();
                     if (batch.Count == 0)
                     {
@@ -91,20 +120,39 @@ namespace pk.core.services
 
                     foreach (var project in batch)
                     {
-                        if (!existingProjectIds.Contains(project.Id))
+                        if (existingProjectIds.Contains(project.Id))
                         {
-                            if (stagedProjectIds.Add(project.Id))
+                            skippedExisting++;
+                            PowerKitMetrics.KickstarterImportSkippedProjects.Add(1, new TagList
                             {
-                                newProjects.Add(project);
-                            }
-                            else
-                            {
-                                _logger.LogWarning($"项目ID {project.Id} 在当前批次中重复，已忽略重复条目。");
-                            }
+                                { "source", sourceTag },
+                                { "reason", "already_exists" }
+                            });
+                            _logger.LogDebug("项目ID {ProjectId} 已存在，跳过导入或考虑更新。", project.Id);
+                            continue;
                         }
-                        else
+
+                        if (!stagedProjectIds.Add(project.Id))
                         {
-                            _logger.LogWarning($"项目ID {project.Id} 已存在，跳过导入或考虑更新。");
+                            skippedDuplicates++;
+                            PowerKitMetrics.KickstarterImportSkippedProjects.Add(1, new TagList
+                            {
+                                { "source", sourceTag },
+                                { "reason", "duplicate_in_batch" }
+                            });
+                            _logger.LogDebug("项目ID {ProjectId} 在当前批次中重复，已忽略重复条目。", project.Id);
+                            continue;
+                        }
+
+                        if (!IsValidProject(project, out var validationReason))
+                        {
+                            PowerKitMetrics.KickstarterImportValidationErrors.Add(1, new TagList
+                            {
+                                { "source", sourceTag },
+                                { "reason", validationReason }
+                            });
+                            _logger.LogWarning("项目ID {ProjectId} 校验失败（原因: {Reason}），已跳过。", project.Id, validationReason);
+                            continue;
                         }
 
                         if (project.Creator != null)
@@ -163,6 +211,8 @@ namespace pk.core.services
                                 newLocations.Add(project.Location);
                             }
                         }
+
+                        newProjects.Add(project);
                     }
 
                     if (newCreators.Any()) _context.Creators.AddRange(newCreators);
@@ -181,31 +231,78 @@ namespace pk.core.services
                         catch (DbUpdateException ex)
                         {
                             saveFailed = true;
-                            _logger.LogError(ex, $"导入批次数据时发生数据库更新错误，批次起始索引: {i}。错误: {ex.Message}");
+                            PowerKitMetrics.KickstarterImportFailures.Add(1, new TagList
+                            {
+                                { "source", sourceTag }
+                            });
+                            _logger.LogError(ex, "导入批次数据时发生数据库更新错误，批次起始索引: {StartIndex}。错误: {Message}", i, ex.Message);
 
                             foreach (var entry in ex.Entries)
                             {
-                                _logger.LogWarning($"实体 {entry.Entity.GetType().Name} (状态: {entry.State}) 插入/更新失败，将尝试跳过。原因: {ex.Message}");
+                                PowerKitMetrics.KickstarterImportSkippedProjects.Add(1, new TagList
+                                {
+                                    { "source", sourceTag },
+                                    { "reason", "db_update_failed" }
+                                });
+                                _logger.LogWarning(
+                                    "实体 {EntityType} (状态: {EntityState}) 插入/更新失败，将尝试跳过。原因: {Message}",
+                                    entry.Entity.GetType().Name,
+                                    entry.State,
+                                    ex.Message);
                                 entry.State = EntityState.Detached;
                             }
                         }
                         catch (Exception ex)
                         {
                             saveFailed = false;
-                            _logger.LogError(ex, $"导入批次数据时发生未知错误，批次起始索引: {i}。错误: {ex.Message}");
+                            PowerKitMetrics.KickstarterImportFailures.Add(1, new TagList
+                            {
+                                { "source", sourceTag }
+                            });
+                            _logger.LogError(ex, "导入批次数据时发生未知错误，批次起始索引: {StartIndex}。错误: {Message}", i, ex.Message);
                         }
                     } while (saveFailed);
 
-                    importedCount += newProjects.Count(p => _context.Entry(p).State == EntityState.Unchanged);
+                    var successfulProjects = newProjects.Count(p => _context.Entry(p).State == EntityState.Unchanged);
+                    if (successfulProjects > 0)
+                    {
+                        PowerKitMetrics.KickstarterImportedProjects.Add(successfulProjects, new TagList
+                        {
+                            { "source", sourceTag }
+                        });
+                    }
+
+                    importedCount += successfulProjects;
+                    PowerKitMetrics.KickstarterImportBatches.Add(1, new TagList
+                    {
+                        { "source", sourceTag }
+                    });
+                    PowerKitMetrics.KickstarterImportBatchDuration.Record(batchStopwatch.Elapsed.TotalMilliseconds, new TagList
+                    {
+                        { "source", sourceTag }
+                    });
 
                     var percentage = totalProjects == 0
                         ? 100
                         : (int)((double)importedCount / totalProjects * 100);
-                    _logger.LogInformation($"已成功导入 {importedCount} / {totalProjects} 条数据。进度: {percentage}%");
+                    _logger.LogInformation(
+                        "批次完成。来源 {Source}，成功导入 {Imported} 条，累计 {ImportedTotal}/{Total}，耗时 {ElapsedMs} ms",
+                        sourceTag,
+                        successfulProjects,
+                        importedCount,
+                        totalProjects,
+                        batchStopwatch.Elapsed.TotalMilliseconds);
                     progress?.Report(percentage);
                 }
 
-                _logger.LogInformation("所有数据导入完成。");
+                overallStopwatch.Stop();
+                _logger.LogInformation(
+                    "所有数据导入完成。来源 {Source}，成功 {ImportedCount}，已存在 {ExistingSkipped}，批内重复 {DuplicateSkipped}，耗时 {ElapsedMs} ms",
+                    sourceTag,
+                    importedCount,
+                    skippedExisting,
+                    skippedDuplicates,
+                    overallStopwatch.Elapsed.TotalMilliseconds);
             }
             finally
             {
@@ -213,7 +310,43 @@ namespace pk.core.services
             }
         }
 
-        private List<KickstarterProject> ParseKickstarterProjectsFromFile(string filePath)
+        private static bool IsValidProject(KickstarterProject project, out string reason)
+        {
+            if (string.IsNullOrWhiteSpace(project.Name))
+            {
+                reason = "missing_name";
+                return false;
+            }
+
+            if (project.Goal < 0)
+            {
+                reason = "negative_goal";
+                return false;
+            }
+
+            if (project.Pledged < 0)
+            {
+                reason = "negative_pledged";
+                return false;
+            }
+
+            if (project.LaunchedAt == default)
+            {
+                reason = "missing_launched_at";
+                return false;
+            }
+
+            if (project.Deadline == default)
+            {
+                reason = "missing_deadline";
+                return false;
+            }
+
+            reason = string.Empty;
+            return true;
+        }
+
+        private List<KickstarterProject> ParseKickstarterProjectsFromFile(string filePath, string sourceTag)
         {
             var parsedProjects = new List<KickstarterProject>();
 
@@ -230,10 +363,18 @@ namespace pk.core.services
                     if (jsonReader.TokenType == JsonToken.StartObject)
                     {
                         var jsonObject = JObject.Load(jsonReader);
-                        var project = TryParseKickstarterRecord(jsonObject);
+                        var project = TryParseKickstarterRecord(jsonObject, sourceTag);
                         if (project != null)
                         {
                             parsedProjects.Add(project);
+                        }
+                        else
+                        {
+                            PowerKitMetrics.KickstarterImportParseErrors.Add(1, new TagList
+                            {
+                                { "source", sourceTag },
+                                { "reason", "record_invalid" }
+                            });
                         }
                     }
                 }
@@ -241,25 +382,45 @@ namespace pk.core.services
             catch (Newtonsoft.Json.JsonReaderException ex)
             {
                 _logger.LogError(ex, $"反序列化 JSON 内容时发生错误：{ex.Message}");
+                PowerKitMetrics.KickstarterImportParseErrors.Add(1, new TagList
+                {
+                    { "source", sourceTag },
+                    { "reason", "json_reader_exception" }
+                });
             }
             catch (JsonException ex)
             {
                 _logger.LogError(ex, $"解析 Kickstarter 数据时发生错误：{ex.Message}");
+                PowerKitMetrics.KickstarterImportParseErrors.Add(1, new TagList
+                {
+                    { "source", sourceTag },
+                    { "reason", "json_parse_exception" }
+                });
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, $"读取或解析文件时发生未知错误：{ex.Message}");
+                PowerKitMetrics.KickstarterImportParseErrors.Add(1, new TagList
+                {
+                    { "source", sourceTag },
+                    { "reason", "unknown_exception" }
+                });
             }
 
             _logger.LogInformation("从文件 {FilePath} 解析出 {Count} 条 Kickstarter 记录。", filePath, parsedProjects.Count);
             return parsedProjects;
         }
 
-        private KickstarterProject? TryParseKickstarterRecord(JObject jsonObject)
+        private KickstarterProject? TryParseKickstarterRecord(JObject jsonObject, string sourceTag)
         {
             if (jsonObject["data"] is not JObject data)
             {
                 _logger.LogWarning("跳过缺少 data 字段的记录。");
+                PowerKitMetrics.KickstarterImportParseErrors.Add(1, new TagList
+                {
+                    { "source", sourceTag },
+                    { "reason", "missing_data" }
+                });
                 return null;
             }
 
@@ -267,6 +428,11 @@ namespace pk.core.services
             if (projectId == null)
             {
                 _logger.LogWarning("跳过缺少项目ID的记录。");
+                PowerKitMetrics.KickstarterImportParseErrors.Add(1, new TagList
+                {
+                    { "source", sourceTag },
+                    { "reason", "missing_id" }
+                });
                 return null;
             }
 

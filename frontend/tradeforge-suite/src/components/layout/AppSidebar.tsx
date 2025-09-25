@@ -1,5 +1,13 @@
 import { Menu } from 'antd';
-import { AppstoreOutlined, DashboardOutlined, ExperimentOutlined, ProfileOutlined, ShopOutlined, StarFilled } from '@ant-design/icons';
+import {
+  AppstoreOutlined,
+  DashboardOutlined,
+  ExperimentOutlined,
+  PlayCircleOutlined,
+  ProfileOutlined,
+  ShopOutlined,
+  StarFilled,
+} from '@ant-design/icons';
 import { useLocation, useNavigate } from 'react-router-dom';
 
 const menuItems = [
@@ -7,6 +15,11 @@ const menuItems = [
     key: '/',
     icon: <DashboardOutlined />,
     label: '概览仪表盘',
+  },
+  {
+    key: '/demo',
+    icon: <PlayCircleOutlined />,
+    label: '客户演示',
   },
   {
     key: '/projects',

@@ -13,6 +13,7 @@ using pk.core.services;
 using pk.core.translations;
 using pk.data;
 using pk.core.Logging;
+using consoleapp.Monitoring;
 
 public class Program
 {
@@ -71,6 +72,7 @@ public class Program
                 services.AddSingleton<ITranslationService, TranslationService>();
 
                 services.AddHttpClient<IAmazonBestsellerSource, HtmlAgilityPackAmazonBestsellerSource>();
+                services.AddHttpClient<MetricsSnapshotClient>();
 
                 services.AddScoped<AmazonIngestionService>();
                 services.AddScoped<AmazonTrendAnalysisService>();
@@ -96,6 +98,7 @@ public class Program
                 services.AddScoped<AmazonFetchCommand>();
                 services.AddScoped<AmazonAnalyzeCommand>();
                 services.AddScoped<AmazonReportCommand>();
+                services.AddScoped<MetricsCommand>();
             })
             .Build();
 
@@ -159,6 +162,7 @@ public class Program
         table.AddRow("amazon-fetch <类目Id> [[best|new|movers]]", "采集 Amazon 榜单快照。");
         table.AddRow("amazon-analyze <snapshotId|latest>", "分析指定 Snapshot 的榜单趋势。");
         table.AddRow("amazon-report <snapshotId|latest>", "输出 Snapshot 的分析报告。");
+        table.AddRow("metrics [--url <api>]", "获取后端 /monitoring/metrics 指标快照，检查导入及查询健康。");
         table.AddRow("exit / quit", "退出 CLI。");
 
         AnsiConsole.Write(table);
@@ -272,6 +276,11 @@ public class Program
                     }
                     var reportCommand = services.GetRequiredService<AmazonReportCommand>();
                     await reportCommand.ExecuteAsync(args[1], CancellationToken.None);
+                    break;
+
+                case "metrics":
+                    var metricsCommand = services.GetRequiredService<MetricsCommand>();
+                    await metricsCommand.ExecuteAsync(args.Skip(1).ToArray());
                     break;
 
                 case "help":
