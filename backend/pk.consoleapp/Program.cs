@@ -153,10 +153,10 @@ public class Program
         table.AddRow("counts", "显示数据库中 Kickstarter 项目、创建者、类别和位置的数量。");
         table.AddRow("clear-db", "清空数据库中的所有 Kickstarter 相关数据。");
         table.AddRow("split <文件路径> <拆分数量>", "将一个 JSON 文件拆分为指定数量的小文件。");
-        table.AddRow("translate [options]", "翻译缺少中文名称/简介的项目字段。");
+        table.AddRow("translate [[options]]", "翻译缺少中文名称/简介的项目字段。");
         table.AddRow("amazon-seed", "同步配置文件中的 Amazon 类目。");
         table.AddRow("amazon-tasks seed", "初始化或更新 Amazon 采集任务配置。");
-        table.AddRow("amazon-fetch <类目Id> [best|new|movers]", "采集 Amazon 榜单快照。");
+        table.AddRow("amazon-fetch <类目Id> [[best|new|movers]]", "采集 Amazon 榜单快照。");
         table.AddRow("amazon-analyze <snapshotId|latest>", "分析指定 Snapshot 的榜单趋势。");
         table.AddRow("amazon-report <snapshotId|latest>", "输出 Snapshot 的分析报告。");
         table.AddRow("exit / quit", "退出 CLI。");
