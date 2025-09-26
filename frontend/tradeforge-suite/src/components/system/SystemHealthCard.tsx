@@ -21,7 +21,7 @@ const STATUS_COLOR_MAP = {
 export const SystemHealthCard = ({ loading, error, summary }: SystemHealthCardProps) => {
   const status = summary?.overallStatus ?? 'healthy';
   const lastUpdated = summary?.lastUpdatedUtc
-    ? dayjs(summary.lastUpdatedUtc).local().format('YYYY-MM-DD HH:mm:ss')
+    ? dayjs(summary.lastUpdatedUtc).format('YYYY-MM-DD HH:mm:ss')
     : '暂无数据';
 
   return (

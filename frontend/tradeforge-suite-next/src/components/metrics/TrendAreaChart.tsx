@@ -1,7 +1,7 @@
 'use client';
 
-import type { TinyAreaConfig } from '@ant-design/plots';
-import { TinyArea } from '@ant-design/plots';
+import type { AreaConfig } from '@ant-design/plots';
+import { Area } from '@ant-design/plots';
 
 export interface TrendPoint {
   month: string;
@@ -14,28 +14,36 @@ interface TrendAreaChartProps {
 }
 
 export const TrendAreaChart = ({ data, loading }: TrendAreaChartProps) => {
-  const config: TinyAreaConfig = {
-    data: data.map((item) => item.value),
-    smooth: true,
-    color: '#5b8ff9',
+  const config: AreaConfig = {
+    data,
+    xField: 'month',
+    yField: 'value',
+    color: '#60a5fa',
+    areaStyle: {
+      fill: 'l(270) 0:#1e293b 1:#60a5fa',
+    },
     tooltip: {
-      customContent: (index) => {
-        const target = typeof index === 'number' ? data[index] : undefined;
-        if (!target) return '';
-        return `<div style="padding: 12px 8px;">${target.month}: ${target.value.toLocaleString()}</div>`;
+      formatter: (datum) => ({
+        name: datum.month,
+        value: datum.value.toLocaleString(),
+      }),
+    },
+    xAxis: {
+      label: { autoHide: true },
+    },
+    yAxis: { label: null, grid: null },
+    animation: {
+      appear: {
+        animation: 'wave-in',
+        duration: 800,
       },
     },
-    areaStyle: {
-      fill: 'l(270) 0:#274472 1:#5b8ff9',
-    },
-    line: {
-      color: '#60a5fa',
-    },
+    padding: [16, 0, 8, 0],
   };
 
   if (loading) {
     return <div style={{ height: 120, background: 'rgba(15,23,42,0.4)', borderRadius: 12 }} />;
   }
 
-  return <TinyArea {...config} height={120} />;
+  return <Area {...config} height={200} />;
 };

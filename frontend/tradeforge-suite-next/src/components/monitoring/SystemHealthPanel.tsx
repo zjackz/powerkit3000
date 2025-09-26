@@ -21,7 +21,7 @@ export const SystemHealthPanel = () => {
   const status = data?.overallStatus ?? 'healthy';
   const statusTag = <Tag color={STATUS_COLOR_MAP[status]}>{renderStatusLabel(status)}</Tag>;
   const lastUpdated = data?.lastUpdatedUtc
-    ? dayjs(data.lastUpdatedUtc).local().format('YYYY-MM-DD HH:mm:ss')
+    ? dayjs(data.lastUpdatedUtc).format('YYYY-MM-DD HH:mm:ss')
     : '暂无数据';
 
   return (

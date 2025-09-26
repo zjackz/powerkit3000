@@ -1,4 +1,5 @@
 import { httpClient } from './httpClient';
+import { notifyApiError, notifyApiFallback } from '@/utils/apiNotifications';
 import type {
   AmazonCoreMetrics,
   AmazonLatestReportResponse,
@@ -8,11 +9,25 @@ import type {
   AmazonTrendListItem,
   AmazonTrendsQueryParams,
 } from '@/types/amazon';
+import {
+  AMAZON_CORE_METRICS_MOCK,
+  AMAZON_REPORT_MOCK,
+  filterAmazonProductsMock,
+  filterTrendsMock,
+  getHistoryMock,
+} from '@/mocks/amazon';
+
+interface AmazonFetchOptions {
+  useMockFallback?: boolean;
+}
 
 /**
  * 获取最新快照的核心指标；若后端返回 204 表示暂未采集数据。
  */
-export const fetchAmazonCoreMetrics = async (): Promise<AmazonCoreMetrics | null> => {
+export const fetchAmazonCoreMetrics = async (
+  options: AmazonFetchOptions = {},
+): Promise<AmazonCoreMetrics | null> => {
+  const { useMockFallback = true } = options;
   try {
     const response = await httpClient.get<AmazonCoreMetrics>('/amazon/core-metrics');
     return response.data;
@@ -20,7 +35,13 @@ export const fetchAmazonCoreMetrics = async (): Promise<AmazonCoreMetrics | null
     if ((error as { response?: { status?: number } }).response?.status === 204) {
       return null;
     }
-    throw error;
+    if (!useMockFallback) {
+      notifyApiError('Amazon 核心指标', error);
+      throw error;
+    }
+    notifyApiFallback('Amazon 核心指标');
+    console.warn('无法加载 Amazon 核心指标，使用本地示例数据回退。', error);
+    return AMAZON_CORE_METRICS_MOCK;
   }
 };
 
@@ -29,11 +50,23 @@ export const fetchAmazonCoreMetrics = async (): Promise<AmazonCoreMetrics | null
  */
 export const fetchAmazonProducts = async (
   params: AmazonProductsQueryParams,
+  options: AmazonFetchOptions = {},
 ): Promise<AmazonProductListItem[]> => {
-  const response = await httpClient.get<AmazonProductListItem[]>('/amazon/products', {
-    params,
-  });
-  return response.data;
+  const { useMockFallback = true } = options;
+  try {
+    const response = await httpClient.get<AmazonProductListItem[]>('/amazon/products', {
+      params,
+    });
+    return response.data;
+  } catch (error) {
+    if (!useMockFallback) {
+      notifyApiError('Amazon 榜单产品', error);
+      throw error;
+    }
+    notifyApiFallback('Amazon 榜单产品');
+    console.warn('无法加载 Amazon 榜单产品列表，使用本地示例数据回退。', error);
+    return filterAmazonProductsMock({ search: params.search });
+  }
 };
 
 /**
@@ -41,11 +74,23 @@ export const fetchAmazonProducts = async (
  */
 export const fetchAmazonTrends = async (
   params: AmazonTrendsQueryParams,
+  options: AmazonFetchOptions = {},
 ): Promise<AmazonTrendListItem[]> => {
-  const response = await httpClient.get<AmazonTrendListItem[]>('/amazon/trends', {
-    params,
-  });
-  return response.data;
+  const { useMockFallback = true } = options;
+  try {
+    const response = await httpClient.get<AmazonTrendListItem[]>('/amazon/trends', {
+      params,
+    });
+    return response.data;
+  } catch (error) {
+    if (!useMockFallback) {
+      notifyApiError('Amazon 趋势', error);
+      throw error;
+    }
+    notifyApiFallback('Amazon 趋势');
+    console.warn('无法加载 Amazon 趋势数据，使用本地示例数据回退。', error);
+    return filterTrendsMock(params.trendType);
+  }
 };
 
 /**
@@ -53,15 +98,30 @@ export const fetchAmazonTrends = async (
  */
 export const fetchAmazonProductHistory = async (
   asin: string,
+  options: AmazonFetchOptions = {},
 ): Promise<AmazonProductHistoryPoint[]> => {
-  const response = await httpClient.get<AmazonProductHistoryPoint[]>(`/amazon/products/${asin}/history`);
-  return response.data;
+  const { useMockFallback = true } = options;
+  try {
+    const response = await httpClient.get<AmazonProductHistoryPoint[]>(`/amazon/products/${asin}/history`);
+    return response.data;
+  } catch (error) {
+    if (!useMockFallback) {
+      notifyApiError('Amazon 产品历史', error);
+      throw error;
+    }
+    notifyApiFallback('Amazon 产品历史');
+    console.warn(`无法加载 ASIN ${asin} 的历史数据，使用本地示例数据回退。`, error);
+    return getHistoryMock(asin);
+  }
 };
 
 /**
  * 拉取最新报告内容，用于前端展示或导出。
  */
-export const fetchLatestAmazonReport = async (): Promise<AmazonLatestReportResponse | null> => {
+export const fetchLatestAmazonReport = async (
+  options: AmazonFetchOptions = {},
+): Promise<AmazonLatestReportResponse | null> => {
+  const { useMockFallback = true } = options;
   try {
     const response = await httpClient.get<AmazonLatestReportResponse>('/amazon/report/latest');
     return response.data;
@@ -69,6 +129,12 @@ export const fetchLatestAmazonReport = async (): Promise<AmazonLatestReportRespo
     if ((error as { response?: { status?: number } }).response?.status === 204) {
       return null;
     }
-    throw error;
+    if (!useMockFallback) {
+      notifyApiError('Amazon 最新报告', error);
+      throw error;
+    }
+    notifyApiFallback('Amazon 最新报告');
+    console.warn('无法加载 Amazon 最新报告，使用本地示例数据回退。', error);
+    return AMAZON_REPORT_MOCK;
   }
 };

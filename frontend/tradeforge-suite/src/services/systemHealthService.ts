@@ -1,5 +1,6 @@
 import { httpClient } from '@/services/httpClient';
 import type { MetricsSnapshot, SystemHealthAlert, SystemHealthStatus, SystemHealthSummary } from '@/types/systemHealth';
+import { notifyApiFallback } from '@/utils/apiNotifications';
 
 const METRICS_ENDPOINT = '/monitoring/metrics';
 const SLOW_QUERY_THRESHOLD_MS = 2000;
@@ -85,6 +86,7 @@ export const fetchSystemHealth = async (useMockFallback = true): Promise<SystemH
       throw error;
     }
 
+    notifyApiFallback('系统健康指标');
     console.warn('无法获取实时监控指标，将使用模拟数据渲染系统健康卡片。');
     return buildSystemHealthSummary(buildMockSnapshot());
   }

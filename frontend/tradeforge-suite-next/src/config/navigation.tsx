@@ -6,6 +6,7 @@ import {
   TagsFilled,
   StarFilled,
   CloudOutlined,
+  DashboardOutlined,
 } from '@ant-design/icons';
 
 export const navigationConfig: ProLayoutProps['route'] = {
@@ -37,6 +38,11 @@ export const navigationConfig: ProLayoutProps['route'] = {
       name: 'Amazon 榜单',
       icon: <TagsFilled />,
       routes: [
+        {
+          path: '/amazon/operations',
+          name: '运营中控台',
+          icon: <DashboardOutlined />,
+        },
         {
           path: '/amazon/trends',
           name: '趋势雷达',

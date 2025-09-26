@@ -6,6 +6,7 @@ import zhCN from 'antd/locale/zh_CN';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { StyleProvider, legacyLogicalPropertiesTransformer } from '@ant-design/cssinjs';
 import { themeConfig } from '@/theme/themeConfig';
+import { TeamProvider } from '@/contexts/TeamContext';
 
 interface Props {
   children: ReactNode;
@@ -33,7 +34,9 @@ export const AntdAppShell = ({ children }: Props) => {
     <StyleProvider transformers={[legacyLogicalPropertiesTransformer]} hashPriority="high">
       <ConfigProvider locale={zhCN} theme={mergedTheme} componentSize="middle">
         <QueryClientProvider client={queryClient}>
-          <AntdApp>{children}</AntdApp>
+          <TeamProvider>
+            <AntdApp>{children}</AntdApp>
+          </TeamProvider>
         </QueryClientProvider>
       </ConfigProvider>
     </StyleProvider>

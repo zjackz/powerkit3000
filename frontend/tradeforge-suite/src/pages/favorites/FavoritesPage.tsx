@@ -83,6 +83,60 @@ export const FavoritesPage = () => {
     }
   };
 
+  const handleExportFavorites = () => {
+    if (favorites.length === 0) {
+      message.info('暂无收藏可导出');
+      return;
+    }
+
+    const headers = ['Id', 'Name', 'NameCn', 'Category', 'Country', 'State', 'Goal', 'Pledged', 'PercentFunded', 'Backers', 'Currency', 'LaunchedAt', 'Deadline', 'Note'];
+    const rows = favorites.map(({ project, note }) => [
+      project.id,
+      project.name,
+      project.nameCn ?? '',
+      project.categoryName,
+      project.country,
+      project.state,
+      project.goal,
+      project.pledged,
+      project.percentFunded,
+      project.backersCount,
+      project.currency,
+      dayjs(project.launchedAt).format('YYYY-MM-DD'),
+      dayjs(project.deadline).format('YYYY-MM-DD'),
+      note ?? '',
+    ]);
+
+    const csv = [headers, ...rows]
+      .map((row) =>
+        row
+          .map((cell) => {
+            if (cell === null || cell === undefined) {
+              return '';
+            }
+            if (typeof cell === 'string') {
+              const escaped = cell.replace(/"/g, '""');
+              return /[",\n]/.test(escaped) ? `"${escaped}"` : escaped;
+            }
+            return cell;
+          })
+          .join(','),
+      )
+      .join('\n');
+
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', `tradeforge-favorites-${dayjs().format('YYYYMMDD-HHmmss')}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+
+    message.success('已导出收藏清单');
+  };
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
       <Card
@@ -96,23 +150,28 @@ export const FavoritesPage = () => {
         }
         extra={
           favorites.length > 0 ? (
-            <Tooltip title="清空收藏">
-              <Button
-                danger
-                size="small"
-                onClick={async () => {
-                  try {
-                    await clearFavorites();
-                    message.success('已清空收藏');
-                  } catch (error) {
-                    console.error(error);
-                    message.error('清空收藏失败，请稍后重试');
-                  }
-                }}
-              >
-                清空
+            <Space size={8}>
+              <Button size="small" onClick={handleExportFavorites}>
+                导出 CSV
               </Button>
-            </Tooltip>
+              <Tooltip title="清空收藏">
+                <Button
+                  danger
+                  size="small"
+                  onClick={async () => {
+                    try {
+                      await clearFavorites();
+                      message.success('已清空收藏');
+                    } catch (error) {
+                      console.error(error);
+                      message.error('清空收藏失败，请稍后重试');
+                    }
+                  }}
+                >
+                  清空
+                </Button>
+              </Tooltip>
+            </Space>
           ) : null
         }
         loading={isLoading}

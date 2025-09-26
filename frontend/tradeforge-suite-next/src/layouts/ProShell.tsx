@@ -3,12 +3,7 @@
 import { ReactNode } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import {
-  ProLayout,
-  PageContainer,
-  ProCard,
-  StatisticCard,
-} from '@ant-design/pro-components';
+import { ProLayout, PageContainer, ProCard } from '@ant-design/pro-components';
 import { Avatar, Badge, Space, Typography } from 'antd';
 import { ThunderboltFilled } from '@ant-design/icons';
 import { navigationConfig } from '@/config/navigation';
@@ -17,6 +12,7 @@ interface ProShellProps {
   title?: string;
   description?: string;
   actions?: ReactNode;
+  overview?: ReactNode;
   children: ReactNode;
 }
 
@@ -36,7 +32,7 @@ const Branding = () => (
   </Space>
 );
 
-export const ProShell = ({ title, description, actions, children }: ProShellProps) => {
+export const ProShell = ({ title, description, actions, overview, children }: ProShellProps) => {
   const pathname = usePathname();
 
   return (
@@ -77,29 +73,7 @@ export const ProShell = ({ title, description, actions, children }: ProShellProp
         extra={actions}
       >
         <Space direction="vertical" size="large" style={{ width: '100%' }}>
-          <StatisticCard.Group bordered={false}>
-            <StatisticCard
-              statistic={{
-                title: '导入作业',
-                value: '1,280',
-                description: '近 24 小时',
-              }}
-            />
-            <StatisticCard
-              statistic={{
-                title: '实时告警',
-                value: 12,
-                description: '任务延迟 / 数据缺失',
-              }}
-            />
-            <StatisticCard
-              statistic={{
-                title: 'LLM 翻译成功率',
-                value: '98.4%',
-                description: '调用 Azure OpenAI',
-              }}
-            />
-          </StatisticCard.Group>
+          {overview}
           <ProCard ghost gutter={16} wrap>
             {children}
           </ProCard>

@@ -19,6 +19,7 @@ import { TopCreatorsList } from '@/components/analytics/TopCreatorsList';
 import { HypeProjectsList } from '@/components/analytics/HypeProjectsList';
 import { CategoryKeywordCloud } from '@/components/analytics/CategoryKeywordCloud';
 import { AnalyticsFilters } from '@/components/analytics/AnalyticsFilters';
+import { TrendSummaryBoard } from '@/components/analytics/TrendSummaryBoard';
 import { useProjectFilters } from '@/hooks/useProjectFilters';
 import { SystemHealthCard } from '@/components/system/SystemHealthCard';
 import type { AnalyticsFilterRequest } from '@/types/project';
@@ -85,6 +86,11 @@ export const DashboardPage = () => {
             loading={systemHealthLoading}
             error={systemHealthDisplayError}
           />
+        </Col>
+      </Row>
+      <Row gutter={[16, 16]}>
+        <Col span={24}>
+          <TrendSummaryBoard data={monthlyTrend} loading={trendLoading} />
         </Col>
       </Row>
       <Row gutter={[16, 16]}>

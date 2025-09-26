@@ -1,9 +1,10 @@
 import { Button, Card, Empty, Input, List, Skeleton, Statistic, Table, Tag, Typography } from 'antd';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import dayjs from 'dayjs';
 import { useAmazonCoreMetrics, useAmazonProducts, useAmazonProductHistory, useAmazonTrends } from '@/hooks/useAmazonDashboard';
 import { useNavigate } from 'react-router-dom';
 import type { AmazonProductListItem, AmazonTrendListItem, AmazonTrendType } from '@/types/amazon';
+import { AmazonHistoryChart } from '@/components/amazon/AmazonHistoryChart';
 import styles from './AmazonPage.module.css';
 
 // 趋势类型映射中文标签，方便在前端直接展示。
@@ -36,20 +37,26 @@ const formatNumber = (value?: number | null) => {
 };
 
 export const AmazonPage = () => {
-    const navigate = useNavigate();
-    const [search, setSearch] = useState('');
-    const [query, setQuery] = useState('');
-    const [selectedAsin, setSelectedAsin] = useState<string>();
+  const navigate = useNavigate();
+  const [search, setSearch] = useState('');
+  const [query, setQuery] = useState('');
+  const [selectedAsin, setSelectedAsin] = useState<string>();
 
-    // React Query 调用服务端 API，实时拉取核心指标、榜单数据和趋势列表。
-    const { data: metrics, isLoading: metricsLoading } = useAmazonCoreMetrics();
-    const { data: newEntries, isLoading: newEntryLoading } = useAmazonTrends({ trendType: 'NewEntry' });
-    const { data: rankSurges, isLoading: rankSurgeLoading } = useAmazonTrends({ trendType: 'RankSurge' });
-    const { data: consistent, isLoading: consistentLoading } = useAmazonTrends({ trendType: 'ConsistentPerformer' });
-    const { data: products, isLoading: productsLoading } = useAmazonProducts({ search: query || undefined });
-    const { data: history, isLoading: historyLoading } = useAmazonProductHistory(selectedAsin);
+  // React Query 调用服务端 API，实时拉取核心指标、榜单数据和趋势列表。
+  const { data: metrics, isLoading: metricsLoading } = useAmazonCoreMetrics();
+  const { data: newEntries, isLoading: newEntryLoading } = useAmazonTrends({ trendType: 'NewEntry' });
+  const { data: rankSurges, isLoading: rankSurgeLoading } = useAmazonTrends({ trendType: 'RankSurge' });
+  const { data: consistent, isLoading: consistentLoading } = useAmazonTrends({ trendType: 'ConsistentPerformer' });
+  const { data: products, isLoading: productsLoading } = useAmazonProducts({ search: query || undefined });
+  const { data: history, isLoading: historyLoading } = useAmazonProductHistory(selectedAsin);
 
   const tableData = useMemo(() => products ?? [], [products]);
+
+  useEffect(() => {
+    if (!selectedAsin && tableData.length > 0) {
+      setSelectedAsin(tableData[0].asin);
+    }
+  }, [selectedAsin, tableData]);
 
   const columns = [
     {
@@ -178,11 +185,12 @@ export const AmazonPage = () => {
           />
         </Card>
         <Card title="历史走势">
-          {historyLoading ? (
-            <Skeleton active />
-          ) : history && history.length > 0 ? (
+          <AmazonHistoryChart data={history} loading={historyLoading} asin={selectedAsin} />
+          {!historyLoading && history && history.length > 0 && (
             <List
+              style={{ marginTop: 16 }}
               size="small"
+              header={<Typography.Text type="secondary">最近采集记录</Typography.Text>}
               dataSource={[...history].reverse()}
               renderItem={(item) => (
                 <List.Item>
@@ -193,8 +201,6 @@ export const AmazonPage = () => {
                 </List.Item>
               )}
             />
-          ) : (
-            <Empty description={selectedAsin ? '未找到历史数据' : '点击左侧产品查看历史'} />
           )}
         </Card>
       </div>

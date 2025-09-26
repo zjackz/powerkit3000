@@ -1,0 +1,140 @@
+documents:
+  - slug: requirements
+    path: docs/需求文档.md
+    title: PowerKit3000 需求说明
+    summary: 需求背景、范围与验收标准的单一真源
+    owner: 产品 Owner
+    audience: [product, engineering]
+    status: active
+    last_updated: 2025-09-25
+    tags: [kickstarter, scope, acceptance]
+    related:
+      - docs/技术方案.md
+      - docs/产品规划.md
+  - slug: product-roadmap
+    path: docs/产品规划.md
+    title: PowerKit3000 产品规划
+    summary: 12 个月路线图、目标用户与业务指标
+    owner: 产品 Owner
+    audience: [product, leadership]
+    status: active
+    last_updated: unknown
+    tags: [roadmap, metrics]
+    related:
+      - docs/需求文档.md
+      - docs/市场运营规划.md
+  - slug: go-to-market
+    path: docs/市场运营规划.md
+    title: 市场运营规划
+    summary: 市场/选品经理视角的流程、指标与协同方式
+    owner: 市场负责人
+    audience: [product, marketing]
+    status: active
+    last_updated: unknown
+    tags: [marketing, operations]
+    related:
+      - docs/需求文档.md
+      - docs/产品规划.md
+  - slug: frontend-ia
+    path: docs/前端界面规划.md
+    title: 前端界面规划
+    summary: 界面信息架构、用户故事、主要交互模式
+    owner: 前端负责人
+    audience: [frontend, design]
+    status: active
+    last_updated: unknown
+    tags: [ui, ux, frontend]
+    related:
+      - docs/技术方案.md
+      - docs/需求文档.md
+  - slug: technical-design
+    path: docs/技术方案.md
+    title: PowerKit3000 技术方案
+    summary: 分层架构、领域服务拆解、关键技术决策
+    owner: 技术负责人
+    audience: [engineering]
+    status: active
+    last_updated: unknown
+    tags: [architecture, backend, amazon]
+    related:
+      - docs/需求文档.md
+      - docs/工程进度.md
+  - slug: data-dictionary
+    path: docs/数据字典.md
+    title: PowerKit3000 核心数据字典
+    summary: Kickstarter 与 Amazon 关键表字段、指标口径对照
+    owner: 数据负责人
+    audience: [engineering, analytics]
+    status: active
+    last_updated: 2025-09-25
+    tags: [data, dictionary, schema]
+    related:
+      - docs/技术方案.md
+      - backend/pk.data/Models
+  - slug: engineering-progress
+    path: docs/工程进度.md
+    title: 工程进度总览
+    summary: 里程碑状态、模块进展、风险与下一步计划
+    owner: 项目经理
+    audience: [engineering, leadership]
+    status: active
+    last_updated: unknown
+    tags: [progress, roadmap, risk]
+    related:
+      - docs/技术方案.md
+      - docs/需求文档.md
+  - slug: agents-handbook
+    path: docs/AGENTS.md
+    title: AGENTS 协作指引
+    summary: 多代理协作、中文注释校验和文档回填规范
+    owner: 协作管理员
+    audience: [engineering, contributors]
+    status: active
+    last_updated: unknown
+    tags: [process, compliance]
+    related:
+      - docs/README.md
+  - slug: strategy-archive
+    path: docs/archive/市场趋势三阶段战略.md
+    title: 市场趋势三阶段战略
+    summary: 产品远景及三阶段战略草案（历史参考）
+    owner: 产品 Owner
+    audience: [leadership]
+    status: archived
+    last_updated: unknown
+    tags: [vision, archive]
+    related:
+      - docs/产品规划.md
+  - slug: advanced-analytics-concepts
+    path: docs/archive/高级分析功能构想.md
+    title: 高级分析功能构想
+    summary: 深度分析/智能推荐构想，尚未纳入正式迭代
+    owner: 产品 Owner
+    audience: [product, engineering]
+    status: archived
+    last_updated: unknown
+    tags: [analytics, archive]
+    related:
+      - docs/技术方案.md
+  - slug: ops-snippets
+    path: docs/archive/常用命令草稿.md
+    title: 常用命令草稿
+    summary: 尚待整理的运维命令集合，计划迁移到正式手册
+    owner: DevOps
+    audience: [engineering]
+    status: needs-review
+    last_updated: unknown
+    tags: [operations, commands]
+    related:
+      - docs/工程进度.md
+  - slug: docs-index
+    path: docs/README.md
+    title: 文档索引
+    summary: 文档导航、阅读路径与维护规范
+    owner: 协作管理员
+    audience: [all]
+    status: active
+    last_updated: 2025-09-25
+    tags: [docs, index, ai]
+    related:
+      - docs/manifest.yaml

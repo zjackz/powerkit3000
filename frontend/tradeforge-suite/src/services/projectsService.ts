@@ -19,6 +19,7 @@ import {
   ProjectFavoriteRecord,
 } from '@/types/project';
 import { httpClient } from './httpClient';
+import { notifyApiFallback } from '@/utils/apiNotifications';
 
 const buildQueryStats = (projects: Project[]): ProjectQueryStats => {
   const total = projects.length;
@@ -160,6 +161,7 @@ export const fetchProjects = async (
       throw error;
     }
 
+    notifyApiFallback('项目列表');
     console.warn('API 不可用，使用本地模拟数据。');
     return new Promise((resolve) => {
       setTimeout(() => resolve(filterProjects(params)), 300);
@@ -176,6 +178,7 @@ export const fetchProjectFilters = async (useMockFallback = true): Promise<Proje
       throw error;
     }
 
+    notifyApiFallback('项目筛选器');
     const stateCounts = PROJECTS_MOCK.reduce<Record<string, number>>((acc, project) => {
       acc[project.state] = (acc[project.state] ?? 0) + 1;
       return acc;
@@ -235,6 +238,7 @@ export const fetchProjectSummary = async (
       throw error;
     }
 
+    notifyApiFallback('项目概览');
     const filtered = PROJECTS_MOCK.filter((project) => {
       if (params.launchedAfter && new Date(project.launchedAt) < new Date(params.launchedAfter)) return false;
       if (params.launchedBefore && new Date(project.launchedAt) > new Date(params.launchedBefore)) return false;
@@ -271,6 +275,7 @@ export const fetchCategoryInsights = async (
       throw error;
     }
 
+    notifyApiFallback('类目洞察');
     const grouped = PROJECTS_MOCK.filter((project) => {
       if (params.launchedAfter && new Date(project.launchedAt) < new Date(params.launchedAfter)) return false;
       if (params.launchedBefore && new Date(project.launchedAt) > new Date(params.launchedBefore)) return false;
@@ -322,6 +327,7 @@ export const fetchCountryInsights = async (
       throw error;
     }
 
+    notifyApiFallback('国家洞察');
     const grouped = PROJECTS_MOCK.filter((project) => {
       if (params.launchedAfter && new Date(project.launchedAt) < new Date(params.launchedAfter)) return false;
       if (params.launchedBefore && new Date(project.launchedAt) > new Date(params.launchedBefore)) return false;
@@ -370,6 +376,7 @@ export const fetchTopProjects = async (
       throw error;
     }
 
+    notifyApiFallback('Top 项目');
     return PROJECTS_MOCK.filter((project) => {
       if (params.launchedAfter && new Date(project.launchedAt) < new Date(params.launchedAfter)) return false;
       if (params.launchedBefore && new Date(project.launchedAt) > new Date(params.launchedBefore)) return false;
@@ -410,6 +417,7 @@ export const fetchHypeProjects = async (
       throw error;
     }
 
+    notifyApiFallback('爆款潜力榜');
     const threshold = filters.minPercentFunded ?? params.minPercentFunded ?? 200;
     return PROJECTS_MOCK.filter((project) => {
       if (filters.launchedAfter && new Date(project.launchedAt) < new Date(filters.launchedAfter)) return false;
@@ -460,6 +468,7 @@ export const fetchCategoryKeywords = async (
       throw error;
     }
 
+    notifyApiFallback('品类关键词');
     const projects = PROJECTS_MOCK.filter((project) => {
       if (project.categoryName !== category) return false;
       if (project.state !== 'successful') return false;
@@ -574,6 +583,7 @@ export const fetchMonthlyTrend = async (
       throw error;
     }
 
+    notifyApiFallback('项目月度趋势');
     const projects = PROJECTS_MOCK.filter((project) => {
       if (params.launchedAfter && new Date(project.launchedAt) < new Date(params.launchedAfter)) return false;
       if (params.launchedBefore && new Date(project.launchedAt) > new Date(params.launchedBefore)) return false;
@@ -623,6 +633,7 @@ export const fetchFundingDistribution = async (
       throw error;
     }
 
+    notifyApiFallback('筹资达成率分布');
     const bins = [
       { label: '<50%', minPercent: 0, maxPercent: 50 },
       { label: '50%-100%', minPercent: 50, maxPercent: 100 },
@@ -663,6 +674,7 @@ export const fetchCreatorPerformance = async (
       throw error;
     }
 
+    notifyApiFallback('创作者表现');
     const grouped = PROJECTS_MOCK.filter((project) => {
       if (params.launchedAfter && new Date(project.launchedAt) < new Date(params.launchedAfter)) return false;
       if (params.launchedBefore && new Date(project.launchedAt) > new Date(params.launchedBefore)) return false;

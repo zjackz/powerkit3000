@@ -1,25 +1,21 @@
 import { Menu } from 'antd';
+import type { MenuProps } from 'antd';
 import {
   AppstoreOutlined,
   DashboardOutlined,
-  ExperimentOutlined,
-  PlayCircleOutlined,
-  ProfileOutlined,
   ShopOutlined,
   StarFilled,
+  ThunderboltFilled,
 } from '@ant-design/icons';
 import { useLocation, useNavigate } from 'react-router-dom';
 
-const menuItems = [
+const CONTROL_TOWER_URL = import.meta.env.VITE_CONTROL_TOWER_URL ?? 'http://localhost:3000';
+
+const menuItems: MenuProps['items'] = [
   {
     key: '/',
     icon: <DashboardOutlined />,
-    label: '概览仪表盘',
-  },
-  {
-    key: '/demo',
-    icon: <PlayCircleOutlined />,
-    label: '客户演示',
+    label: 'Legacy 仪表盘',
   },
   {
     key: '/projects',
@@ -34,18 +30,15 @@ const menuItems = [
   {
     key: '/amazon',
     icon: <ShopOutlined />,
-    label: 'Amazon 榜单',
+    label: 'Amazon 榜单 (Legacy)',
   },
   {
-    key: '/amazon/tasks',
-    icon: <ProfileOutlined />,
-    label: 'Amazon 任务配置',
+    type: 'divider',
   },
   {
-    key: 'experiments',
-    icon: <ExperimentOutlined />,
-    label: '实验室 (规划中)',
-    disabled: true,
+    key: 'control-tower',
+    icon: <ThunderboltFilled />,
+    label: '打开新版 Control Tower',
   },
 ];
 
@@ -53,19 +46,28 @@ export const AppSidebar = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
-  const activeKey = menuItems.reduce((matched, item) => {
-    if (location.pathname.startsWith(item.key) && item.key.length > matched.length) {
-      return item.key;
+  const routeKeys = ['/', '/projects', '/favorites', '/amazon'];
+  const activeKey = routeKeys.reduce((matched, key) => {
+    if (location.pathname.startsWith(key) && key.length > matched.length) {
+      return key;
     }
     return matched;
-  }, '/');
+  }, '');
+
+  const handleClick: MenuProps['onClick'] = ({ key }) => {
+    if (key === 'control-tower') {
+      window.open(CONTROL_TOWER_URL, '_blank', 'noopener');
+      return;
+    }
+    navigate(key);
+  };
 
   return (
     <Menu
       theme="dark"
       mode="inline"
-      selectedKeys={[activeKey]}
-      onClick={({ key }) => navigate(key)}
+      selectedKeys={activeKey ? [activeKey] : []}
+      onClick={handleClick}
       items={menuItems}
     />
   );
