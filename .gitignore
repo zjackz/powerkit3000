@@ -30,3 +30,15 @@ obj/
 .DS_Store
 Thumbs.db
 /.vs/AmazonTrendsDashboard/FileContentIndex
+# Next.js
+.next/
+# 包管理
+node_modules/
+# Turborepo / Vercel
+.turbo/
+.vercel/
+# logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
