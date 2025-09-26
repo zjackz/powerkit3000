@@ -23,10 +23,10 @@ PowerKit3000 聚焦于打造面向跨境团队的 Kickstarter 数据分析工具
    ```
 3. **运行 CLI**
    ```bash
-   scripts/run-console.sh -- import backend/pk.consoleapp/data/sample2.json
-   scripts/run-console.sh -- counts
-   scripts/run-console.sh -- query --state successful --country US
-   scripts/run-console.sh -- translate --max-projects 50
+   scripts/console.sh -- import backend/pk.consoleapp/data/sample2.json
+   scripts/console.sh -- counts
+   scripts/console.sh -- query --state successful --country US
+   scripts/console.sh -- translate --max-projects 50
    ```
 4. **启动 API（默认端口 5200）**
    ```bash
@@ -51,7 +51,7 @@ PowerKit3000 聚焦于打造面向跨境团队的 Kickstarter 数据分析工具
 - `backend/pk.data`：EF Core 模型与迁移，`AppDbContext` 定义持久化实体。
 - `backend/pk.api`：.NET Minimal API，向前端输出查询与分析结果。
 - `frontend/tradeforge-suite`：React + Ant Design 前端应用，提供筛选、详情与分析面板。
-- `scripts/`：开发辅助脚本，如 `run-console.sh` 一键执行 CLI。
+- `scripts/`：开发辅助脚本，如 `console.sh` 一键执行 CLI。
 - `docs/`：需求、规划、技术方案与进度记录。
 
 ## 协作指引

@@ -18,4 +18,5 @@ public class AmazonProduct
     public AmazonCategory Category { get; set; } = null!;
     public ICollection<AmazonProductDataPoint> DataPoints { get; set; } = new List<AmazonProductDataPoint>();
     public ICollection<AmazonTrend> Trends { get; set; } = new List<AmazonTrend>();
+    public ICollection<AmazonProductOperationalMetric> OperationalMetrics { get; set; } = new List<AmazonProductOperationalMetric>();
 }

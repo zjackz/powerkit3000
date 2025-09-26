@@ -9,6 +9,7 @@ using pk.core.Amazon;
 using pk.core.Amazon.Contracts;
 using pk.core.Amazon.Options;
 using pk.core.Amazon.Services;
+using pk.core.Amazon.Operations;
 using pk.core.services;
 using pk.core.translations;
 using pk.data;
@@ -65,6 +66,7 @@ public class Program
                 }
                 services.Configure<TranslationOptions>(context.Configuration.GetSection(TranslationOptions.SectionName));
                 services.Configure<AmazonModuleOptions>(context.Configuration.GetSection(AmazonModuleOptions.SectionName));
+                services.Configure<AmazonOperationalDashboardOptions>(context.Configuration.GetSection(AmazonOperationalDashboardOptions.SectionName));
                 services.AddSingleton<ITranslationProvider, NoOpTranslationProvider>();
                 services.AddSingleton<ITranslationProvider, OpenAiTranslationProvider>();
                 services.AddSingleton<ITranslationProvider, GeminiTranslationProvider>();
@@ -74,11 +76,14 @@ public class Program
                 services.AddHttpClient<IAmazonBestsellerSource, HtmlAgilityPackAmazonBestsellerSource>();
                 services.AddHttpClient<MetricsSnapshotClient>();
 
+                services.AddSingleton<IAmazonOperationalDataSource, NoopAmazonOperationalDataSource>();
                 services.AddScoped<AmazonIngestionService>();
                 services.AddScoped<AmazonTrendAnalysisService>();
                 services.AddScoped<AmazonReportingService>();
                 services.AddScoped<AmazonDashboardService>();
                 services.AddScoped<AmazonTaskService>();
+                services.AddScoped<AmazonOperationalIngestionService>();
+                services.AddScoped<AmazonOperationalInsightService>();
 
                 services.AddScoped<KickstarterDataImportService>(provider =>
                     new KickstarterDataImportService(
@@ -98,6 +103,8 @@ public class Program
                 services.AddScoped<AmazonFetchCommand>();
                 services.AddScoped<AmazonAnalyzeCommand>();
                 services.AddScoped<AmazonReportCommand>();
+                services.AddScoped<AmazonOperationsIngestCommand>();
+                services.AddScoped<AmazonOperationsSummaryCommand>();
                 services.AddScoped<MetricsCommand>();
             })
             .Build();
@@ -162,6 +169,8 @@ public class Program
         table.AddRow("amazon-fetch <类目Id> [[best|new|movers]]", "采集 Amazon 榜单快照。");
         table.AddRow("amazon-analyze <snapshotId|latest>", "分析指定 Snapshot 的榜单趋势。");
         table.AddRow("amazon-report <snapshotId|latest>", "输出 Snapshot 的分析报告。");
+        table.AddRow("amazon-operations ingest", "采集亚马逊运营指标快照。");
+        table.AddRow("amazon-operations summary", "查看运营问题统计概览。");
         table.AddRow("metrics [--url <api>]", "获取后端 /monitoring/metrics 指标快照，检查导入及查询健康。");
         table.AddRow("exit / quit", "退出 CLI。");
 
@@ -276,6 +285,24 @@ public class Program
                     }
                     var reportCommand = services.GetRequiredService<AmazonReportCommand>();
                     await reportCommand.ExecuteAsync(args[1], CancellationToken.None);
+                    break;
+
+                case "amazon-operations":
+                    if (args.Length >= 2 && args[1].Equals("ingest", StringComparison.OrdinalIgnoreCase))
+                    {
+                        var operationsIngestCommand = services.GetRequiredService<AmazonOperationsIngestCommand>();
+                        await operationsIngestCommand.ExecuteAsync(CancellationToken.None);
+                        break;
+                    }
+
+                    if (args.Length >= 2 && args[1].Equals("summary", StringComparison.OrdinalIgnoreCase))
+                    {
+                        var operationsSummaryCommand = services.GetRequiredService<AmazonOperationsSummaryCommand>();
+                        await operationsSummaryCommand.ExecuteAsync(CancellationToken.None);
+                        break;
+                    }
+
+                    AnsiConsole.MarkupLine("[red]用法: amazon-operations ingest | amazon-operations summary[/]");
                     break;
 
                 case "metrics":

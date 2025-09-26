@@ -1,12 +1,15 @@
 'use client';
 
-import { ReactNode } from 'react';
+import { ReactNode, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { ProLayout, PageContainer, ProCard } from '@ant-design/pro-components';
+import { ProLayout, PageContainer, ProCard, SettingDrawer, type ProSettings } from '@ant-design/pro-components';
 import { Avatar, Badge, Space, Typography } from 'antd';
 import { ThunderboltFilled } from '@ant-design/icons';
 import { navigationConfig } from '@/config/navigation';
+import { theme as antdTheme } from 'antd';
+import { useThemeMode } from '@/contexts/ThemeContext';
+import { ThemeToggle } from '@/components/theme/ThemeToggle';
 
 interface ProShellProps {
   title?: string;
@@ -16,16 +19,16 @@ interface ProShellProps {
   children: ReactNode;
 }
 
-const Branding = () => (
+const Branding = ({ mode }: { mode: 'dark' | 'light' }) => (
   <Space align="center" size="small">
-    <Badge count={2024} style={{ backgroundColor: '#22d3ee' }}>
-      <Avatar shape="square" size="large" icon={<ThunderboltFilled />} />
+    <Badge count={2024} style={{ backgroundColor: mode === 'dark' ? '#22d3ee' : '#2563eb' }}>
+      <Avatar shape="square" size="large" style={{ background: mode === 'dark' ? '#0f172a' : '#e0f2fe' }} icon={<ThunderboltFilled style={{ color: mode === 'dark' ? '#38bdf8' : '#2563eb' }} />} />
     </Badge>
     <div>
-      <Typography.Text strong style={{ color: '#e2e8f0' }}>
+      <Typography.Text strong style={{ color: mode === 'dark' ? '#e2e8f0' : '#0f172a' }}>
         TradeForge Control Tower
       </Typography.Text>
-      <Typography.Paragraph style={{ margin: 0, color: '#94a3b8' }}>
+      <Typography.Paragraph style={{ margin: 0, color: mode === 'dark' ? '#94a3b8' : '#475569' }}>
         跨境情报实时调度中心
       </Typography.Paragraph>
     </div>
@@ -34,25 +37,49 @@ const Branding = () => (
 
 export const ProShell = ({ title, description, actions, overview, children }: ProShellProps) => {
   const pathname = usePathname();
+  const { mode, setMode, primaryColor, setPrimaryColor } = useThemeMode();
+  const isDark = mode === 'dark';
+  const { token } = antdTheme.useToken();
+  const [settings, setSettings] = useState<Partial<ProSettings>>({
+    navTheme: isDark ? 'realDark' : 'light',
+    colorPrimary: primaryColor,
+    layout: 'mix',
+  });
+
+  useEffect(() => {
+    setSettings((prev) => ({
+      ...prev,
+      navTheme: isDark ? 'realDark' : 'light',
+      colorPrimary: primaryColor,
+    }));
+  }, [isDark, primaryColor]);
+
+  const layoutTokens = useMemo(
+    () => ({
+      layout: {
+        siderMenuType: 'group',
+        colorMenuBackground: isDark ? 'rgba(15,23,42,0.9)' : '#ffffff',
+        colorBgHeader: isDark ? 'rgba(8,15,35,0.92)' : '#ffffffdd',
+        colorTextMenu: isDark ? 'rgba(226,232,240,0.76)' : 'rgba(30, 41, 59, 0.78)',
+        colorTextMenuSelected: token.colorPrimary,
+      },
+    }),
+    [isDark, token.colorPrimary],
+  );
 
   return (
-    <ProLayout
+    <>
+      <ProLayout
       layout="mix"
-      navTheme="realDark"
+      navTheme={isDark ? 'realDark' : 'light'}
       fixSiderbar
       fixedHeader
       route={navigationConfig}
       location={{ pathname }}
-      logo={<ThunderboltFilled style={{ color: '#38bdf8', fontSize: 24 }} />}
-      menuHeaderRender={() => <Branding />}
-      token={{
-        layout: {
-          siderMenuType: 'group',
-          colorMenuBackground: 'rgba(15,23,42,0.88)',
-          colorBgHeader: 'rgba(2,6,23,0.85)',
-          colorTextMenu: 'rgba(226,232,240,0.75)',
-        },
-      }}
+      logo={<ThunderboltFilled style={{ color: token.colorPrimary, fontSize: 24 }} />}
+      menuHeaderRender={() => <Branding mode={mode} />}
+      token={layoutTokens}
+      settings={settings}
       menuItemRender={(item, dom) => {
         if (!item.path) return dom;
         return <Link href={item.path}>{dom}</Link>;
@@ -62,23 +89,43 @@ export const ProShell = ({ title, description, actions, overview, children }: Pr
         size: 'small',
         title: '运营值班',
       }}
-      actionsRender={() => [actions ?? null].filter(Boolean)}
+      actionsRender={() => [<ThemeToggle key="theme-toggle" />, actions ?? null].filter(Boolean)}
       breadcrumbRender={(routers = []) => routers?.filter((route) => route?.name)}
       collapsedButtonRender={false}
-    >
-      <PageContainer
-        title={title || '全局驾驶舱'}
-        content={description}
-        ghost
-        extra={actions}
       >
-        <Space direction="vertical" size="large" style={{ width: '100%' }}>
-          {overview}
-          <ProCard ghost gutter={16} wrap>
-            {children}
-          </ProCard>
-        </Space>
-      </PageContainer>
-    </ProLayout>
+        <PageContainer
+          title={title || '全局驾驶舱'}
+          content={description}
+          ghost
+          extra={actions}
+        >
+          <Space direction="vertical" size="large" style={{ width: '100%' }}>
+            {overview}
+            <ProCard ghost gutter={16} wrap>
+              {children}
+            </ProCard>
+          </Space>
+        </PageContainer>
+      </ProLayout>
+      <SettingDrawer
+        settings={settings}
+        disableUrlParams
+        enableDarkTheme
+        hideCopyButton
+        getContainer={() => document.body}
+        onSettingChange={(nextSettings) => {
+          setSettings(nextSettings);
+          if (nextSettings.navTheme) {
+            setMode(nextSettings.navTheme === 'realDark' ? 'dark' : 'light');
+          }
+          if (nextSettings.isDarkTheme !== undefined) {
+            setMode(nextSettings.isDarkTheme ? 'dark' : 'light');
+          }
+          if (nextSettings.colorPrimary) {
+            setPrimaryColor(nextSettings.colorPrimary as string);
+          }
+        }}
+      />
+    </>
   );
 };

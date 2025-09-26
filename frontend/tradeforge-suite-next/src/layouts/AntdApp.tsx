@@ -1,11 +1,9 @@
 'use client';
 
-import { ReactNode, useMemo, useState } from 'react';
-import { App as AntdApp, ConfigProvider, theme as antdTheme } from 'antd';
-import zhCN from 'antd/locale/zh_CN';
+import { ReactNode, useState } from 'react';
+import { App as AntdApp } from 'antd';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { StyleProvider, legacyLogicalPropertiesTransformer } from '@ant-design/cssinjs';
-import { themeConfig } from '@/theme/themeConfig';
+import { ThemeProvider } from '@/contexts/ThemeContext';
 import { TeamProvider } from '@/contexts/TeamContext';
 
 interface Props {
@@ -25,20 +23,13 @@ export const AntdAppShell = ({ children }: Props) => {
       }),
   );
 
-  const mergedTheme = useMemo(() => ({
-    ...themeConfig,
-    algorithm: [antdTheme.darkAlgorithm, antdTheme.compactAlgorithm],
-  }), []);
-
   return (
-    <StyleProvider transformers={[legacyLogicalPropertiesTransformer]} hashPriority="high">
-      <ConfigProvider locale={zhCN} theme={mergedTheme} componentSize="middle">
-        <QueryClientProvider client={queryClient}>
-          <TeamProvider>
-            <AntdApp>{children}</AntdApp>
-          </TeamProvider>
-        </QueryClientProvider>
-      </ConfigProvider>
-    </StyleProvider>
+    <ThemeProvider>
+      <QueryClientProvider client={queryClient}>
+        <TeamProvider>
+          <AntdApp>{children}</AntdApp>
+        </TeamProvider>
+      </QueryClientProvider>
+    </ThemeProvider>
   );
 };

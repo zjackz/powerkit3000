@@ -3,6 +3,9 @@ import { notifyApiError, notifyApiFallback } from '@/utils/apiNotifications';
 import type {
   AmazonCoreMetrics,
   AmazonLatestReportResponse,
+  AmazonOperationalIssuesQueryParams,
+  AmazonOperationalIssuesResponse,
+  AmazonOperationalSummary,
   AmazonProductHistoryPoint,
   AmazonProductListItem,
   AmazonProductsQueryParams,
@@ -20,6 +23,9 @@ import {
 interface AmazonFetchOptions {
   useMockFallback?: boolean;
 }
+
+const DEFAULT_AD_PLACEHOLDER = { status: 'comingSoon', message: '广告浪费分析开发中，敬请期待。' } as const;
+const EMPTY_ISSUE_SUMMARY = { total: 0, high: 0, medium: 0, low: 0 } as const;
 
 /**
  * 获取最新快照的核心指标；若后端返回 204 表示暂未采集数据。
@@ -136,5 +142,56 @@ export const fetchLatestAmazonReport = async (
     notifyApiFallback('Amazon 最新报告');
     console.warn('无法加载 Amazon 最新报告，使用本地示例数据回退。', error);
     return AMAZON_REPORT_MOCK;
+  }
+};
+
+export const fetchAmazonOperationalSummary = async (
+  options: AmazonFetchOptions = {},
+): Promise<AmazonOperationalSummary> => {
+  const { useMockFallback = true } = options;
+  try {
+    const response = await httpClient.get<AmazonOperationalSummary>('/amazon/operations/summary');
+    return response.data;
+  } catch (error) {
+    if (!useMockFallback) {
+      notifyApiError('Amazon 运营概览', error);
+      throw error;
+    }
+    notifyApiFallback('Amazon 运营概览');
+    console.warn('无法加载 Amazon 运营概览，返回空数据占位。', error);
+    return {
+      lastUpdatedAt: null,
+      isStale: false,
+      lowStock: { ...EMPTY_ISSUE_SUMMARY },
+      negativeReview: { ...EMPTY_ISSUE_SUMMARY },
+      adWastePlaceholder: DEFAULT_AD_PLACEHOLDER,
+    };
+  }
+};
+
+export const fetchAmazonOperationalIssues = async (
+  params: AmazonOperationalIssuesQueryParams,
+  options: AmazonFetchOptions = {},
+): Promise<AmazonOperationalIssuesResponse> => {
+  const { useMockFallback = true } = options;
+  try {
+    const response = await httpClient.get<AmazonOperationalIssuesResponse>('/amazon/operations/issues', {
+      params,
+    });
+    return response.data;
+  } catch (error) {
+    if (!useMockFallback) {
+      notifyApiError('Amazon 运营问题列表', error);
+      throw error;
+    }
+    notifyApiFallback('Amazon 运营问题列表');
+    console.warn('无法加载 Amazon 运营问题列表，返回空列表占位。', error);
+    return {
+      lastUpdatedAt: null,
+      isStale: false,
+      items: [],
+      total: 0,
+      adWastePlaceholder: DEFAULT_AD_PLACEHOLDER,
+    };
   }
 };

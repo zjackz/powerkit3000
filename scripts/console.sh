@@ -1,6 +1,10 @@
 #!/bin/bash
 set -euo pipefail
 
+# 默认切换到 Company 环境，除非显式指定
+export DOTNET_ENVIRONMENT="${DOTNET_ENVIRONMENT:-Company}"
+export ASPNETCORE_ENVIRONMENT="${ASPNETCORE_ENVIRONMENT:-$DOTNET_ENVIRONMENT}"
+
 if [[ -n "${PROJECT_PATH:-}" ]]; then
   project_path="$PROJECT_PATH"
 else

@@ -9,6 +9,7 @@ using pk.api.Jobs;
 using pk.api.Monitoring;
 using pk.core.Amazon.Options;
 using pk.core.Amazon.Services;
+using pk.core.Amazon.Operations;
 using pk.core.Amazon.Contracts;
 using pk.core.Amazon;
 using pk.core.contracts;
@@ -49,12 +50,16 @@ try
     builder.Services.AddScoped<ProjectFavoriteService>();
 
     builder.Services.Configure<AmazonModuleOptions>(builder.Configuration.GetSection(AmazonModuleOptions.SectionName));
+    builder.Services.Configure<AmazonOperationalDashboardOptions>(builder.Configuration.GetSection(AmazonOperationalDashboardOptions.SectionName));
     builder.Services.AddHttpClient<IAmazonBestsellerSource, HtmlAgilityPackAmazonBestsellerSource>();
+    builder.Services.AddSingleton<IAmazonOperationalDataSource, NoopAmazonOperationalDataSource>();
     builder.Services.AddScoped<AmazonIngestionService>();
     builder.Services.AddScoped<AmazonTrendAnalysisService>();
     builder.Services.AddScoped<AmazonReportingService>();
     builder.Services.AddScoped<AmazonDashboardService>();
     builder.Services.AddScoped<AmazonRecurringJobService>();
+    builder.Services.AddScoped<AmazonOperationalIngestionService>();
+    builder.Services.AddScoped<AmazonOperationalInsightService>();
 
     builder.Services.AddCors(options =>
     {
@@ -541,6 +546,24 @@ app.MapGet("/amazon/report/latest", async (AmazonDashboardService dashboardServi
             report.ReportText
         });
 }).WithName("GetLatestAmazonReport").WithOpenApi();
+
+app.MapPost("/amazon/operations/ingest", async (AmazonOperationalIngestionService ingestionService, CancellationToken cancellationToken) =>
+{
+    var snapshotId = await ingestionService.IngestAsync(cancellationToken);
+    return Results.Ok(new { snapshotId });
+}).WithName("IngestAmazonOperationalMetrics").WithOpenApi();
+
+app.MapGet("/amazon/operations/summary", async (AmazonOperationalInsightService insightService, CancellationToken cancellationToken) =>
+{
+    var summary = await insightService.GetSummaryAsync(cancellationToken);
+    return Results.Ok(summary);
+}).WithName("GetAmazonOperationalSummary").WithOpenApi();
+
+app.MapGet("/amazon/operations/issues", async ([AsParameters] AmazonOperationalIssueRequest request, AmazonOperationalInsightService insightService, CancellationToken cancellationToken) =>
+{
+    var result = await insightService.GetIssuesAsync(request.ToQuery(), cancellationToken);
+    return Results.Ok(result);
+}).WithName("GetAmazonOperationalIssues").WithOpenApi();
 
 app.MapGet("/", () => Results.Redirect("/swagger")).ExcludeFromDescription();
 

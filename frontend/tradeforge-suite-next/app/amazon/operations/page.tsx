@@ -1,221 +1,518 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
-import { ProCard } from '@ant-design/pro-components';
-import { Card, Empty, Input, Skeleton, Space, Statistic, Table, Typography } from 'antd';
-import dayjs from 'dayjs';
+import { useMemo, useState } from 'react';
+import { ProCard, StatisticCard } from '@ant-design/pro-components';
+import {
+  Alert,
+  Badge,
+  Button,
+  Card,
+  Divider,
+  Drawer,
+  Empty,
+  Input,
+  Select,
+  Skeleton,
+  Space,
+  Segmented,
+  Table,
+  Tag,
+  Typography,
+  Descriptions,
+} from 'antd';
 import type { ColumnsType } from 'antd/es/table';
+import dayjs from 'dayjs';
 import { ProShell } from '@/layouts/ProShell';
 import { TeamSwitcher } from '@/components/team/TeamSwitcher';
-import { useTeamContext } from '@/contexts/TeamContext';
-import { AmazonHistoryChart } from '@/components/amazon/AmazonHistoryChart';
 import {
-  useAmazonCoreMetrics,
-  useAmazonProductHistory,
-  useAmazonProducts,
-  useAmazonTrends,
+  useAmazonOperationalIssues,
+  useAmazonOperationalSummary,
 } from '@/hooks/useAmazonDashboard';
-import type { AmazonProductListItem } from '@/types/amazon';
+import type {
+  AmazonOperationalIssue,
+  AmazonOperationalIssueType,
+  AmazonOperationalSeverity,
+} from '@/types/amazon';
+import {
+  AlertOutlined,
+  DatabaseOutlined,
+  FireTwoTone,
+  MessageOutlined,
+  StopOutlined,
+  ThunderboltOutlined,
+} from '@ant-design/icons';
+import { theme as antdTheme } from 'antd';
+import { useThemeMode } from '@/contexts/ThemeContext';
 
-const formatCurrency = (value?: number | null) => {
+const ISSUE_TYPE_LABEL: Record<Exclude<AmazonOperationalIssueType, 'AdWaste'>, string> = {
+  LowStock: '库存告警',
+  NegativeReview: '差评风险',
+};
+
+const SEVERITY_LABEL: Record<AmazonOperationalSeverity, string> = {
+  High: '高',
+  Medium: '中',
+  Low: '低',
+};
+
+const SEVERITY_COLOR: Record<AmazonOperationalSeverity, string> = {
+  High: 'red',
+  Medium: 'orange',
+  Low: 'gold',
+};
+
+const pageSize = 20;
+
+const severityLabels: Record<AmazonOperationalSeverity, string> = {
+  High: '高风险',
+  Medium: '中风险',
+  Low: '低风险',
+};
+
+const issueTypeSegments: Array<{ label: string; value: AmazonOperationalIssueType | 'all'; icon: JSX.Element }> = [
+  { label: '全部', value: 'all', icon: <DatabaseOutlined /> },
+  { label: ISSUE_TYPE_LABEL.LowStock, value: 'LowStock', icon: <AlertOutlined /> },
+  { label: ISSUE_TYPE_LABEL.NegativeReview, value: 'NegativeReview', icon: <MessageOutlined /> },
+];
+
+const formatInventoryDays = (value?: number | null) => {
   if (value === null || value === undefined) {
     return '—';
   }
-  return `$${value.toFixed(2)}`;
+  if (value < 1) {
+    return '不足 1 天';
+  }
+  return `${value.toFixed(1)} 天`;
 };
 
-const formatNumber = (value?: number | null) => {
-  if (value === null || value === undefined) {
-    return '—';
-  }
-  return value.toLocaleString();
-};
+const formatDateTime = (value?: string | null) =>
+  value ? dayjs(value).format('YYYY-MM-DD HH:mm') : '—';
 
 const OperationsContent = () => {
-  const { team } = useTeamContext();
+  const [issueType, setIssueType] = useState<AmazonOperationalIssueType | 'all'>('all');
+  const [severity, setSeverity] = useState<AmazonOperationalSeverity | 'all'>('all');
   const [search, setSearch] = useState('');
-  const [query, setQuery] = useState('');
-  const [selectedAsin, setSelectedAsin] = useState<string>();
+  const [pendingSearch, setPendingSearch] = useState('');
+  const [page, setPage] = useState(1);
+  const [selectedIssue, setSelectedIssue] = useState<AmazonOperationalIssue | null>(null);
+  const { mode } = useThemeMode();
+  const isDark = mode === 'dark';
+  const { token } = antdTheme.useToken();
 
-  useEffect(() => {
-    if (team.focusCategories?.length) {
-      setQuery(team.focusCategories[0] ?? '');
+  const {
+    data: summary,
+    isLoading: summaryLoading,
+  } = useAmazonOperationalSummary();
+  const {
+    data: issuesData,
+    isLoading: issuesLoading,
+  } = useAmazonOperationalIssues({
+    issueType: issueType === 'all' ? undefined : issueType,
+    severity: severity === 'all' ? undefined : severity,
+    search: search || undefined,
+    page,
+    pageSize,
+  });
+
+  const issues = issuesData?.items ?? [];
+  const total = issuesData?.total ?? 0;
+
+  const columns = useMemo<ColumnsType<AmazonOperationalIssue>>((): ColumnsType<AmazonOperationalIssue> => [
+    {
+      title: 'ASIN',
+      dataIndex: 'asin',
+      key: 'asin',
+      width: 140,
+      render: (value: string) => (
+        <Typography.Text strong copyable>{value}</Typography.Text>
+      ),
+    },
+    {
+      title: '产品',
+      dataIndex: 'title',
+      key: 'title',
+      ellipsis: true,
+      render: (value: string) => <Typography.Text>{value}</Typography.Text>,
+    },
+    {
+      title: '问题类型',
+      dataIndex: 'issueType',
+      key: 'issueType',
+      width: 120,
+      render: (value: AmazonOperationalIssueType) => (
+        <Space size={4}>
+          {value === 'LowStock' ? <AlertOutlined style={{ color: '#f59e0b' }} /> : <MessageOutlined style={{ color: '#ef4444' }} />}
+          <Typography.Text>{ISSUE_TYPE_LABEL[value as Exclude<AmazonOperationalIssueType, 'AdWaste'>] ?? value}</Typography.Text>
+        </Space>
+      ),
+    },
+    {
+      title: '严重度',
+      dataIndex: 'severity',
+      key: 'severity',
+      width: 120,
+      render: (value: AmazonOperationalSeverity) => (
+        <Tag color={SEVERITY_COLOR[value]} style={{ fontWeight: 600 }}>
+          {SEVERITY_LABEL[value]}
+        </Tag>
+      ),
+    },
+    {
+      title: '关键指标',
+      key: 'kpi',
+      render: (_, record) => {
+        if (record.issueType === 'LowStock') {
+          return (
+            <Space direction="vertical" size={4}>
+              <Typography.Text type="secondary">库存天数：{formatInventoryDays(record.kpi.inventoryDays)}</Typography.Text>
+              <Typography.Text type="secondary">库存数量：{record.kpi.inventoryQuantity ?? '—'}</Typography.Text>
+              <Typography.Text type="secondary">近 7 日销量：{record.kpi.unitsSold7d ?? '—'}</Typography.Text>
+            </Space>
+          );
+        }
+
+        return (
+          <Space direction="vertical" size={4}>
+            <Typography.Text type="secondary">差评数量：{record.kpi.negativeReviewCount}</Typography.Text>
+            <Typography.Text type="secondary">最新差评时间：{formatDateTime(record.kpi.latestNegativeReviewAt)}</Typography.Text>
+            {record.kpi.latestNegativeReviewExcerpt && (
+              <Typography.Paragraph ellipsis={{ rows: 2 }} style={{ marginBottom: 0 }}>
+                {record.kpi.latestNegativeReviewExcerpt}
+              </Typography.Paragraph>
+            )}
+          </Space>
+        );
+      },
+    },
+    {
+      title: '建议动作',
+      dataIndex: 'recommendation',
+      key: 'recommendation',
+      ellipsis: true,
+      render: (value: string) => (
+        <Typography.Text type="secondary">{value}</Typography.Text>
+      ),
+    },
+    {
+      title: '采集时间',
+      dataIndex: 'capturedAt',
+      key: 'capturedAt',
+      width: 160,
+      render: (value: string) => dayjs(value).format('MM-DD HH:mm'),
+    },
+    {
+      title: '操作',
+      key: 'action',
+      width: 120,
+      render: (_, record) =>
+        record.kpi.latestNegativeReviewUrl ? (
+          <Button
+            type="link"
+            size="small"
+            href={record.kpi.latestNegativeReviewUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            查看差评
+          </Button>
+        ) : (
+          <Typography.Text type="secondary">—</Typography.Text>
+        ),
+    },
+  ], []);
+
+  const renderSummaryCards = () => {
+    if (summaryLoading) {
+      return <Skeleton active />;
     }
-  }, [team]);
 
-  const { data: metrics, isLoading: metricsLoading } = useAmazonCoreMetrics();
-  const { data: products, isLoading: productsLoading } = useAmazonProducts({ search: query || undefined });
-  const { data: trendsNew, isLoading: newLoading } = useAmazonTrends({ trendType: 'NewEntry' });
-  const { data: trendsSurge, isLoading: surgeLoading } = useAmazonTrends({ trendType: 'RankSurge' });
-  const { data: trendsConsistent, isLoading: consistentLoading } = useAmazonTrends({ trendType: 'ConsistentPerformer' });
-  const { data: history, isLoading: historyLoading } = useAmazonProductHistory(selectedAsin);
-
-  useEffect(() => {
-    if (!selectedAsin && products && products.length > 0) {
-      setSelectedAsin(products[0].asin);
+    if (!summary) {
+      return <Empty description="暂无运营数据" />;
     }
-  }, [products, selectedAsin]);
 
-  const columns = useMemo<ColumnsType<AmazonProductListItem>>(
-    () => [
+    const cards = [
       {
-        title: 'ASIN',
-        dataIndex: 'asin',
-        key: 'asin',
-        width: 140,
+        title: '库存风险',
+        value: summary.lowStock.total,
+        footer: `高 ${summary.lowStock.high} / 中 ${summary.lowStock.medium} / 低 ${summary.lowStock.low}`,
+        icon: <AlertOutlined style={{ color: isDark ? '#fbbf24' : '#f97316' }} />,
+        color: isDark
+          ? 'linear-gradient(135deg, rgba(251, 191, 36, 0.32), rgba(250, 204, 21, 0.12))'
+          : 'linear-gradient(135deg, rgba(255, 214, 102, 0.45), rgba(253, 230, 138, 0.2))',
       },
       {
-        title: '产品标题',
-        dataIndex: 'title',
-        key: 'title',
+        title: '差评警报',
+        value: summary.negativeReview.total,
+        footer: `高 ${summary.negativeReview.high} / 中 ${summary.negativeReview.medium} / 低 ${summary.negativeReview.low}`,
+        icon: <MessageOutlined style={{ color: isDark ? '#fb7185' : '#e11d48' }} />,
+        color: isDark
+          ? 'linear-gradient(135deg, rgba(248, 113, 113, 0.38), rgba(251, 146, 146, 0.15))'
+          : 'linear-gradient(135deg, rgba(252, 165, 165, 0.5), rgba(254, 226, 226, 0.25))',
       },
       {
-        title: '类目',
-        dataIndex: 'categoryName',
-        key: 'categoryName',
-        width: 200,
+        title: '广告模块',
+        value: summary.adWastePlaceholder.status === 'comingSoon' ? '开发中' : summary.adWastePlaceholder.status,
+        footer: summary.adWastePlaceholder.message,
+        icon: <ThunderboltOutlined style={{ color: token.colorPrimary }} />,
+        color: isDark
+          ? 'linear-gradient(135deg, rgba(56,189,248,0.32), rgba(59,130,246,0.16))'
+          : 'linear-gradient(135deg, rgba(219,234,254,0.65), rgba(191,219,254,0.35))',
       },
-      {
-        title: '排名',
-        dataIndex: 'latestRank',
-        key: 'latestRank',
-        width: 120,
-        render: (value: number | null) => (value ? `#${value}` : '—'),
-      },
-      {
-        title: '价格',
-        dataIndex: 'latestPrice',
-        key: 'latestPrice',
-        width: 120,
-        render: formatCurrency,
-      },
-      {
-        title: '评分',
-        dataIndex: 'latestRating',
-        key: 'latestRating',
-        width: 100,
-        render: (value: number | null) => (value ? value.toFixed(1) : '—'),
-      },
-      {
-        title: '评论数',
-        dataIndex: 'latestReviews',
-        key: 'latestReviews',
-        width: 120,
-        render: formatNumber,
-      },
-      {
-        title: '更新时间',
-        dataIndex: 'lastUpdated',
-        key: 'lastUpdated',
-        width: 180,
-        render: (value: string | null) => (value ? dayjs(value).format('MM-DD HH:mm') : '—'),
-      },
-    ],
+    ];
+
+    return (
+      <>
+        <Space align="center" size={12} wrap>
+          <TeamSwitcher />
+          <Divider type="vertical" style={{ margin: 0, height: 20 }} />
+          <Typography.Text type="secondary">最后更新时间：</Typography.Text>
+          <Typography.Text strong style={{ fontSize: 16 }}>
+            {summary.lastUpdatedAt ? dayjs(summary.lastUpdatedAt).format('YYYY-MM-DD HH:mm:ss') : '暂无数据'}
+          </Typography.Text>
+          {summary.isStale && <Tag color="orange">数据超过阈值</Tag>}
+        </Space>
+        <Space size={16} wrap style={{ width: '100%', marginTop: 16 }}>
+          {cards.map((item) => (
+            <StatisticCard
+              key={item.title}
+              statistic={{
+                title: item.title,
+                value: item.value,
+                suffix: item.title === '广告模块' ? undefined : '项',
+              }}
+              chart={<div style={{ fontSize: 32 }}>{item.icon}</div>}
+              style={{
+                width: 260,
+                background: item.color,
+                border: 'none',
+                backdropFilter: 'blur(6px)',
+              }}
+              footer={<Typography.Text type="secondary">{item.footer}</Typography.Text>}
+            />
+          ))}
+        </Space>
+      </>
+    );
+  };
+
+  const resetFilters = () => {
+    setIssueType('all');
+    setSeverity('all');
+    setSearch('');
+    setPendingSearch('');
+    setPage(1);
+  };
+
+  const severityLegend = useMemo(
+    () => (
+      <Space size={12} wrap>
+        {Object.entries(severityLabels).map(([key, label]) => (
+          <Badge
+            key={key}
+            color={SEVERITY_COLOR[key as AmazonOperationalSeverity]}
+            text={label}
+          />
+        ))}
+      </Space>
+    ),
     [],
   );
 
   return (
     <ProShell
-      title="Amazon 运营中控台"
-      description="跟踪榜单产品核心指标、趋势信号与历史走势，为跨境运营提供决策依据。"
+      title="Amazon 运营仪表盘"
+      description="聚焦库存与差评风险，帮助运营快速锁定优先处理事项。"
       overview={
-        <Card bordered={false} style={{ background: 'rgba(15,23,42,0.75)' }}>
-          <Space direction="vertical" size={12} style={{ width: '100%' }}>
-            <TeamSwitcher />
-            <Typography.Text type="secondary">榜单核心指标</Typography.Text>
-            {metricsLoading ? (
-              <Skeleton active paragraph={false} />
-            ) : metrics ? (
-              <Space size={16} wrap>
-                <Statistic title="采集产品" value={metrics.totalProducts} valueStyle={{ color: '#38bdf8' }} />
-                <Statistic title="新晋上榜" value={metrics.totalNewEntries} valueStyle={{ color: '#0fbf61' }} />
-                <Statistic title="排名飙升" value={metrics.totalRankSurges} valueStyle={{ color: '#f97316' }} />
-                <Statistic title="持续霸榜" value={metrics.totalConsistentPerformers} valueStyle={{ color: '#1677ff' }} />
-              </Space>
-            ) : (
-              <Empty description="暂无采集数据" />
-            )}
-          </Space>
+        <Card
+          bordered={false}
+          style={{
+            background: isDark
+              ? 'linear-gradient(135deg, rgba(15,23,42,0.88), rgba(37,99,235,0.55))'
+              : 'linear-gradient(135deg, rgba(219,234,254,0.9), rgba(191,219,254,0.6))',
+            color: isDark ? '#fff' : token.colorTextBase,
+            boxShadow: isDark
+              ? '0 18px 42px rgba(30,64,175,0.35)'
+              : '0 16px 36px rgba(148, 163, 184, 0.25)',
+          }}
+        >
+          {renderSummaryCards()}
         </Card>
       }
     >
-      <ProCard colSpan={{ xs: 24, xl: 14 }} bordered>
-        <Space direction="vertical" size={12} style={{ width: '100%' }}>
-          <Space align="center" style={{ width: '100%', justifyContent: 'space-between' }}>
-            <Typography.Title level={4} style={{ margin: 0 }}>
-              榜单产品
-            </Typography.Title>
-            <Input.Search
-              allowClear
-              placeholder="搜索 ASIN 或标题"
-              value={search}
-              onChange={(event) => setSearch(event.target.value)}
-              onSearch={setQuery}
-              style={{ width: 260 }}
-            />
+      <ProCard colSpan={{ xs: 24, xl: 18 }} bordered headerBordered title="风险清单">
+        <Space direction="vertical" size={16} style={{ width: '100%' }}>
+          <Space direction="vertical" size={10} style={{ width: '100%' }}>
+            <Space wrap align="center" style={{ width: '100%', justifyContent: 'space-between' }}>
+              <Space wrap size={12}>
+                <Segmented
+                  size="large"
+                  value={issueType}
+                  onChange={(value) => {
+                    setIssueType(value as AmazonOperationalIssueType | 'all');
+                    setPage(1);
+                  }}
+                  options={issueTypeSegments.map((item) => ({
+                    label: (
+                      <Space size={6}>
+                        {item.icon}
+                        <span>{item.label}</span>
+                      </Space>
+                    ),
+                    value: item.value,
+                  }))}
+                />
+                <Select
+                  value={severity}
+                  style={{ width: 160 }}
+                  onChange={(value) => {
+                    setSeverity(value);
+                    setPage(1);
+                  }}
+                  options={[
+                    { label: '全部严重度', value: 'all' },
+                    { label: '高风险', value: 'High' },
+                    { label: '中风险', value: 'Medium' },
+                    { label: '低风险', value: 'Low' },
+                  ]}
+                />
+              </Space>
+              <Space size={12}>
+                <Input.Search
+                  allowClear
+                  placeholder="搜索 ASIN 或标题"
+                  value={pendingSearch}
+                  onChange={(event) => setPendingSearch(event.target.value)}
+                  onSearch={(value) => {
+                    setSearch(value.trim());
+                    setPage(1);
+                  }}
+                  style={{ width: 260 }}
+                />
+                <Button onClick={resetFilters} icon={<StopOutlined />}>重置</Button>
+              </Space>
+            </Space>
+            <Space style={{ width: '100%', justifyContent: 'space-between' }} wrap>
+              {severityLegend}
+              <Typography.Text type="secondary">点击行可查看详细建议</Typography.Text>
+            </Space>
           </Space>
-          <Table<AmazonProductListItem>
-            rowKey={(record) => record.asin}
-            dataSource={products ?? []}
+          <Table<AmazonOperationalIssue>
+            rowKey={(record) => `${record.asin}-${record.issueType}`}
+            dataSource={issues}
             columns={columns}
-            loading={productsLoading}
-            pagination={{ pageSize: 20 }}
+            loading={issuesLoading}
+            locale={{ emptyText: issuesLoading ? <Skeleton active /> : <Empty description="暂无风险" /> }}
+            pagination={{
+              current: page,
+              pageSize,
+              total,
+              onChange: (nextPage) => setPage(nextPage),
+              showTotal: (count) => `共 ${count} 条记录`,
+            }}
             onRow={(record) => ({
-              onClick: () => setSelectedAsin(record.asin),
+              onClick: () => setSelectedIssue(record),
               style: { cursor: 'pointer' },
             })}
-            size="small"
+            size="middle"
           />
         </Space>
       </ProCard>
-      <ProCard colSpan={{ xs: 24, xl: 10 }} bordered>
-        <Typography.Title level={4} style={{ marginTop: 0 }}>
-          历史走势
-        </Typography.Title>
-        <AmazonHistoryChart data={history} loading={historyLoading} asin={selectedAsin} />
+      <ProCard colSpan={{ xs: 24, xl: 6 }} bordered title="运营提示">
+        <Space direction="vertical" size={16} style={{ width: '100%' }}>
+          <Card
+            bordered={false}
+            style={{
+              background: isDark
+                ? 'linear-gradient(120deg, rgba(59,130,246,0.25), rgba(14,165,233,0.25))'
+                : 'linear-gradient(120deg, rgba(191,219,254,0.6), rgba(165,243,252,0.4))',
+              borderRadius: 16,
+            }}
+          >
+            <Space align="start">
+              <FireTwoTone twoToneColor={token.colorPrimary} style={{ fontSize: 28 }} />
+              <Space direction="vertical" size={12} style={{ flex: 1 }}>
+                <Typography.Title level={5} style={{ margin: 0 }}>
+                  广告模块占位
+                </Typography.Title>
+                <Typography.Paragraph style={{ marginBottom: 0 }}>
+                  {issuesData?.adWastePlaceholder?.message ?? '广告浪费分析正在接入中，敬请期待下一迭代。'}
+                </Typography.Paragraph>
+              </Space>
+            </Space>
+          </Card>
+          <Alert
+            type={isDark ? 'success' : 'info'}
+            showIcon
+            message="操作建议"
+            description="优先处理高风险库存，其次关注差评集中 ASIN，可结合榜单趋势判定是否调价或暂停广告。"
+          />
+        </Space>
       </ProCard>
-      <ProCard colSpan={{ xs: 24, xl: 8 }} bordered title="新晋上榜">
-        {newLoading ? (
-          <Skeleton active />
-        ) : !trendsNew?.length ? (
-          <Empty description="暂无数据" />
-        ) : (
-          trendsNew.map((trend) => (
-            <Card key={trend.asin} size="small" style={{ marginBottom: 12 }}>
-              <Typography.Text strong>{trend.title}</Typography.Text>
-              <div style={{ color: '#94a3b8', marginTop: 4 }}>{trend.description}</div>
-            </Card>
-          ))
+      <Drawer
+        title={selectedIssue?.title}
+        open={Boolean(selectedIssue)}
+        onClose={() => setSelectedIssue(null)}
+        width={420}
+      >
+        {!selectedIssue ? null : (
+          <Space direction="vertical" size={16} style={{ width: '100%' }}>
+            <Space size={8}>
+              <Tag color={SEVERITY_COLOR[selectedIssue.severity]}>{SEVERITY_LABEL[selectedIssue.severity]}</Tag>
+              <Typography.Text type="secondary">{ISSUE_TYPE_LABEL[selectedIssue.issueType as Exclude<AmazonOperationalIssueType, 'AdWaste'>]}</Typography.Text>
+            </Space>
+            <Typography.Paragraph>{selectedIssue.recommendation}</Typography.Paragraph>
+            <Descriptions bordered size="small" column={1}>
+              <Descriptions.Item label="ASIN">{selectedIssue.asin}</Descriptions.Item>
+              <Descriptions.Item label="问题类型">
+                {ISSUE_TYPE_LABEL[selectedIssue.issueType as Exclude<AmazonOperationalIssueType, 'AdWaste'>] ?? selectedIssue.issueType}
+              </Descriptions.Item>
+              <Descriptions.Item label="采集时间">
+                {dayjs(selectedIssue.capturedAt).format('YYYY-MM-DD HH:mm:ss')}
+              </Descriptions.Item>
+              {selectedIssue.issueType === 'LowStock' ? (
+                <>
+                  <Descriptions.Item label="库存天数">
+                    {formatInventoryDays(selectedIssue.kpi.inventoryDays)}
+                  </Descriptions.Item>
+                  <Descriptions.Item label="库存数量">
+                    {selectedIssue.kpi.inventoryQuantity ?? '—'}
+                  </Descriptions.Item>
+                  <Descriptions.Item label="近 7 日销量">
+                    {selectedIssue.kpi.unitsSold7d ?? '—'}
+                  </Descriptions.Item>
+                </>
+              ) : (
+                <>
+                  <Descriptions.Item label="差评数量">
+                    {selectedIssue.kpi.negativeReviewCount}
+                  </Descriptions.Item>
+                  <Descriptions.Item label="最新差评时间">
+                    {formatDateTime(selectedIssue.kpi.latestNegativeReviewAt)}
+                  </Descriptions.Item>
+                  {selectedIssue.kpi.latestNegativeReviewExcerpt && (
+                    <Descriptions.Item label="差评摘要">
+                      {selectedIssue.kpi.latestNegativeReviewExcerpt}
+                    </Descriptions.Item>
+                  )}
+                  {selectedIssue.kpi.latestNegativeReviewUrl && (
+                    <Descriptions.Item label="差评链接">
+                      <Button
+                        type="link"
+                        href={selectedIssue.kpi.latestNegativeReviewUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        size="small"
+                      >
+                        查看原文
+                      </Button>
+                    </Descriptions.Item>
+                  )}
+                </>
+              )}
+            </Descriptions>
+          </Space>
         )}
-      </ProCard>
-      <ProCard colSpan={{ xs: 24, xl: 8 }} bordered title="排名飙升">
-        {surgeLoading ? (
-          <Skeleton active />
-        ) : !trendsSurge?.length ? (
-          <Empty description="暂无数据" />
-        ) : (
-          trendsSurge.map((trend) => (
-            <Card key={trend.asin} size="small" style={{ marginBottom: 12 }}>
-              <Typography.Text strong>{trend.title}</Typography.Text>
-              <div style={{ color: '#94a3b8', marginTop: 4 }}>{trend.description}</div>
-            </Card>
-          ))
-        )}
-      </ProCard>
-      <ProCard colSpan={{ xs: 24, xl: 8 }} bordered title="持续霸榜">
-        {consistentLoading ? (
-          <Skeleton active />
-        ) : !trendsConsistent?.length ? (
-          <Empty description="暂无数据" />
-        ) : (
-          trendsConsistent.map((trend) => (
-            <Card key={trend.asin} size="small" style={{ marginBottom: 12 }}>
-              <Typography.Text strong>{trend.title}</Typography.Text>
-              <div style={{ color: '#94a3b8', marginTop: 4 }}>{trend.description}</div>
-            </Card>
-          ))
-        )}
-      </ProCard>
+      </Drawer>
     </ProShell>
   );
 };

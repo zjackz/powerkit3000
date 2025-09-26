@@ -24,6 +24,8 @@ public class AppDbContext : DbContext
     public DbSet<AmazonProductDataPoint> AmazonProductDataPoints { get; set; }
     public DbSet<AmazonTrend> AmazonTrends { get; set; }
     public DbSet<AmazonTask> AmazonTasks { get; set; }
+    public DbSet<AmazonOperationalSnapshot> AmazonOperationalSnapshots { get; set; }
+    public DbSet<AmazonProductOperationalMetric> AmazonProductOperationalMetrics { get; set; }
 
 
     /// <summary>
@@ -149,6 +151,32 @@ public class AppDbContext : DbContext
 
             entity.Property(t => t.CreatedAt).HasColumnType("timestamp with time zone");
             entity.Property(t => t.UpdatedAt).HasColumnType("timestamp with time zone");
+        });
+
+        modelBuilder.Entity<AmazonOperationalSnapshot>(entity =>
+        {
+            entity.Property(s => s.Status).HasMaxLength(50);
+            entity.Property(s => s.ErrorMessage).HasMaxLength(2000);
+            entity.HasIndex(s => s.CapturedAt);
+        });
+
+        modelBuilder.Entity<AmazonProductOperationalMetric>(entity =>
+        {
+            entity.HasIndex(m => new { m.ProductId, m.CapturedAt });
+            entity.Property(m => m.BuyBoxPrice).HasColumnType("numeric(12,2)");
+            entity.Property(m => m.InventoryDays).HasColumnType("numeric(10,2)");
+            entity.Property(m => m.LatestNegativeReviewExcerpt).HasMaxLength(2000);
+            entity.Property(m => m.LatestNegativeReviewUrl).HasMaxLength(1000);
+
+            entity.HasOne(m => m.OperationalSnapshot)
+                .WithMany(s => s.ProductMetrics)
+                .HasForeignKey(m => m.OperationalSnapshotId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(m => m.Product)
+                .WithMany(p => p.OperationalMetrics)
+                .HasForeignKey(m => m.ProductId)
+                .OnDelete(DeleteBehavior.Cascade);
         });
     }
 }

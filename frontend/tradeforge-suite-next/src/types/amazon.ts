@@ -114,3 +114,64 @@ export interface AmazonTask {
   createdAt: string;
   updatedAt: string;
 }
+
+export type AmazonOperationalIssueType = 'LowStock' | 'NegativeReview' | 'AdWaste';
+export type AmazonOperationalSeverity = 'Low' | 'Medium' | 'High';
+
+export interface AmazonOperationalIssueKpi {
+  inventoryDays?: number | null;
+  inventoryQuantity?: number | null;
+  unitsSold7d?: number | null;
+  isStockout?: boolean | null;
+  negativeReviewCount: number;
+  latestNegativeReviewAt?: string | null;
+  latestNegativeReviewExcerpt?: string | null;
+  latestNegativeReviewUrl?: string | null;
+  buyBoxPrice?: number | null;
+}
+
+export interface AmazonOperationalIssue {
+  asin: string;
+  title: string;
+  issueType: AmazonOperationalIssueType;
+  severity: AmazonOperationalSeverity;
+  kpi: AmazonOperationalIssueKpi;
+  recommendation: string;
+  capturedAt: string;
+}
+
+export interface AmazonOperationalIssueSummary {
+  total: number;
+  high: number;
+  medium: number;
+  low: number;
+}
+
+export interface AmazonOperationalPlaceholder {
+  status: string;
+  message: string;
+}
+
+export interface AmazonOperationalSummary {
+  lastUpdatedAt?: string | null;
+  isStale: boolean;
+  lowStock: AmazonOperationalIssueSummary;
+  negativeReview: AmazonOperationalIssueSummary;
+  adWastePlaceholder: AmazonOperationalPlaceholder;
+}
+
+export interface AmazonOperationalIssuesResponse {
+  lastUpdatedAt?: string | null;
+  isStale: boolean;
+  items: AmazonOperationalIssue[];
+  total: number;
+  adWastePlaceholder: AmazonOperationalPlaceholder;
+}
+
+export interface AmazonOperationalIssuesQueryParams {
+  issueType?: AmazonOperationalIssueType;
+  severity?: AmazonOperationalSeverity;
+  search?: string;
+  page?: number;
+  pageSize?: number;
+}
