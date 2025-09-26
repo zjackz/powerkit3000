@@ -42,3 +42,13 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
+# Next.js build output
+.next/
+# Packages
+node_modules/
+# Others
+.turbo/
+.vercel/
+npm-debug.log*
+yarn-*.log*
+pnpm-debug.log*
