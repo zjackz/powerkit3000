@@ -5,7 +5,7 @@ import type {
   SystemHealthSummary,
 } from '@/types/systemHealth';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? 'http://localhost:5200';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? 'http://172.31.69.200:5200';
 const METRICS_ENDPOINT = '/monitoring/metrics';
 const SLOW_QUERY_THRESHOLD_MS = 2000;
 

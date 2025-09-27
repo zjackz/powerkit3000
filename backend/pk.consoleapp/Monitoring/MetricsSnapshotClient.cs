@@ -19,7 +19,7 @@ public class MetricsSnapshotClient
         }
     }
 
-    public string DefaultEndpoint { get; set; } = "http://localhost:5200/monitoring/metrics";
+    public string DefaultEndpoint { get; set; } = "http://172.31.69.200:5200/monitoring/metrics";
 
     public async Task<MetricsSnapshot?> GetSnapshotAsync(string url, CancellationToken cancellationToken)
     {
