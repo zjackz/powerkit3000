@@ -21,14 +21,14 @@ trap cleanup INT TERM EXIT
 echo "[all.sh] Building solution (pk3000.sln)..."
 (
   cd "$ROOT_DIR"
-  dotnet build pk3000.sln >/dev/null
+  dotnet build pk3000.sln
 )
 echo "[all.sh] Build completed."
 
 echo "[all.sh] Starting console app..."
 (
   cd "$ROOT_DIR"
-  DOTNET_ENVIRONMENT=${DOTNET_ENVIRONMENT:-Company} \
+  DOTNET_ENVIRONMENT=${DOTNET_ENVIRONMENT:-Home} \
   ASPNETCORE_ENVIRONMENT=${ASPNETCORE_ENVIRONMENT:-$DOTNET_ENVIRONMENT} \
   dotnet run --no-build --project backend/pk.consoleapp/pk.consoleapp.csproj
 ) &
@@ -37,7 +37,7 @@ CONSOLE_PID=$!
 echo "[all.sh] Starting API..."
 (
   cd "$ROOT_DIR"
-  DOTNET_ENVIRONMENT=${DOTNET_ENVIRONMENT:-Company} \
+  DOTNET_ENVIRONMENT=${DOTNET_ENVIRONMENT:-Home} \
   ASPNETCORE_ENVIRONMENT=${ASPNETCORE_ENVIRONMENT:-$DOTNET_ENVIRONMENT} \
   dotnet run --no-build --project backend/pk.api/pk.api.csproj
 ) &

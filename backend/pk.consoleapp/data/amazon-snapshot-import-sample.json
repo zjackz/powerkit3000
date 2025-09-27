@@ -1,0 +1,40 @@
+{
+  "amazonCategoryId": "172282",
+  "bestsellerType": "BestSellers",
+  "capturedAt": "2024-09-27T08:00:00Z",
+  "entries": [
+    {
+      "asin": "B0SMARTLAMP1",
+      "title": "LumaGlow 智能氛围灯",
+      "brand": "LumaGlow",
+      "imageUrl": "https://images.example.com/B0SMARTLAMP1.jpg",
+      "rank": 1,
+      "price": 59.99,
+      "rating": 4.7,
+      "reviewsCount": 1245,
+      "listingDate": "2024-05-12T00:00:00Z"
+    },
+    {
+      "asin": "B0CLEANBOT2",
+      "title": "AeroSweep 轻量无线吸尘器",
+      "brand": "AeroSweep",
+      "imageUrl": "https://images.example.com/B0CLEANBOT2.jpg",
+      "rank": 2,
+      "price": 129.5,
+      "rating": 4.5,
+      "reviewsCount": 980,
+      "listingDate": "2024-02-18T00:00:00Z"
+    },
+    {
+      "asin": "B0SMARTKITCH3",
+      "title": "ChefMind 智能料理锅",
+      "brand": "ChefMind",
+      "imageUrl": "https://images.example.com/B0SMARTKITCH3.jpg",
+      "rank": 3,
+      "price": 249.0,
+      "rating": 4.3,
+      "reviewsCount": 612,
+      "listingDate": "2023-11-30T00:00:00Z"
+    }
+  ]
+}
