@@ -19,6 +19,9 @@ public class AmazonRecurringJobService
     private readonly AmazonTrendAnalysisService _analysisService;
     private readonly ILogger<AmazonRecurringJobService> _logger;
 
+    /// <summary>
+    /// 初始化 <see cref="AmazonRecurringJobService"/>。
+    /// </summary>
     public AmazonRecurringJobService(
         AppDbContext dbContext,
         AmazonIngestionService ingestionService,
@@ -34,6 +37,8 @@ public class AmazonRecurringJobService
     /// <summary>
     /// 根据配置抓取指定类目的榜单，并在成功后立即计算趋势。
     /// </summary>
+    /// <param name="amazonCategoryId">Amazon 官方类目编号。</param>
+    /// <param name="bestsellerType">榜单类型。</param>
     public async Task CaptureAndAnalyzeAsync(string amazonCategoryId, AmazonBestsellerType bestsellerType)
     {
         // Hangfire 不支持传入 CancellationToken，这里默认无取消场景。

@@ -21,6 +21,9 @@ public class AmazonOperationalInsightService
     private readonly AmazonOperationalDashboardOptions _options;
     private readonly ILogger<AmazonOperationalInsightService> _logger;
 
+    /// <summary>
+    /// 初始化 <see cref="AmazonOperationalInsightService"/>。
+    /// </summary>
     public AmazonOperationalInsightService(
         AppDbContext dbContext,
         IOptions<AmazonOperationalDashboardOptions> options,
@@ -31,6 +34,11 @@ public class AmazonOperationalInsightService
         _logger = logger;
     }
 
+    /// <summary>
+    /// 获取运营仪表盘的概要统计信息。
+    /// </summary>
+    /// <param name="cancellationToken">取消令牌。</param>
+    /// <returns>包含库存、差评等统计的概要 DTO。</returns>
     public async Task<AmazonOperationalSummaryDto> GetSummaryAsync(CancellationToken cancellationToken)
     {
         var snapshot = await GetLatestSnapshotAsync(cancellationToken).ConfigureAwait(false);
@@ -58,6 +66,12 @@ public class AmazonOperationalInsightService
             BuildAdPlaceholder());
     }
 
+    /// <summary>
+    /// 获取运营问题的分页列表。
+    /// </summary>
+    /// <param name="query">过滤与分页条件。</param>
+    /// <param name="cancellationToken">取消令牌。</param>
+    /// <returns>包含分页结果的 DTO。</returns>
     public async Task<AmazonOperationalIssuesResult> GetIssuesAsync(AmazonOperationalIssueQuery query, CancellationToken cancellationToken)
     {
         var snapshot = await GetLatestSnapshotAsync(cancellationToken).ConfigureAwait(false);

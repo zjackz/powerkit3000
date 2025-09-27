@@ -7,6 +7,9 @@ namespace pk.core.Amazon.Options;
 /// </summary>
 public class AmazonOperationalDashboardOptions
 {
+    /// <summary>
+    /// 配置节点名称常量。
+    /// </summary>
     public const string SectionName = "AmazonOperationalDashboard";
 
     /// <summary>

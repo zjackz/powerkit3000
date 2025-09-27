@@ -20,6 +20,9 @@ public class AmazonJobScheduler
     private readonly AmazonIngestionService _ingestionService;
     private readonly ILogger<AmazonJobScheduler> _logger;
 
+    /// <summary>
+    /// 初始化 <see cref="AmazonJobScheduler"/>。
+    /// </summary>
     public AmazonJobScheduler(
         IOptions<AmazonModuleOptions> options,
         IRecurringJobManager recurringJobManager,
@@ -35,6 +38,7 @@ public class AmazonJobScheduler
     /// <summary>
     /// 初始化调度任务：若启用则同步类目并注册 Hangfire 定时作业。
     /// </summary>
+    /// <param name="cancellationToken">取消令牌。</param>
     public async Task InitializeAsync(CancellationToken cancellationToken)
     {
         if (!_options.EnableScheduling)

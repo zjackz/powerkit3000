@@ -18,6 +18,9 @@ public class AmazonOperationalIngestionService
     private readonly IAmazonOperationalDataSource _dataSource;
     private readonly ILogger<AmazonOperationalIngestionService> _logger;
 
+    /// <summary>
+    /// 初始化 <see cref="AmazonOperationalIngestionService"/>。
+    /// </summary>
     public AmazonOperationalIngestionService(
         AppDbContext dbContext,
         IAmazonOperationalDataSource dataSource,
@@ -31,6 +34,8 @@ public class AmazonOperationalIngestionService
     /// <summary>
     /// 触发一次运营数据采集并落库，返回生成的快照 ID。
     /// </summary>
+    /// <param name="cancellationToken">取消令牌。</param>
+    /// <returns>新生成的运营快照主键。</returns>
     public async Task<long> IngestAsync(CancellationToken cancellationToken)
     {
         var batch = await _dataSource.FetchAsync(cancellationToken).ConfigureAwait(false);

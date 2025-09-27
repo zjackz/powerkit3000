@@ -1,6 +1,7 @@
 'use client';
 
 import { ReactNode, useEffect, useMemo, useState } from 'react';
+import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { ProLayout, PageContainer, ProCard, SettingDrawer, type ProSettings } from '@ant-design/pro-components';
@@ -41,9 +42,12 @@ export const ProShell = ({ title, description, actions, overview, children }: Pr
   const isDark = mode === 'dark';
   const { token } = antdTheme.useToken();
   const [settings, setSettings] = useState<Partial<ProSettings>>({
-    navTheme: isDark ? 'realDark' : 'light',
-    colorPrimary: primaryColor,
+    navTheme: 'light',
+    colorPrimary: '#1890ff',
     layout: 'mix',
+    contentWidth: 'Fluid',
+    fixedHeader: false,
+    fixSiderbar: true,
   });
 
   useEffect(() => {
@@ -70,13 +74,14 @@ export const ProShell = ({ title, description, actions, overview, children }: Pr
   return (
     <>
       <ProLayout
-      layout="mix"
-      navTheme={isDark ? 'realDark' : 'light'}
-      fixSiderbar
-      fixedHeader
+      layout={settings.layout ?? 'mix'}
+      navTheme={settings.navTheme ?? (isDark ? 'realDark' : 'light')}
+      fixSiderbar={settings.fixSiderbar ?? true}
+      fixedHeader={settings.fixedHeader ?? false}
+      contentWidth={settings.contentWidth ?? 'Fluid'}
       route={navigationConfig}
       location={{ pathname }}
-      logo={<ThunderboltFilled style={{ color: token.colorPrimary, fontSize: 24 }} />}
+      logo={<Image src="https://gw.alipayobjects.com/zos/rmsportal/KDpgvguMpGfqaHPjicRK.svg" alt="TradeForge logo" width={28} height={28} priority />}
       menuHeaderRender={() => <Branding mode={mode} />}
       token={layoutTokens}
       settings={settings}

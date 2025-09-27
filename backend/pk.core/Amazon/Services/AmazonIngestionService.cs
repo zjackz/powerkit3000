@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -22,6 +23,9 @@ public class AmazonIngestionService
     private readonly AmazonModuleOptions _options;
     private readonly ILogger<AmazonIngestionService> _logger;
 
+    /// <summary>
+    /// 初始化 <see cref="AmazonIngestionService"/>。
+    /// </summary>
     public AmazonIngestionService(
         AppDbContext dbContext,
         IAmazonBestsellerSource bestsellerSource,
@@ -86,6 +90,13 @@ public class AmazonIngestionService
     /// <summary>
     /// 抓取指定类目与榜单类型，生成一条快照记录并落库所有数据点，返回快照主键。
     /// </summary>
+    /// <summary>
+    /// 在线抓取指定类目的榜单并生成快照记录。
+    /// </summary>
+    /// <param name="categoryId">内部 Amazon 类目主键。</param>
+    /// <param name="bestsellerType">榜单类型。</param>
+    /// <param name="cancellationToken">取消令牌。</param>
+    /// <returns>新生成的快照主键。</returns>
     public async Task<long> CaptureSnapshotAsync(int categoryId, Amazon.AmazonBestsellerType bestsellerType, CancellationToken cancellationToken)
     {
         var category = await _dbContext.AmazonCategories
@@ -107,66 +118,13 @@ public class AmazonIngestionService
 
         try
         {
-            // 请求 Amazon 榜单页面并解析结果，返回当前榜单的所有条目。
             var entries = await _bestsellerSource.FetchAsync(category.AmazonCategoryId, bestsellerType, cancellationToken).ConfigureAwait(false);
             _logger.LogInformation("Fetched {Count} amazon entries for category {CategoryName}", entries.Count, category.Name);
 
-            foreach (var entry in entries)
-            {
-                cancellationToken.ThrowIfCancellationRequested();
-
-                var product = await _dbContext.AmazonProducts
-                    .FirstOrDefaultAsync(p => p.Id == entry.Asin, cancellationToken)
-                    .ConfigureAwait(false);
-
-                if (product == null)
-                {
-                    // 首次遇到该 ASIN，创建产品主数据记录。
-                    product = new AmazonProduct
-                    {
-                        Id = entry.Asin,
-                        Title = entry.Title,
-                        Brand = entry.Brand,
-                        CategoryId = category.Id,
-                        ListingDate = entry.ListingDate,
-                        ImageUrl = entry.ImageUrl
-                    };
-
-                    _dbContext.AmazonProducts.Add(product);
-                }
-                else
-                {
-                    // 已存在则更新可能发生变化的字段，确保前端读取到最新展示信息。
-                    product.Title = entry.Title;
-                    product.Brand = entry.Brand;
-                    product.ImageUrl = entry.ImageUrl;
-                    if (entry.ListingDate.HasValue && product.ListingDate == null)
-                    {
-                        product.ListingDate = entry.ListingDate;
-                    }
-
-                    if (product.CategoryId != category.Id)
-                    {
-                        product.CategoryId = category.Id;
-                    }
-                }
-
-                // 关于同一商品的最新榜单数据点，以便历史趋势分析与前端展示。
-                var dataPoint = new AmazonProductDataPoint
-                {
-                    ProductId = entry.Asin,
-                    SnapshotId = snapshot.Id,
-                    CapturedAt = now,
-                    Rank = entry.Rank,
-                    Price = entry.Price,
-                    Rating = entry.Rating,
-                    ReviewsCount = entry.ReviewsCount
-                };
-
-                _dbContext.AmazonProductDataPoints.Add(dataPoint);
-            }
+            await IngestEntriesAsync(category, snapshot, entries, now, cancellationToken).ConfigureAwait(false);
 
             snapshot.Status = "Completed";
+            snapshot.ErrorMessage = null;
             await _dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
             return snapshot.Id;
         }
@@ -177,6 +135,123 @@ public class AmazonIngestionService
             snapshot.ErrorMessage = ex.Message;
             await _dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
             throw;
+        }
+    }
+
+    /// <summary>
+    /// 将外部抓取工具提供的榜单数据导入为快照。
+    /// </summary>
+    /// <param name="importModel">封装导入数据的模型。</param>
+    /// <param name="cancellationToken">取消令牌。</param>
+    /// <returns>新生成的快照主键。</returns>
+    public async Task<long> ImportSnapshotAsync(AmazonSnapshotImportModel importModel, CancellationToken cancellationToken)
+    {
+        var category = await _dbContext.AmazonCategories
+            .FirstOrDefaultAsync(c => c.Id == importModel.CategoryId, cancellationToken)
+            .ConfigureAwait(false)
+            ?? throw new InvalidOperationException($"Amazon category {importModel.CategoryId} does not exist.");
+
+        var snapshot = new AmazonSnapshot
+        {
+            CapturedAt = importModel.CapturedAt,
+            CategoryId = category.Id,
+            BestsellerType = importModel.BestsellerType.ToString(),
+            Status = "InProgress"
+        };
+
+        _dbContext.AmazonSnapshots.Add(snapshot);
+        await _dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+
+        try
+        {
+            await IngestEntriesAsync(category, snapshot, importModel.Entries, importModel.CapturedAt, cancellationToken).ConfigureAwait(false);
+
+            snapshot.Status = "Completed";
+            snapshot.ErrorMessage = null;
+            await _dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+            return snapshot.Id;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to import Amazon snapshot for category {CategoryName}", category.Name);
+            snapshot.Status = "Failed";
+            snapshot.ErrorMessage = ex.Message;
+            await _dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+            throw;
+        }
+    }
+
+    /// <summary>
+    /// 将榜单条目落库为商品主数据和数据点，复用在抓取与导入场景。
+    /// </summary>
+    /// <param name="category">目标类目实体。</param>
+    /// <param name="snapshot">当前快照。</param>
+    /// <param name="entries">榜单条目集合。</param>
+    /// <param name="capturedAt">采集时间。</param>
+    /// <param name="cancellationToken">取消令牌。</param>
+    private async Task IngestEntriesAsync(
+        AmazonCategory category,
+        AmazonSnapshot snapshot,
+        IReadOnlyCollection<AmazonBestsellerEntry> entries,
+        DateTime capturedAt,
+        CancellationToken cancellationToken)
+    {
+        if (entries.Count == 0)
+        {
+            return;
+        }
+
+        foreach (var entry in entries)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+
+            var product = await _dbContext.AmazonProducts
+                .FirstOrDefaultAsync(p => p.Id == entry.Asin, cancellationToken)
+                .ConfigureAwait(false);
+
+            if (product == null)
+            {
+                product = new AmazonProduct
+                {
+                    Id = entry.Asin,
+                    Title = entry.Title,
+                    Brand = entry.Brand,
+                    CategoryId = category.Id,
+                    ListingDate = entry.ListingDate,
+                    ImageUrl = entry.ImageUrl
+                };
+
+                _dbContext.AmazonProducts.Add(product);
+            }
+            else
+            {
+                product.Title = entry.Title;
+                product.Brand = entry.Brand;
+                product.ImageUrl = entry.ImageUrl;
+
+                if (entry.ListingDate.HasValue && product.ListingDate == null)
+                {
+                    product.ListingDate = entry.ListingDate;
+                }
+
+                if (product.CategoryId != category.Id)
+                {
+                    product.CategoryId = category.Id;
+                }
+            }
+
+            var dataPoint = new AmazonProductDataPoint
+            {
+                ProductId = entry.Asin,
+                SnapshotId = snapshot.Id,
+                CapturedAt = capturedAt,
+                Rank = entry.Rank,
+                Price = entry.Price,
+                Rating = entry.Rating,
+                ReviewsCount = entry.ReviewsCount
+            };
+
+            _dbContext.AmazonProductDataPoints.Add(dataPoint);
         }
     }
 }

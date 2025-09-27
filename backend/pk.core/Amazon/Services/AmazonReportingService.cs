@@ -19,6 +19,9 @@ public class AmazonReportingService
     private readonly AppDbContext _dbContext;
     private readonly ILogger<AmazonReportingService> _logger;
 
+    /// <summary>
+    /// 初始化 <see cref="AmazonReportingService"/>。
+    /// </summary>
     public AmazonReportingService(AppDbContext dbContext, ILogger<AmazonReportingService> logger)
     {
         _dbContext = dbContext;
@@ -28,6 +31,9 @@ public class AmazonReportingService
     /// <summary>
     /// 构建指定快照的报告对象，若快照不存在则返回 null。
     /// </summary>
+    /// <param name="snapshotId">快照主键。</param>
+    /// <param name="cancellationToken">取消令牌。</param>
+    /// <returns>包含核心指标、趋势集合与文本摘要的报告。</returns>
     public async Task<AmazonSnapshotReportDto?> BuildReportAsync(long snapshotId, CancellationToken cancellationToken)
     {
         var snapshot = await _dbContext.AmazonSnapshots

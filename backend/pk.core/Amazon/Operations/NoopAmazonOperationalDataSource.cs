@@ -9,6 +9,7 @@ namespace pk.core.Amazon.Operations;
 /// </summary>
 public sealed class NoopAmazonOperationalDataSource : IAmazonOperationalDataSource
 {
+    /// <inheritdoc />
     public Task<AmazonOperationalDataBatch> FetchAsync(CancellationToken cancellationToken)
     {
         var batch = AmazonOperationalDataBatch.Empty(DateTime.UtcNow);

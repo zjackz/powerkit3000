@@ -8,5 +8,10 @@ namespace pk.core.Amazon.Operations;
 /// </summary>
 public interface IAmazonOperationalDataSource
 {
+    /// <summary>
+    /// 拉取最新的运营指标批次数据。
+    /// </summary>
+    /// <param name="cancellationToken">取消令牌。</param>
+    /// <returns>封装运营指标的数据批次。</returns>
     Task<AmazonOperationalDataBatch> FetchAsync(CancellationToken cancellationToken);
 }

@@ -19,6 +19,9 @@ public class AmazonDashboardService
     private readonly AmazonReportingService _reportingService;
     private readonly ILogger<AmazonDashboardService> _logger;
 
+    /// <summary>
+    /// 初始化 <see cref="AmazonDashboardService"/>。
+    /// </summary>
     public AmazonDashboardService(AppDbContext dbContext, AmazonReportingService reportingService, ILogger<AmazonDashboardService> logger)
     {
         _dbContext = dbContext;
@@ -29,6 +32,7 @@ public class AmazonDashboardService
     /// <summary>
     /// 获取最新快照的核心指标，若尚未采集快照则返回 null。
     /// </summary>
+    /// <param name="cancellationToken">取消令牌。</param>
     public async Task<AmazonCoreMetricsDto?> GetLatestCoreMetricsAsync(CancellationToken cancellationToken)
     {
         var latestSnapshot = await _dbContext.AmazonSnapshots
@@ -48,6 +52,9 @@ public class AmazonDashboardService
     /// <summary>
     /// 查询 Amazon 榜单商品，自动匹配其最新快照数据，可按类目与关键字筛选。
     /// </summary>
+    /// <param name="categoryId">内部类目主键。</param>
+    /// <param name="searchTerm">搜索关键字。</param>
+    /// <param name="cancellationToken">取消令牌。</param>
     public async Task<IReadOnlyList<AmazonProductDto>> GetProductsAsync(int? categoryId, string? searchTerm, CancellationToken cancellationToken)
     {
         var query = _dbContext.AmazonProducts
@@ -111,6 +118,8 @@ public class AmazonDashboardService
     /// <summary>
     /// 查询最新快照的趋势列表，可选地按趋势类型过滤。
     /// </summary>
+    /// <param name="trendType">趋势类型过滤条件。</param>
+    /// <param name="cancellationToken">取消令牌。</param>
     public async Task<IReadOnlyList<AmazonTrendDto>> GetLatestTrendsAsync(Amazon.AmazonTrendType? trendType, CancellationToken cancellationToken)
     {
         var latestSnapshotId = await _dbContext.AmazonSnapshots
@@ -154,6 +163,8 @@ public class AmazonDashboardService
     /// <summary>
     /// 获取某个 ASIN 在历史快照中的排名、价格等信息，按时间升序返回。
     /// </summary>
+    /// <param name="asin">目标 ASIN。</param>
+    /// <param name="cancellationToken">取消令牌。</param>
     public async Task<IReadOnlyList<AmazonProductHistoryPoint>> GetProductHistoryAsync(string asin, CancellationToken cancellationToken)
     {
         var history = await _dbContext.AmazonProductDataPoints
@@ -171,6 +182,7 @@ public class AmazonDashboardService
     /// <summary>
     /// 返回最新快照的完整报告数据，若没有快照则返回 null。
     /// </summary>
+    /// <param name="cancellationToken">取消令牌。</param>
     public async Task<AmazonSnapshotReportDto?> GetLatestReportAsync(CancellationToken cancellationToken)
     {
         var latestSnapshotId = await _dbContext.AmazonSnapshots

@@ -20,6 +20,9 @@ public class AmazonTrendAnalysisService
 
     private const int RankSurgeThreshold = 10;
 
+    /// <summary>
+    /// 初始化 <see cref="AmazonTrendAnalysisService"/>。
+    /// </summary>
     public AmazonTrendAnalysisService(AppDbContext dbContext, ILogger<AmazonTrendAnalysisService> logger)
     {
         _dbContext = dbContext;
@@ -29,6 +32,9 @@ public class AmazonTrendAnalysisService
     /// <summary>
     /// 对指定快照重新计算趋势标签，返回生成的趋势数量。
     /// </summary>
+    /// <param name="snapshotId">快照主键。</param>
+    /// <param name="cancellationToken">取消令牌。</param>
+    /// <returns>生成的趋势记录数。</returns>
     public async Task<int> AnalyzeSnapshotAsync(long snapshotId, CancellationToken cancellationToken)
     {
         var snapshot = await _dbContext.AmazonSnapshots
@@ -66,6 +72,9 @@ public class AmazonTrendAnalysisService
     /// <summary>
     /// 基于当前数据点与历史比较结果产生 0~N 条趋势信息。
     /// </summary>
+    /// <param name="currentDataPoint">当前快照中的数据点。</param>
+    /// <param name="snapshotTime">快照时间。</param>
+    /// <param name="cancellationToken">取消令牌。</param>
     private IEnumerable<AmazonTrend> AnalyzeDataPoint(AmazonProductDataPoint currentDataPoint, DateTime snapshotTime, CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();

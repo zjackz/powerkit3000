@@ -34,8 +34,8 @@ interface ThemeProviderProps {
 }
 
 export const ThemeProvider = ({ children }: ThemeProviderProps) => {
-  const [mode, setModeState] = useState<ThemeMode>('dark');
-  const [primaryColor, setPrimaryColorState] = useState<string>('#38bdf8');
+  const [mode, setModeState] = useState<ThemeMode>('light');
+  const [primaryColor, setPrimaryColorState] = useState<string>('#1890ff');
 
   useEffect(() => {
     if (typeof window === 'undefined') {

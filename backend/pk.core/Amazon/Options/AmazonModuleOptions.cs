@@ -9,14 +9,32 @@ namespace pk.core.Amazon.Options;
 /// </summary>
 public class AmazonModuleOptions
 {
+    /// <summary>
+    /// 配置节点名称常量。
+    /// </summary>
     public const string SectionName = "Amazon";
 
+    /// <summary>
+    /// 需要同步的 Amazon 类目列表。
+    /// </summary>
     public List<AmazonCategoryOption> Categories { get; set; } = new();
 
+    /// <summary>
+    /// 相邻请求的最小延迟（毫秒），用于控制抓取节奏。
+    /// </summary>
     public int MinDelayMilliseconds { get; set; } = 1000;
+    /// <summary>
+    /// 相邻请求的最大延迟（毫秒）。
+    /// </summary>
     public int MaxDelayMilliseconds { get; set; } = 3000;
 
+    /// <summary>
+    /// 固定使用的 User-Agent 字符串。
+    /// </summary>
     public string? UserAgent { get; set; }
+    /// <summary>
+    /// 随机挑选的 User-Agent 池。
+    /// </summary>
     public List<string> UserAgentPool { get; set; } = new();
 
     /// <summary>
@@ -35,9 +53,21 @@ public class AmazonModuleOptions
 /// </summary>
 public class AmazonCategoryOption
 {
+    /// <summary>
+    /// 类目显示名称。
+    /// </summary>
     public string Name { get; set; } = null!;
+    /// <summary>
+    /// Amazon 官方类目编号。
+    /// </summary>
     public string AmazonCategoryId { get; set; } = null!;
+    /// <summary>
+    /// 父级类目主键，如有。
+    /// </summary>
     public int? ParentCategoryId { get; set; }
+    /// <summary>
+    /// 可选别名，便于前端展示。
+    /// </summary>
     public string? Alias { get; set; }
 }
 

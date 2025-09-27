@@ -28,6 +28,9 @@ public class HtmlAgilityPackAmazonBestsellerSource : IAmazonBestsellerSource
     private static readonly Regex PriceRegex = new("[$,]", RegexOptions.Compiled);
     private static readonly Regex RatingRegex = new("^(\\d+(?:.\\d+)?)", RegexOptions.Compiled);
 
+    /// <summary>
+    /// 初始化基于 HtmlAgilityPack 的抓取器。
+    /// </summary>
     public HtmlAgilityPackAmazonBestsellerSource(
         HttpClient httpClient,
         IOptions<AmazonModuleOptions> options,
@@ -41,6 +44,10 @@ public class HtmlAgilityPackAmazonBestsellerSource : IAmazonBestsellerSource
     /// <summary>
     /// 抓取指定类目与榜单类型的商品列表。
     /// </summary>
+    /// <param name="amazonCategoryId">Amazon 官方类目编号。</param>
+    /// <param name="bestsellerType">榜单类型。</param>
+    /// <param name="cancellationToken">取消令牌。</param>
+    /// <returns>抓取到的榜单条目集合。</returns>
     public async Task<IReadOnlyList<AmazonBestsellerEntry>> FetchAsync(string amazonCategoryId, Amazon.AmazonBestsellerType bestsellerType, CancellationToken cancellationToken)
     {
         var url = BuildUrl(amazonCategoryId, bestsellerType);
@@ -137,6 +144,9 @@ public class HtmlAgilityPackAmazonBestsellerSource : IAmazonBestsellerSource
         }
     }
 
+    /// <summary>
+    /// 随机选择或返回默认的 User-Agent。
+    /// </summary>
     private string? SelectUserAgent()
     {
         if (_options.UserAgentPool is { Count: > 0 })

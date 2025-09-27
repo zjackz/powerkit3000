@@ -17,6 +17,9 @@ namespace pk.core.Amazon.Services;
 /// </summary>
 public class AmazonTaskService
 {
+    /// <summary>
+    /// 序列化任务配置时使用的统一 JSON 选项。
+    /// </summary>
     private static readonly JsonSerializerOptions JsonOptions = new()
     {
         PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
@@ -27,12 +30,21 @@ public class AmazonTaskService
     private readonly AppDbContext _dbContext;
     private readonly ILogger<AmazonTaskService> _logger;
 
+    /// <summary>
+    /// 初始化 <see cref="AmazonTaskService"/>。
+    /// </summary>
     public AmazonTaskService(AppDbContext dbContext, ILogger<AmazonTaskService> logger)
     {
         _dbContext = dbContext;
         _logger = logger;
     }
 
+    /// <summary>
+    /// 批量创建或更新采集任务定义。
+    /// </summary>
+    /// <param name="definitions">任务定义集合。</param>
+    /// <param name="cancellationToken">取消令牌。</param>
+    /// <returns>包含影响行数的结果。</returns>
     public async Task<AmazonTaskUpsertResult> UpsertTasksAsync(IEnumerable<AmazonTaskDefinition> definitions, CancellationToken cancellationToken)
     {
         var definitionList = definitions.ToList();
@@ -88,13 +100,26 @@ public class AmazonTaskService
         return new AmazonTaskUpsertResult(definitionList.Count, created, updated, affected);
     }
 
+    /// <summary>
+    /// 使用统一配置序列化对象。
+    /// </summary>
     private static string Serialize<T>(T value)
     {
         return JsonSerializer.Serialize(value, JsonOptions);
     }
 }
 
+/// <summary>
+/// 保存任务定义时的影响统计。
+/// </summary>
+/// <param name="Requested">请求的任务数量。</param>
+/// <param name="Created">新增任务数量。</param>
+/// <param name="Updated">更新任务数量。</param>
+/// <param name="DbChanges">EF Core 保存的变更条数。</param>
 public readonly record struct AmazonTaskUpsertResult(int Requested, int Created, int Updated, int DbChanges)
 {
+    /// <summary>
+    /// 表示无操作的默认结果。
+    /// </summary>
     public static AmazonTaskUpsertResult Empty => new(0, 0, 0, 0);
 }

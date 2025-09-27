@@ -9,7 +9,7 @@ using pk.core.Diagnostics;
 namespace pk.api.Monitoring;
 
 /// <summary>
-/// Captures in-memory aggregates for PowerKit metrics so they can be surfaced via HTTP endpoints without external dependencies.
+/// 捕获 PowerKit 运行时指标的内存快照，便于通过 HTTP 暴露监控数据。
 /// </summary>
 public sealed class MetricsSnapshotService : IHostedService, IDisposable
 {
@@ -19,6 +19,9 @@ public sealed class MetricsSnapshotService : IHostedService, IDisposable
     private DateTimeOffset _lastUpdated = DateTimeOffset.MinValue;
     private bool _disposed;
 
+    /// <summary>
+    /// 初始化监听器并注册指标回调。
+    /// </summary>
     public MetricsSnapshotService()
     {
         _listener = new MeterListener
@@ -36,6 +39,7 @@ public sealed class MetricsSnapshotService : IHostedService, IDisposable
         _listener.SetMeasurementEventCallback<double>(OnHistogramRecorded);
     }
 
+    /// <inheritdoc />
     public Task StartAsync(CancellationToken cancellationToken)
     {
         _listener.Start();
@@ -43,17 +47,22 @@ public sealed class MetricsSnapshotService : IHostedService, IDisposable
         return Task.CompletedTask;
     }
 
+    /// <inheritdoc />
     public Task StopAsync(CancellationToken cancellationToken)
     {
         DisposeListener();
         return Task.CompletedTask;
     }
 
+    /// <inheritdoc />
     public void Dispose()
     {
         DisposeListener();
     }
 
+    /// <summary>
+    /// 释放监听器资源。
+    /// </summary>
     private void DisposeListener()
     {
         if (_disposed)
@@ -65,6 +74,9 @@ public sealed class MetricsSnapshotService : IHostedService, IDisposable
         _disposed = true;
     }
 
+    /// <summary>
+    /// 构建当前内存指标的快照。
+    /// </summary>
     public MetricsSnapshot CreateSnapshot()
     {
         return new MetricsSnapshot(
@@ -73,6 +85,9 @@ public sealed class MetricsSnapshotService : IHostedService, IDisposable
             _lastUpdated);
     }
 
+    /// <summary>
+    /// 计数器事件回调。
+    /// </summary>
     private void OnCounterRecorded(
         Instrument instrument,
         long measurement,
@@ -89,6 +104,9 @@ public sealed class MetricsSnapshotService : IHostedService, IDisposable
         _lastUpdated = DateTimeOffset.UtcNow;
     }
 
+    /// <summary>
+    /// 直方图事件回调。
+    /// </summary>
     private void OnHistogramRecorded(
         Instrument instrument,
         double measurement,
@@ -102,6 +120,9 @@ public sealed class MetricsSnapshotService : IHostedService, IDisposable
         _lastUpdated = DateTimeOffset.UtcNow;
     }
 
+    /// <summary>
+    /// 根据指标名称与标签构建键。
+    /// </summary>
     private static string BuildKey(string instrumentName, ReadOnlySpan<KeyValuePair<string, object?>> tags)
     {
         if (tags.Length == 0)
@@ -127,6 +148,9 @@ public sealed class MetricsSnapshotService : IHostedService, IDisposable
         return builder.ToString();
     }
 
+    /// <summary>
+    /// 直方图聚合中间结果。
+    /// </summary>
     private readonly record struct HistogramAggregate(double Sum, long Count, double Min, double Max)
     {
         public static HistogramAggregate FromValue(double value) => new(value, 1, value, value);
@@ -148,8 +172,22 @@ public sealed class MetricsSnapshotService : IHostedService, IDisposable
     }
 }
 
+/// <summary>
+/// 直方图汇总信息。
+/// </summary>
+/// <param name="Count">样本数量。</param>
+/// <param name="Sum">总和。</param>
+/// <param name="Min">最小值。</param>
+/// <param name="Max">最大值。</param>
+/// <param name="Average">平均值。</param>
 public sealed record HistogramSummary(long Count, double Sum, double Min, double Max, double Average);
 
+/// <summary>
+/// 指标快照数据。
+/// </summary>
+/// <param name="Counters">计数器集合。</param>
+/// <param name="Histograms">直方图集合。</param>
+/// <param name="LastUpdatedUtc">最后更新时间。</param>
 public sealed record MetricsSnapshot(
     IReadOnlyDictionary<string, double> Counters,
     IReadOnlyDictionary<string, HistogramSummary> Histograms,

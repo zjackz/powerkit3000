@@ -171,7 +171,7 @@ public class Program
         table.AddRow("amazon-report <snapshotId|latest>", "输出 Snapshot 的分析报告。");
         table.AddRow("amazon-operations ingest", "采集亚马逊运营指标快照。");
         table.AddRow("amazon-operations summary", "查看运营问题统计概览。");
-        table.AddRow("metrics [--url <api>]", "获取后端 /monitoring/metrics 指标快照，检查导入及查询健康。");
+        table.AddRow(Markup.Escape("metrics [--url <api>]"), "获取后端 /monitoring/metrics 指标快照，检查导入及查询健康。");
         table.AddRow("exit / quit", "退出 CLI。");
 
         AnsiConsole.Write(table);
