@@ -3,8 +3,6 @@
 import { Card, Empty, Skeleton, Space, Typography } from 'antd';
 import { ProCard } from '@ant-design/pro-components';
 import { ProShell } from '@/layouts/ProShell';
-import { TeamSwitcher } from '@/components/team/TeamSwitcher';
-import { useTeamContext } from '@/contexts/TeamContext';
 import { useAmazonTrends } from '@/hooks/useAmazonDashboard';
 import type { AmazonTrendListItem } from '@/types/amazon';
 
@@ -33,7 +31,6 @@ const TrendList = ({ title, loading, trends }: { title: string; loading: boolean
 );
 
 const TrendsContent = () => {
-  const { team } = useTeamContext();
   const { data: newEntries, isLoading: newLoading } = useAmazonTrends({ trendType: 'NewEntry' });
   const { data: surges, isLoading: surgeLoading } = useAmazonTrends({ trendType: 'RankSurge' });
   const { data: consistent, isLoading: consistentLoading } = useAmazonTrends({ trendType: 'ConsistentPerformer' });
@@ -41,10 +38,9 @@ const TrendsContent = () => {
   const overview = (
     <Card bordered={false} style={{ background: 'rgba(15,23,42,0.85)' }}>
       <Space direction="vertical" size={12} style={{ width: '100%' }}>
-        <Typography.Text type="secondary">团队视角</Typography.Text>
-        <TeamSwitcher />
+        <Typography.Text type="secondary">榜单概览</Typography.Text>
         <Typography.Text type="secondary" style={{ fontSize: 12 }}>
-          {team.description}
+          聚焦新晋、飙升与持续霸榜三类趋势，辅助运营制定任务。
         </Typography.Text>
       </Space>
     </Card>

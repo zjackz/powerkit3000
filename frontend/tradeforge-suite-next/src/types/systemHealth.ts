@@ -1,5 +1,5 @@
 /**
- * 系统健康监控数据结构，复用 CLI/APIs 的指标字段，便于 Control Tower 直接消费。
+ * 系统健康监控数据结构，复用 CLI/APIs 的指标字段，便于 MISSION X 直接消费。
  */
 export interface HistogramSummary {
   count: number;

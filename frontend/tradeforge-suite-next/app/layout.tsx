@@ -4,7 +4,7 @@ import type { ReactNode } from 'react';
 import { AntdAppShell } from '@/layouts/AntdApp';
 
 export const metadata: Metadata = {
-  title: 'TradeForge Control Tower',
+  title: 'MISSION X',
   description: '跨境电商情报驾驶舱',
 };
 

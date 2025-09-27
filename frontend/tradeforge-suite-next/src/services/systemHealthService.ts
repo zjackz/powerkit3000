@@ -10,7 +10,7 @@ const METRICS_ENDPOINT = '/monitoring/metrics';
 const SLOW_QUERY_THRESHOLD_MS = 2000;
 
 /**
- * 将后端指标快照转换为 Control Tower 所需的告警与摘要信息。
+ * 将后端指标快照转换为 MISSION X 所需的告警与摘要信息。
  */
 export const buildSystemHealthSummary = (snapshot: MetricsSnapshot): SystemHealthSummary => {
   const counters = snapshot.counters ?? {};

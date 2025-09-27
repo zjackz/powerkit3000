@@ -4,8 +4,6 @@ import { Button, Card, List, Space, Tag, Typography } from 'antd';
 import { ThunderboltOutlined } from '@ant-design/icons';
 import { ProCard } from '@ant-design/pro-components';
 import { ProShell } from '@/layouts/ProShell';
-import { TeamSwitcher } from '@/components/team/TeamSwitcher';
-import { useTeamContext } from '@/contexts/TeamContext';
 
 interface TaskItem {
   id: string;
@@ -18,10 +16,10 @@ interface TaskItem {
   successRate: number;
 }
 
-const buildMockTasks = (teamName: string): TaskItem[] => [
+const buildMockTasks = (): TaskItem[] => [
   {
     id: 'task-1',
-    name: `${teamName} | 家居 Top100 日更`,
+    name: 'MISSION X | 家居 Top100 日更',
     status: 'online',
     site: 'amazon.com',
     categories: ['Home & Kitchen'],
@@ -31,7 +29,7 @@ const buildMockTasks = (teamName: string): TaskItem[] => [
   },
   {
     id: 'task-2',
-    name: `${teamName} | 工具飙升榜监控`,
+    name: 'MISSION X | 工具飙升榜监控',
     status: 'online',
     site: 'amazon.com',
     categories: ['Tools & Home Improvement'],
@@ -41,7 +39,7 @@ const buildMockTasks = (teamName: string): TaskItem[] => [
   },
   {
     id: 'task-3',
-    name: `${teamName} | 评论洞察周报`,
+    name: 'MISSION X | 评论洞察周报',
     status: 'paused',
     site: 'amazon.co.uk',
     categories: ['Home & Kitchen'],
@@ -62,16 +60,14 @@ const TaskStatusTag = ({ status }: { status: TaskItem['status'] }) => {
 };
 
 const TasksContent = () => {
-  const { team } = useTeamContext();
-  const tasks = buildMockTasks(team.name);
+  const tasks = buildMockTasks();
 
   const overview = (
     <Card bordered={false} style={{ background: 'rgba(15,23,42,0.85)' }}>
       <Space direction="vertical" size={12} style={{ width: '100%' }}>
-        <Typography.Text type="secondary">团队视角</Typography.Text>
-        <TeamSwitcher />
+        <Typography.Text type="secondary">调度概览</Typography.Text>
         <Typography.Text type="secondary" style={{ fontSize: 12 }}>
-          {team.description}
+          规划 Amazon 榜单采集任务，掌握运行状态与后续计划。
         </Typography.Text>
       </Space>
     </Card>

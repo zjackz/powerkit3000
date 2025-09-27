@@ -1,10 +1,9 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { ProCard } from '@ant-design/pro-components';
 import { Card, Col, Row, Skeleton, Statistic, Typography } from 'antd';
 import { ProShell } from '@/layouts/ProShell';
-import { TeamSwitcher } from '@/components/team/TeamSwitcher';
 import { SystemHealthPanel } from '@/components/monitoring/SystemHealthPanel';
 import { AnalyticsFilters } from '@/components/analytics/AnalyticsFilters';
 import { TrendSummaryBoard } from '@/components/analytics/TrendSummaryBoard';
@@ -16,7 +15,6 @@ import { TopProjectsList } from '@/components/analytics/TopProjectsList';
 import { TopCreatorsList } from '@/components/analytics/TopCreatorsList';
 import { HypeProjectsList } from '@/components/analytics/HypeProjectsList';
 import { CategoryKeywordCloud } from '@/components/analytics/CategoryKeywordCloud';
-import { useTeamContext } from '@/contexts/TeamContext';
 import { useProjectFilters } from '@/hooks/useProjectFilters';
 import { useProjectSummary } from '@/hooks/useProjectSummary';
 import { useMonthlyTrend } from '@/hooks/useMonthlyTrend';
@@ -30,13 +28,10 @@ import { useCategoryKeywords } from '@/hooks/useCategoryKeywords';
 import { useSystemHealth } from '@/hooks/useSystemHealth';
 import type { AnalyticsFilterRequest } from '@/types/project';
 
-const DashboardContent = () => {
-  const { team } = useTeamContext();
-  const [filters, setFilters] = useState<AnalyticsFilterRequest>(() => team.defaultProjectFilters ?? { minPercentFunded: 200 });
+const DEFAULT_ANALYTICS_FILTERS: AnalyticsFilterRequest = { minPercentFunded: 200 };
 
-  useEffect(() => {
-    setFilters(team.defaultProjectFilters ?? { minPercentFunded: 200 });
-  }, [team]);
+const DashboardContent = () => {
+  const [filters, setFilters] = useState<AnalyticsFilterRequest>(DEFAULT_ANALYTICS_FILTERS);
 
   const { data: filterOptions, isLoading: filterLoading } = useProjectFilters();
 
@@ -108,19 +103,19 @@ const DashboardContent = () => {
   return (
     <ProShell
       title="全局驾驶舱"
-      description="按团队视角查看 Kickstarter + Amazon 双域指标，支持快速筛选与策略洞察。"
+      description="查看 Kickstarter + Amazon 双域指标，快速洞察高热项目走势。"
       overview={
         <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-          <TeamSwitcher />
+          <Typography.Text strong style={{ color: '#cbd5f5' }}>MISSION X · 默认视角</Typography.Text>
           {kpiOverview}
           <SystemHealthPanel />
         </div>
       }
     >
       <ProCard colSpan={24} bordered hoverable>
-        <Typography.Title level={4} style={{ marginTop: 0 }}>{team.name} · 筛选器</Typography.Title>
+        <Typography.Title level={4} style={{ marginTop: 0 }}>MISSION X · 筛选器</Typography.Title>
         <Typography.Paragraph type="secondary" style={{ marginBottom: 12 }}>
-          {team.description}
+          默认聚焦高达成率项目，可根据需要调整筛选条件。
         </Typography.Paragraph>
         <AnalyticsFilters
           options={filterOptions}

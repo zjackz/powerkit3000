@@ -23,7 +23,6 @@ import {
 import type { ColumnsType } from 'antd/es/table';
 import dayjs from 'dayjs';
 import { ProShell } from '@/layouts/ProShell';
-import { TeamSwitcher } from '@/components/team/TeamSwitcher';
 import {
   useAmazonOperationalIssues,
   useAmazonOperationalSummary,
@@ -263,7 +262,7 @@ const OperationsContent = () => {
     return (
       <>
         <Space align="center" size={12} wrap>
-          <TeamSwitcher />
+          <Typography.Text strong>MISSION X · 运营视图</Typography.Text>
           <Divider type="vertical" style={{ margin: 0, height: 20 }} />
           <Typography.Text type="secondary">最后更新时间：</Typography.Text>
           <Typography.Text strong style={{ fontSize: 16 }}>

@@ -27,7 +27,7 @@ const Branding = ({ mode }: { mode: 'dark' | 'light' }) => (
     </Badge>
     <div>
       <Typography.Text strong style={{ color: mode === 'dark' ? '#e2e8f0' : '#0f172a' }}>
-        TradeForge Control Tower
+        MISSION X
       </Typography.Text>
       <Typography.Paragraph style={{ margin: 0, color: mode === 'dark' ? '#94a3b8' : '#475569' }}>
         跨境情报实时调度中心
@@ -81,7 +81,8 @@ export const ProShell = ({ title, description, actions, overview, children }: Pr
       contentWidth={settings.contentWidth ?? 'Fluid'}
       route={navigationConfig}
       location={{ pathname }}
-      logo={<Image src="https://gw.alipayobjects.com/zos/rmsportal/KDpgvguMpGfqaHPjicRK.svg" alt="TradeForge logo" width={28} height={28} priority />}
+      logo={<Image src="/missionx-logo.svg" alt="MISSION X logo" width={28} height={28} priority />}
+      title="MISSION X"
       menuHeaderRender={() => <Branding mode={mode} />}
       token={layoutTokens}
       settings={settings}

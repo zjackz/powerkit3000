@@ -18,8 +18,6 @@ import dayjs from 'dayjs';
 import { StarFilled } from '@ant-design/icons';
 import { ProCard } from '@ant-design/pro-components';
 import { ProShell } from '@/layouts/ProShell';
-import { TeamSwitcher } from '@/components/team/TeamSwitcher';
-import { useTeamContext } from '@/contexts/TeamContext';
 import { ProjectDetailDrawer } from '@/components/projects/ProjectDetailDrawer';
 import { useProjectFavorites } from '@/hooks/useProjectFavorites';
 import type { Project, ProjectFavoriteRecord } from '@/types/project';
@@ -27,7 +25,6 @@ import type { Project, ProjectFavoriteRecord } from '@/types/project';
 const formatCurrencyValue = (value: number, currency: string) => `${currency} ${value.toLocaleString()}`;
 
 const FavoritesContent = () => {
-  const { team } = useTeamContext();
   const { favorites, removeFavorite, clearFavorites, updateFavoriteNote, isLoading } = useProjectFavorites();
   const [searchTerm, setSearchTerm] = useState('');
   const [activeProject, setActiveProject] = useState<Project | null>(null);
@@ -137,10 +134,9 @@ const FavoritesContent = () => {
   const overview = (
     <Card bordered={false} style={{ background: 'rgba(15,23,42,0.85)' }}>
       <Space direction="vertical" size={12} style={{ width: '100%' }}>
-        <Typography.Text type="secondary">团队视角</Typography.Text>
-        <TeamSwitcher />
+        <Typography.Text type="secondary">收藏视图</Typography.Text>
         <Typography.Text type="secondary" style={{ fontSize: 12 }}>
-          {team.description}
+          维护收藏项目与备注，便于会议复盘与执行落地。
         </Typography.Text>
       </Space>
     </Card>
@@ -150,7 +146,7 @@ const FavoritesContent = () => {
     <>
       <ProShell
         title="重点跟进"
-        description="维护跨团队共享的收藏项目、备注与导出清单，支撑会议复盘与执行落地。"
+        description="维护收藏项目、备注与导出清单，支撑会议复盘与执行落地。"
         overview={overview}
       >
         <ProCard colSpan={{ xs: 24, xl: 8 }} bordered>
@@ -161,9 +157,7 @@ const FavoritesContent = () => {
                 我的收藏
               </Typography.Title>
             </Space>
-            <Typography.Text type="secondary">
-              收藏数量：{favorites.length} 个 · 团队：{team.name}
-            </Typography.Text>
+            <Typography.Text type="secondary">收藏数量：{favorites.length} 个</Typography.Text>
             <Space>
               <Button type="primary" onClick={handleExportFavorites} disabled={!favorites.length}>
                 导出 CSV

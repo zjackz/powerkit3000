@@ -26,8 +26,6 @@ import { StarFilled, StarOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import { ProCard } from '@ant-design/pro-components';
 import { ProShell } from '@/layouts/ProShell';
-import { TeamSwitcher } from '@/components/team/TeamSwitcher';
-import { useTeamContext } from '@/contexts/TeamContext';
 import { ProjectFilters } from '@/components/projects/ProjectFilters';
 import { ProjectDetailDrawer } from '@/components/projects/ProjectDetailDrawer';
 import { useProjects } from '@/hooks/useProjects';
@@ -53,13 +51,14 @@ const getMomentumMeta = (percent: number) => {
 
 const CARD_BODY_STYLE = { padding: 14 };
 
+const DEFAULT_PROJECT_FILTERS: ProjectQueryParams = { minPercentFunded: 200 };
+
 const ProjectsContent = () => {
-  const { team } = useTeamContext();
-  const [filters, setFilters] = useState<ProjectQueryParams>(() => ({
+  const [filters, setFilters] = useState<ProjectQueryParams>({
     page: 1,
     pageSize: DEFAULT_PAGE_SIZE,
-    ...(team.defaultProjectFilters ?? {}),
-  }));
+    ...DEFAULT_PROJECT_FILTERS,
+  });
   const [activeProject, setActiveProject] = useState<Project | null>(null);
   const { favorites, addFavorite, isFavorite, removeFavorite, clearFavorites } = useProjectFavorites();
   const [showFavoritesOnly, setShowFavoritesOnly] = useState(false);
@@ -67,14 +66,6 @@ const ProjectsContent = () => {
   const [favoriteModalProject, setFavoriteModalProject] = useState<Project | null>(null);
   const [favoriteModalSaving, setFavoriteModalSaving] = useState(false);
   const [favoriteForm] = Form.useForm();
-
-  useEffect(() => {
-    setFilters({
-      page: 1,
-      pageSize: DEFAULT_PAGE_SIZE,
-      ...(team.defaultProjectFilters ?? {}),
-    });
-  }, [team]);
 
   const favoritesCount = favorites.length;
   const favoriteProjects = useMemo(() => favorites.map((item) => item.project), [favorites]);
@@ -286,10 +277,9 @@ const ProjectsContent = () => {
   const overview = (
     <Card bordered={false} bodyStyle={CARD_BODY_STYLE} style={{ background: 'rgba(15,23,42,0.85)' }}>
       <Space direction="vertical" size={12} style={{ width: '100%' }}>
-        <Typography.Text type="secondary">团队视角</Typography.Text>
-        <TeamSwitcher />
+        <Typography.Text type="secondary">视图说明</Typography.Text>
         <Typography.Text type="secondary" style={{ fontSize: 12 }}>
-          {team.description}
+          默认聚焦高热 Kickstarter 项目，可通过筛选器细化条件并导出结果。
         </Typography.Text>
       </Space>
     </Card>
