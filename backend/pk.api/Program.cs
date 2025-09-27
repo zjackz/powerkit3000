@@ -1,5 +1,6 @@
 using System.Linq;
 using Hangfire;
+using Hangfire.Dashboard;
 using Hangfire.PostgreSql;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
@@ -77,6 +78,8 @@ try
 
     builder.Services.AddSingleton<MetricsSnapshotService>();
     builder.Services.AddHostedService(provider => provider.GetRequiredService<MetricsSnapshotService>());
+    builder.Services.Configure<HangfireDashboardOptions>(builder.Configuration.GetSection("Hangfire:Dashboard"));
+    builder.Services.AddSingleton<HangfireDashboardAuthorizationFilter>();
 
     var hangfireDisabled = builder.Configuration.GetValue("Hangfire:Disabled", false);
     if (hangfireDisabled)
@@ -142,7 +145,11 @@ try
     // 暂未加权限控制，生产环境需加认证后再开放仪表盘。
     if (!hangfireDisabled)
     {
-        app.UseHangfireDashboard("/hangfire");
+        var dashboardAuthorization = app.Services.GetRequiredService<HangfireDashboardAuthorizationFilter>();
+        app.UseHangfireDashboard("/hangfire", new DashboardOptions
+        {
+            Authorization = new[] { dashboardAuthorization },
+        });
     }
 
 app.MapGet("/projects", async (
