@@ -26,6 +26,8 @@ public class AppDbContext : DbContext
     public DbSet<AmazonTask> AmazonTasks { get; set; }
     public DbSet<AmazonOperationalSnapshot> AmazonOperationalSnapshots { get; set; }
     public DbSet<AmazonProductOperationalMetric> AmazonProductOperationalMetrics { get; set; }
+    public DbSet<TemplateConfiguration> TemplateConfigurations { get; set; }
+    public DbSet<TemplateDictionaryEntry> TemplateDictionaryEntries { get; set; }
 
 
     /// <summary>
@@ -177,6 +179,35 @@ public class AppDbContext : DbContext
                 .WithMany(p => p.OperationalMetrics)
                 .HasForeignKey(m => m.ProductId)
                 .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<TemplateConfiguration>(entity =>
+        {
+            entity.HasKey(c => c.Id);
+            entity.Property(c => c.Id).ValueGeneratedNever();
+            entity.Property(c => c.ProjectName).HasMaxLength(200);
+            entity.Property(c => c.LogoUrl).HasMaxLength(500);
+            entity.Property(c => c.ContactEmail).HasMaxLength(200);
+            entity.Property(c => c.ApiBaseUrl).HasMaxLength(200);
+            entity.Property(c => c.ThemeColor).HasMaxLength(50);
+            entity.Property(c => c.DisplayName).HasMaxLength(200);
+            entity.Property(c => c.Email).HasMaxLength(200);
+            entity.Property(c => c.AccessToken).HasMaxLength(200);
+            entity.Property(c => c.CreatedAt).HasColumnType("timestamp with time zone");
+            entity.Property(c => c.UpdatedAt).HasColumnType("timestamp with time zone");
+        });
+
+        modelBuilder.Entity<TemplateDictionaryEntry>(entity =>
+        {
+            entity.HasKey(d => d.Id);
+            entity.HasIndex(d => new { d.Category, d.Key }).IsUnique();
+
+            entity.Property(d => d.Category).HasMaxLength(100);
+            entity.Property(d => d.Key).HasMaxLength(200);
+            entity.Property(d => d.Value).HasMaxLength(1000);
+            entity.Property(d => d.Notes).HasMaxLength(1000);
+            entity.Property(d => d.CreatedAt).HasColumnType("timestamp with time zone");
+            entity.Property(d => d.UpdatedAt).HasColumnType("timestamp with time zone");
         });
     }
 }

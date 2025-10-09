@@ -13,6 +13,7 @@ using pk.core.Amazon.Services;
 using pk.core.Amazon.Operations;
 using pk.core.Amazon.Contracts;
 using pk.core.Amazon;
+using pk.core.Template;
 using pk.core.contracts;
 using pk.core.services;
 using pk.data;
@@ -61,6 +62,8 @@ try
     builder.Services.AddScoped<AmazonRecurringJobService>();
     builder.Services.AddScoped<AmazonOperationalIngestionService>();
     builder.Services.AddScoped<AmazonOperationalInsightService>();
+    builder.Services.AddScoped<AmazonTaskService>();
+    builder.Services.AddScoped<AmazonTaskQueryService>();
 
     builder.Services.AddCors(options =>
     {
@@ -76,6 +79,7 @@ try
     builder.Services.AddHealthChecks()
         .AddDbContextCheck<AppDbContext>("database");
 
+    builder.Services.AddScoped<TemplateConfigService>();
     builder.Services.AddSingleton<MetricsSnapshotService>();
     builder.Services.AddHostedService(provider => provider.GetRequiredService<MetricsSnapshotService>());
     builder.Services.Configure<HangfireDashboardOptions>(builder.Configuration.GetSection("Hangfire:Dashboard"));
@@ -151,6 +155,137 @@ try
             Authorization = new[] { dashboardAuthorization },
         });
     }
+
+    // 模板项目基础配置
+    app.MapGet("/template/settings", async (TemplateConfigService configService, CancellationToken cancellationToken) =>
+    {
+        var settings = await configService.GetSettingsAsync(cancellationToken).ConfigureAwait(false);
+        return Results.Ok(settings);
+    }).WithName("GetTemplateSettings").WithTags("Template")
+      .WithOpenApi(operation =>
+      {
+          operation.Summary = "获取模板系统设置";
+          operation.Description = "读取模板项目的基础信息（名称、Logo、联系方式等）。";
+          return operation;
+      });
+
+    app.MapPut("/template/settings", async (
+        HttpContext httpContext,
+        UpdateTemplateSettingsRequest request,
+        TemplateConfigService configService,
+        CancellationToken cancellationToken) =>
+    {
+        if (!httpContext.Request.HasJsonContentType())
+        {
+            return Results.BadRequest(new { error = "请求内容类型必须为 application/json" });
+        }
+
+        try
+        {
+            var updated = await configService.UpdateSettingsAsync(request.ToSettings(), cancellationToken).ConfigureAwait(false);
+            return Results.Ok(updated);
+        }
+        catch (ArgumentException ex)
+        {
+            return Results.BadRequest(new { error = ex.Message });
+        }
+    }).WithName("UpdateTemplateSettings").WithTags("Template")
+      .WithOpenApi(operation =>
+      {
+          operation.Summary = "更新模板系统设置";
+          operation.Description = "保存模板项目的基础信息，写入数据库配置表。";
+          return operation;
+      });
+
+    app.MapGet("/template/profile", async (TemplateConfigService configService, CancellationToken cancellationToken) =>
+    {
+        var profile = await configService.GetProfileAsync(cancellationToken).ConfigureAwait(false);
+        return Results.Ok(profile);
+    }).WithName("GetTemplateProfile").WithTags("Template")
+      .WithOpenApi(operation =>
+      {
+          operation.Summary = "获取个人账户信息";
+          operation.Description = "返回模板项目的个人资料和访问令牌。";
+          return operation;
+      });
+
+    app.MapPut("/template/profile", async (
+        UpdateTemplateProfileRequest request,
+        TemplateConfigService configService,
+        CancellationToken cancellationToken) =>
+    {
+        try
+        {
+            var updated = await configService.UpdateProfileAsync(request.ToProfile(), cancellationToken).ConfigureAwait(false);
+            return Results.Ok(updated);
+        }
+        catch (ArgumentException ex)
+        {
+            return Results.BadRequest(new { error = ex.Message });
+        }
+    }).WithName("UpdateTemplateProfile").WithTags("Template")
+      .WithOpenApi(operation =>
+      {
+          operation.Summary = "更新个人账户信息";
+          operation.Description = "保存模板项目的个人资料及访问令牌。";
+          return operation;
+      });
+
+    app.MapGet("/template/dictionaries", async (
+        string? category,
+        TemplateConfigService configService,
+        CancellationToken cancellationToken) =>
+    {
+        var items = await configService.GetDictionaryAsync(category, cancellationToken).ConfigureAwait(false);
+        return Results.Ok(items);
+    }).WithName("ListTemplateDictionary").WithTags("Template")
+      .WithOpenApi(operation =>
+      {
+          operation.Summary = "获取通用字典列表";
+          operation.Description = "按类别筛选模板项目的通用字典条目。";
+          return operation;
+      });
+
+    app.MapPost("/template/dictionaries", async (
+        TemplateDictionaryItemRequest request,
+        TemplateConfigService configService,
+        CancellationToken cancellationToken) =>
+    {
+        try
+        {
+            var item = await configService.UpsertDictionaryAsync(request.ToItem(), cancellationToken).ConfigureAwait(false);
+            return Results.Ok(item);
+        }
+        catch (ArgumentException ex)
+        {
+            return Results.BadRequest(new { error = ex.Message });
+        }
+        catch (InvalidOperationException ex)
+        {
+            return Results.Conflict(new { error = ex.Message });
+        }
+    }).WithName("UpsertTemplateDictionary").WithTags("Template")
+      .WithOpenApi(operation =>
+      {
+          operation.Summary = "新增或更新字典条目";
+          operation.Description = "维护模板项目的通用字典配置。";
+          return operation;
+      });
+
+    app.MapDelete("/template/dictionaries/{id:guid}", async (
+        Guid id,
+        TemplateConfigService configService,
+        CancellationToken cancellationToken) =>
+    {
+        var removed = await configService.DeleteDictionaryAsync(id, cancellationToken).ConfigureAwait(false);
+        return removed ? Results.NoContent() : Results.NotFound();
+    }).WithName("DeleteTemplateDictionary").WithTags("Template")
+      .WithOpenApi(operation =>
+      {
+          operation.Summary = "删除字典条目";
+          operation.Description = "移除模板项目的通用字典配置。";
+          return operation;
+      });
 
 app.MapGet("/projects", async (
     [AsParameters] ProjectQueryRequest request,
@@ -696,6 +831,58 @@ app.MapGet("/amazon/trends", async ([AsParameters] AmazonTrendsQueryRequest requ
 {
     operation.Summary = "获取最新 Amazon 趋势列表";
     operation.Description = "返回最新快照的趋势记录，可按趋势类型过滤。";
+    return operation;
+});
+
+app.MapGet("/amazon/tasks", async ([AsParameters] AmazonTaskQueryRequest request, AmazonTaskQueryService taskQueryService, CancellationToken cancellationToken) =>
+{
+    var result = await taskQueryService.GetTasksAsync(new AmazonTaskListQuery(request.Status, request.Site, request.Search), cancellationToken).ConfigureAwait(false);
+    var response = new AmazonTaskListResponseDto
+    {
+        Total = result.Total,
+        Items = result.Items
+            .Select(item => new AmazonTaskListItemDto(
+                item.Id,
+                item.Name,
+                item.Site,
+                item.Status,
+                item.Categories,
+                item.Leaderboards,
+                item.Schedule,
+                item.PriceRange,
+                item.Filters,
+                item.Keywords,
+                item.Limits,
+                item.ProxyPolicy,
+                item.Notes,
+                item.Summary,
+                item.CreatedAt,
+                item.UpdatedAt))
+            .ToList()
+    };
+    return Results.Ok(response);
+}).WithName("GetAmazonTasks").WithTags("Amazon").WithOpenApi(operation =>
+{
+    operation.Summary = "查询 Amazon 采集任务";
+    operation.Description = "按状态、站点与关键字筛选采集任务列表。";
+    return operation;
+});
+
+app.MapPost("/amazon/tasks/{taskId:guid}/trigger", async (Guid taskId, AmazonTaskQueryService taskQueryService, ILoggerFactory loggerFactory, CancellationToken cancellationToken) =>
+{
+    var exists = await taskQueryService.ExistsAsync(taskId, cancellationToken).ConfigureAwait(false);
+    if (!exists)
+    {
+        return Results.NotFound(new { message = $"Task {taskId} not found." });
+    }
+
+    var logger = loggerFactory.CreateLogger("AmazonTasks");
+    logger.LogInformation("Received manual trigger request for Amazon task {TaskId}.", taskId);
+    return Results.Accepted($"/amazon/tasks/{taskId}", new { taskId });
+}).WithName("TriggerAmazonTask").WithTags("Amazon").WithOpenApi(operation =>
+{
+    operation.Summary = "手动触发 Amazon 采集任务";
+    operation.Description = "用于人工触发指定任务，当前实现仅记录请求并返回 Accepted。";
     return operation;
 });
 
