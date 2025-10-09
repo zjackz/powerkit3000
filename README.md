@@ -6,7 +6,7 @@ PowerKit3000 聚焦于打造面向跨境团队的 Kickstarter 数据分析工具
 - 数据导入：通过 `import`、`split` 等命令把 JSON/JSONL 数据批量写入 Postgres，并处理创作者、分类、地区等实体去重。
 - 数据查询：`backend/pk.core` 暴露查询服务，支持复用到 CLI 与 API，涵盖分页过滤、统计汇总等场景。
 - 分析 API：`backend/pk.api` 提供项目列表、筛选器、统计摘要及多维分析端点，兼容 Swagger 文档。
-- 前端体验：`frontend/tradeforge-suite-next` 基于 Next.js + Ant Design Pro 构建 MISSION X，中控仪表盘与运营面板实时联通后端 API。
+- 前端体验：`frontend/naive-ui-admin` 基于 Vue 3 + Vite + Naive UI Admin 模板构建运营驾驶舱，实时联通后端 API 并承载 Kickstarter/Amazon 分析页面。
 - 测试保障：`backend/pk.consoleapp.Tests` 使用 NUnit 验证导入、查询关键流程，便于持续交付。
 - 多语言扩展：CLI 提供 `translate` 命令批量生成项目名称/简介的中文字段，API 与前端自动读取并展示。
 
@@ -14,7 +14,7 @@ PowerKit3000 聚焦于打造面向跨境团队的 Kickstarter 数据分析工具
 1. **安装依赖**
    ```bash
    dotnet restore pk3000.sln
-   npm install --prefix frontend/tradeforge-suite-next
+   pnpm install --dir frontend/naive-ui-admin
    ```
 2. **构建与测试**
    ```bash
@@ -32,9 +32,9 @@ PowerKit3000 聚焦于打造面向跨境团队的 Kickstarter 数据分析工具
    ```bash
    dotnet run --project backend/pk.api/pk.api.csproj
    ```
-5. **启动前端（Next.js Dev Server，默认 3000）**
+5. **启动前端（Vite Dev Server，默认 5173）**
    ```bash
-   npm run dev --prefix frontend/tradeforge-suite-next
+   pnpm run dev --dir frontend/naive-ui-admin
    ```
 
 > **数据库连接**：后端默认读取 `ConnectionStrings:AppDb`（参见 `backend/pk.consoleapp/appsettings.json`），可通过环境变量 `ConnectionStrings__AppDb` 覆盖；执行迁移需进入 `backend/pk.data` 目录运行 `dotnet ef database update`。
@@ -50,7 +50,7 @@ PowerKit3000 聚焦于打造面向跨境团队的 Kickstarter 数据分析工具
 - `backend/pk.core`：共享领域逻辑（例如 `KickstarterDataImportService`, `KickstarterProjectQueryService`）。
 - `backend/pk.data`：EF Core 模型与迁移，`AppDbContext` 定义持久化实体。
 - `backend/pk.api`：.NET Minimal API，向前端输出查询与分析结果。
-- `frontend/tradeforge-suite-next`：Next.js + Ant Design Pro 前端应用（MISSION X），聚合 Kickstarter 分析、亚马逊榜单与亚马逊运营模块。
+- `frontend/naive-ui-admin`：Vue 3 + Naive UI 管理台，聚合 Kickstarter 分析、亚马逊榜单与运营模块，已替换历史 Tradeforge 应用。
 - `scripts/`：开发辅助脚本，如 `console.sh` 一键执行 CLI。
 - `docs/`：需求、规划、技术方案与进度记录。
 
